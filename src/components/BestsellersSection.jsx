@@ -54,6 +54,7 @@ const BestsellersSection = () => {
                 subtitle={item.subtitle}
                 price={item.price}
                 variant="bestseller"
+                className="w-64 flex-shrink-0"
               />
             ))}
           </div>

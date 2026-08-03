@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const CategorySection = () => {
+const CategorySection = ({ onSelectCategory }) => {
   const categories = [
     { title: 'Tea & Wholesale Commodities', label: 'Tea' },
     { title: 'Bulk Order Bundles', label: 'Bundles' },
@@ -19,6 +19,7 @@ const CategorySection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.15 }}
             whileHover={{ y: -6 }}
+            onClick={() => onSelectCategory && onSelectCategory(cat.label)}
             className="flex flex-col items-center cursor-pointer group"
           >
             {/* Image Placeholder Block */}

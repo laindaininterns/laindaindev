@@ -12,14 +12,15 @@ const ProductCard = ({
   imageSrc,
   variant = 'standard', // 'standard' | 'bestseller'
   onActionClick,
+  className = '',
   actionText = 'Buy now'
 }) => {
-  if (variant === 'bestseller') {
+  if (variant === 'bestseller' || variant === 'similar') {
     return (
       <motion.div
         whileHover={{ y: -4 }}
         transition={{ duration: 0.2 }}
-        className="bg-white p-5 shadow-sm rounded-none w-64 flex-shrink-0 text-center border border-gray-100 flex flex-col items-center"
+        className={`bg-white p-5 shadow-sm rounded-none text-center border border-gray-200/80 flex flex-col items-center justify-between w-full h-full ${className}`}
       >
         {/* Image Placeholder / Visual */}
         <div className="bg-[#D9D9D9] w-full h-40 mb-4 rounded-none flex items-center justify-center overflow-hidden relative group">
@@ -43,6 +44,35 @@ const ProductCard = ({
         {/* Subtitle */}
         {subtitle && (
           <p className="text-xs text-gray-500 font-light leading-relaxed">{subtitle}</p>
+        )}
+      </motion.div>
+    );
+  }
+
+  if (variant === 'catalog') {
+    return (
+      <motion.div
+        whileHover={{ y: -3 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white p-4 flex flex-col justify-between items-start border border-gray-300 w-full h-full group"
+      >
+        {/* Image Placeholder */}
+        <div className="bg-[#D9D9D9] w-full aspect-4/3 mb-4 flex items-center justify-center overflow-hidden">
+          {imageSrc ? (
+            <img src={imageSrc} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          ) : (
+            <span className="text-gray-400 text-xs font-light">Image Placeholder</span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h4 className="text-sm md:text-base font-medium text-[#000000] mb-3">{title}</h4>
+
+        {/* Price Pill */}
+        {price && (
+          <div className="bg-[#F0F0F0] text-[#000000] px-4 py-1 rounded-full text-xs font-medium border border-gray-200">
+            {price}
+          </div>
         )}
       </motion.div>
     );
