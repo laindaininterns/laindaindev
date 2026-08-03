@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Menu, X } from 'lucide-react';
+import { Search, ShoppingBag, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Navbar = ({ activePage = 'home', onNavigate }) => {
+const Navbar = ({ activePage = 'home', onNavigate, cartCount = 1 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -57,7 +57,7 @@ const Navbar = ({ activePage = 'home', onNavigate }) => {
                   }`}
                 >
                   {link.name}
-                  {/* Underline for Active Item (matching Figma Category page for Shop) */}
+                  {/* Underline for Active Item */}
                   {isActive && (
                     <motion.div
                       layoutId="activeNavUnderline"
@@ -71,7 +71,7 @@ const Navbar = ({ activePage = 'home', onNavigate }) => {
           </div>
         </div>
 
-        {/* Right: Search Bar & Mobile Menu Trigger */}
+        {/* Right: Search Bar & Shopping Bag & Mobile Menu Trigger */}
         <div className="flex items-center space-x-4">
           <div className="relative flex items-center">
             <Search className="absolute left-2.5 w-4 h-4 text-gray-700 pointer-events-none" />
@@ -80,9 +80,23 @@ const Navbar = ({ activePage = 'home', onNavigate }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search product"
-              className="pl-8 pr-3 py-1.5 border border-[#000000] bg-transparent text-xs md:text-sm text-[#000000] placeholder-gray-600 w-44 sm:w-64 focus:outline-none focus:ring-1 focus:ring-black"
+              className="pl-8 pr-3 py-1.5 border border-[#000000] bg-transparent text-xs md:text-sm text-[#000000] placeholder-gray-600 w-36 sm:w-64 focus:outline-none focus:ring-1 focus:ring-black"
             />
           </div>
+
+          {/* Shopping Bag Button */}
+          <button
+            onClick={() => onNavigate && onNavigate('bag')}
+            className="p-2 border border-black rounded-none bg-white text-black hover:bg-black hover:text-white transition-colors relative cursor-pointer focus:outline-none"
+            aria-label="Shopping Bag"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-[#A3C1BF] text-black font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center border border-black">
+                {cartCount}
+              </span>
+            )}
+          </button>
 
           {/* Mobile Menu Toggle Button */}
           <button

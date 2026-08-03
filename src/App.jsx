@@ -7,10 +7,12 @@ import SubscriptionSection from './components/SubscriptionSection';
 import BestsellersSection from './components/BestsellersSection';
 import CategoryPage from './components/CategoryPage';
 import ProductDetailPage from './components/ProductDetailPage';
+import ShoppingBagPage from './components/ShoppingBagPage';
+import CartOverviewPage from './components/CartOverviewPage';
 import Footer from './components/Footer';
 
 function App() {
-  const [activePage, setActivePage] = useState('home'); // 'home' | 'shop' | 'product'
+  const [activePage, setActivePage] = useState('home'); // 'home' | 'shop' | 'product' | 'bag' | 'checkout'
   const [selectedProduct, setSelectedProduct] = useState({
     title: 'Green Tea',
     category: 'Loose leaf tea',
@@ -23,7 +25,23 @@ function App() {
     imageSrc: null,
   });
 
-  const handleNavigate = (page) => {
+  const [cartItem, setCartItem] = useState({
+    title: 'Green Tea',
+    variant: 'Packed Bags',
+    quantity: 1,
+    price: '$31',
+  });
+
+  const handleNavigate = (page, itemData) => {
+    if (itemData) {
+      setCartItem((prev) => ({
+        ...prev,
+        title: itemData.title || prev.title,
+        variant: itemData.variant || prev.variant,
+        quantity: itemData.quantity || prev.quantity,
+        price: itemData.price || prev.price,
+      }));
+    }
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -40,10 +58,27 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleUpdateCartQuantity = (newQty) => {
+    setCartItem((prev) => ({ ...prev, quantity: newQty }));
+  };
+
+  const handleRemoveCartItem = () => {
+    setCartItem({
+      title: 'Green Tea',
+      variant: 'Packed Bags',
+      quantity: 0,
+      price: '$0',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#FDF9F6] text-[#000000] font-poppins flex flex-col antialiased">
       {/* 1. Navbar Component */}
-      <Navbar activePage={activePage} onNavigate={handleNavigate} />
+      <Navbar
+        activePage={activePage}
+        onNavigate={handleNavigate}
+        cartCount={cartItem.quantity}
+      />
 
       {/* 2. Main Content View */}
       <main className="flex-1">
@@ -67,6 +102,22 @@ function App() {
             product={selectedProduct}
             onNavigate={handleNavigate}
             onSelectProduct={handleSelectProduct}
+          />
+        )}
+
+        {activePage === 'bag' && (
+          <ShoppingBagPage
+            cartItem={cartItem}
+            onNavigate={handleNavigate}
+            onUpdateQuantity={handleUpdateCartQuantity}
+            onRemoveItem={handleRemoveCartItem}
+          />
+        )}
+
+        {activePage === 'checkout' && (
+          <CartOverviewPage
+            cartItem={cartItem}
+            onNavigate={handleNavigate}
           />
         )}
       </main>
