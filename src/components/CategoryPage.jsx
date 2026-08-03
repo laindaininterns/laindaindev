@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
 
 const catalogProducts = [
-  // Row 1
-  { id: 1, title: 'Green Tea', price: '$15', category: 'Green tea' },
-  { id: 2, title: 'White Tea', price: '$31', category: 'White tea' },
-  { id: 3, title: 'Super Matcha', price: '$12', category: 'Green tea' },
-  { id: 4, title: 'Rooibos Fruit Tea', price: '$12', category: 'Rooibos tea' },
-  // Row 2
-  { id: 5, title: 'White Tea', price: '$10', category: 'White tea' },
-  { id: 6, title: 'Black Tea', price: '$10', category: 'Black Tea' },
-  { id: 7, title: 'Green Jasmine Tea', price: '$12', category: 'Green tea' },
-  { id: 8, title: 'Christmas Rooibos', price: '$17', category: 'Rooibos tea' },
-  // Row 3
-  { id: 9, title: 'Green Tea', price: '$15', category: 'Green tea' },
-  { id: 10, title: 'White Tea', price: '$31', category: 'White tea' },
-  { id: 11, title: 'Super Matcha', price: '$12', category: 'Green tea' },
-  { id: 12, title: 'Rooibos Fruit Tea', price: '$12', category: 'Rooibos tea' },
-  // Row 4
-  { id: 13, title: 'White Tea', price: '$10', category: 'White tea' },
-  { id: 14, title: 'Black Tea', price: '$10', category: 'Black Tea' },
-  { id: 15, title: 'Green Jasmine Tea', price: '$12', category: 'Green tea' },
-  { id: 16, title: 'Christmas Rooibos', price: '$17', category: 'Rooibos tea' },
+  // Green Tea selection (matching Figma filtered page mockup)
+  { id: 1, title: 'Green Tea', price: '$15', category: 'Green tea', tagline: 'Strong & Energizing' },
+  { id: 2, title: 'Green Tea', price: '$31', category: 'Green tea', tagline: 'Premium Organic' },
+  { id: 3, title: 'Green Tea', price: '$12', category: 'Green tea', tagline: 'Light & Fresh' },
+  { id: 4, title: 'Green Tea', price: '$12', category: 'Green tea', tagline: 'Classic Blend' },
+  { id: 5, title: 'Green Tea', price: '$10', category: 'Green tea', tagline: 'Daily Harvest' },
+  { id: 6, title: 'Green Tea', price: '$10', category: 'Green tea', tagline: 'Gentle Aroma' },
+  { id: 7, title: 'Green Tea', price: '$12', category: 'Green tea', tagline: 'Jasmine Infused' },
+  { id: 8, title: 'Green Tea', price: '$17', category: 'Green tea', tagline: 'Special Reserve' },
+  { id: 9, title: 'Green Tea', price: '$10', category: 'Green tea', tagline: 'Traditional Loose Leaf' },
+
+  // Other category teas for dynamic pill filtering
+  { id: 10, title: 'Black Tea', price: '$15', category: 'Black Tea', tagline: 'Bold & Full Body' },
+  { id: 11, title: 'Black Tea', price: '$22', category: 'Black Tea', tagline: 'Earl Grey Special' },
+  { id: 12, title: 'White Tea', price: '$31', category: 'White tea', tagline: 'Delicate Silver Needle' },
+  { id: 13, title: 'Rooibos Fruit Tea', price: '$17', category: 'Rooibos tea', tagline: 'Caffeine Free Herbal' },
 ];
 
 const bestsellerItems = [
@@ -41,46 +37,67 @@ const bestsellerItems = [
   },
 ];
 
-const CategoryPage = ({ onSelectProduct }) => {
-  const [selectedPill, setSelectedPill] = useState(null);
-  const [caffeinated, setCaffeinated] = useState(false);
+const CategoryPage = ({ onSelectProduct, initialCategory = 'Green tea' }) => {
+  const [selectedPill, setSelectedPill] = useState(initialCategory);
+  const [caffeinated, setCaffeinated] = useState(true);
   const [decaffeinated, setDecaffeinated] = useState(false);
+
+  // Accordion state management
   const [openTeaType, setOpenTeaType] = useState(false);
   const [openSize, setOpenSize] = useState(false);
+  const [openStrength, setOpenStrength] = useState(false);
+  const [openCaffeine, setOpenCaffeine] = useState(true); // Open by default per Figma spec
+  const [openSource, setOpenSource] = useState(false);
 
   const pills = ['Black Tea', 'Green tea', 'Rooibos tea', 'White tea'];
 
+  // Filter products based on selected pill/category
   const filteredProducts = catalogProducts.filter((product) => {
-    if (selectedPill && product.category !== selectedPill) {
+    if (selectedPill && product.category.toLowerCase() !== selectedPill.toLowerCase()) {
       return false;
     }
     return true;
   });
 
+  // Display title based on active pill filter
+  const categoryTitle = selectedPill || 'Tea';
+
   return (
-    <div className="w-full bg-[#FDF9F6] text-[#000000]">
-      {/* 1. Header Banner Visual Box */}
-      <section className="w-full h-44 md:h-64 bg-[#D9D9D9] mb-10 border-b border-gray-300" />
+    <div className="w-full bg-[#FDF9F6] text-[#000000] font-poppins">
+      {/* 1. Top Header Banner Section (Split view: Title Left, Image Placeholder Right) */}
+      <section className="w-full flex flex-col md:flex-row items-stretch border-b border-gray-300 mb-12">
+        {/* Left Title Panel */}
+        <div className="w-full md:w-5/12 bg-[#EAE5DF] p-8 md:p-14 flex items-center justify-start border-b md:border-b-0 md:border-r border-gray-300">
+          <div className="space-y-1">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#000000] leading-none">
+              {categoryTitle}
+            </h1>
+            <p className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#000000] leading-none">
+              Selection
+            </p>
+          </div>
+        </div>
+
+        {/* Right Visual Image Placeholder Panel */}
+        <div className="w-full md:w-7/12 min-h-[220px] md:min-h-[320px] bg-[#D9D9D9] flex items-center justify-center">
+          <span className="text-gray-400 font-medium text-lg hidden">Image Banner</span>
+        </div>
+      </section>
 
       {/* 2. Main Filter & Catalog Grid Container */}
       <div className="max-w-7xl mx-auto px-6 md:px-12 mb-20">
-        {/* Filter Title & Quick Category Pills Header Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[#000000]">
-            Filter
-          </h2>
-
-          {/* Quick Pill Buttons */}
+        {/* Category Pills Row (Aligned above the product grid) */}
+        <div className="flex justify-end mb-8">
           <div className="flex flex-wrap items-center gap-3">
             {pills.map((pill) => {
-              const isSelected = selectedPill === pill;
+              const isSelected = selectedPill?.toLowerCase() === pill.toLowerCase();
               return (
                 <button
                   key={pill}
                   onClick={() => setSelectedPill(isSelected ? null : pill)}
                   className={`px-6 py-2 rounded-full text-xs md:text-sm font-medium border border-[#000000] transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-black text-white'
+                      ? 'bg-[#A3C1BF] text-black shadow-xs font-semibold'
                       : 'bg-white text-black hover:bg-gray-100'
                   }`}
                 >
@@ -95,14 +112,18 @@ const CategoryPage = ({ onSelectProduct }) => {
         <div className="flex flex-col md:flex-row gap-8 items-start">
           {/* Left Sidebar Filter Column */}
           <aside className="w-full md:w-56 shrink-0 space-y-3">
-            {/* Tea Type Box */}
+            <h2 className="text-2xl font-bold tracking-tight text-[#000000] mb-4">
+              Filter
+            </h2>
+
+            {/* Tea Type Accordion */}
             <div className="border border-black bg-white">
               <button
                 onClick={() => setOpenTeaType(!openTeaType)}
-                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none"
+                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none cursor-pointer"
               >
                 <span>Tea type</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${openTeaType ? 'rotate-180' : ''}`} />
+                {openTeaType ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
               {openTeaType && (
                 <div className="px-3 pb-3 pt-1 border-t border-gray-200 text-xs space-y-1.5 text-gray-700">
@@ -119,14 +140,14 @@ const CategoryPage = ({ onSelectProduct }) => {
               )}
             </div>
 
-            {/* Size Box */}
+            {/* Size Accordion */}
             <div className="border border-black bg-white">
               <button
                 onClick={() => setOpenSize(!openSize)}
-                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none"
+                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none cursor-pointer"
               >
                 <span>Size</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${openSize ? 'rotate-180' : ''}`} />
+                {openSize ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
               {openSize && (
                 <div className="px-3 pb-3 pt-1 border-t border-gray-200 text-xs space-y-1.5 text-gray-700">
@@ -137,39 +158,73 @@ const CategoryPage = ({ onSelectProduct }) => {
               )}
             </div>
 
-            {/* Strength Box */}
-            <div className="border border-black bg-white p-3 text-sm font-normal text-black">
-              Strength
+            {/* Strength Accordion */}
+            <div className="border border-black bg-white">
+              <button
+                onClick={() => setOpenStrength(!openStrength)}
+                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none cursor-pointer"
+              >
+                <span>Strength</span>
+                {openStrength ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+              {openStrength && (
+                <div className="px-3 pb-3 pt-1 border-t border-gray-200 text-xs space-y-1.5 text-gray-700">
+                  <div className="cursor-pointer hover:text-black py-0.5">Mild</div>
+                  <div className="cursor-pointer hover:text-black py-0.5">Medium</div>
+                  <div className="cursor-pointer hover:text-black py-0.5">Strong</div>
+                </div>
+              )}
             </div>
 
-            {/* Caffeine Box */}
-            <div className="border border-black bg-white p-3">
-              <div className="text-sm font-normal text-black mb-3">Caffeine</div>
-              <div className="space-y-2 text-xs text-gray-800">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={caffeinated}
-                    onChange={(e) => setCaffeinated(e.target.checked)}
-                    className="w-3.5 h-3.5 border-black rounded-none accent-black"
-                  />
-                  <span>Caffeinated</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={decaffeinated}
-                    onChange={(e) => setDecaffeinated(e.target.checked)}
-                    className="w-3.5 h-3.5 border-black rounded-none accent-black"
-                  />
-                  <span>Decaffeinated</span>
-                </label>
-              </div>
+            {/* Caffeine Accordion (Expanded by default matching Figma screenshot) */}
+            <div className="border border-black bg-white">
+              <button
+                onClick={() => setOpenCaffeine(!openCaffeine)}
+                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none cursor-pointer"
+              >
+                <span>Caffeine</span>
+                {openCaffeine ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+              {openCaffeine && (
+                <div className="px-3 pb-3 pt-1 space-y-2 text-xs text-gray-800">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={caffeinated}
+                      onChange={(e) => setCaffeinated(e.target.checked)}
+                      className="w-3.5 h-3.5 border-black rounded-none accent-black"
+                    />
+                    <span>Caffeinated</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={decaffeinated}
+                      onChange={(e) => setDecaffeinated(e.target.checked)}
+                      className="w-3.5 h-3.5 border-black rounded-none accent-black"
+                    />
+                    <span>Decaffeinated</span>
+                  </label>
+                </div>
+              )}
             </div>
 
-            {/* Source Box */}
-            <div className="border border-black bg-white p-3 text-sm font-normal text-black">
-              Source
+            {/* Source Accordion */}
+            <div className="border border-black bg-white">
+              <button
+                onClick={() => setOpenSource(!openSource)}
+                className="w-full p-3 text-left text-sm font-normal text-black flex items-center justify-between focus:outline-none cursor-pointer"
+              >
+                <span>Source</span>
+                {openSource ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+              {openSource && (
+                <div className="px-3 pb-3 pt-1 border-t border-gray-200 text-xs space-y-1.5 text-gray-700">
+                  <div className="cursor-pointer hover:text-black py-0.5">Single Origin</div>
+                  <div className="cursor-pointer hover:text-black py-0.5">Blended</div>
+                  <div className="cursor-pointer hover:text-black py-0.5">Estate Grown</div>
+                </div>
+              )}
             </div>
           </aside>
 
@@ -194,7 +249,7 @@ const CategoryPage = ({ onSelectProduct }) => {
         </div>
       </div>
 
-      {/* 3. Bestsellers Section (Matching bottom section of Category dedicated page) */}
+      {/* 3. Bestsellers Section (Matching bottom section of Category page) */}
       <section className="w-full bg-[#FDF9F6] py-16 px-6 md:px-12 border-t border-gray-200">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
           {/* Left Text Block */}
