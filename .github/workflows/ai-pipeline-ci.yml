@@ -1,0 +1,39 @@
+name: ai-pipeline CI
+
+# Only runs when something under ai-pipeline actually changes, so it
+# doesn't fire on every push to unrelated parts of the repo.
+on:
+  pull_request:
+    paths:
+      - "ai-pipeline/**"
+      - ".github/workflows/ai-pipeline-ci.yml"
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "ai-pipeline/**"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: ai-pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check app tests
+
+      - name: Run tests
+        run: pytest tests/ -v
