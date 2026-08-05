@@ -91,3 +91,11 @@ CREATE TRIGGER update_buyer_profiles_updated_at BEFORE UPDATE ON buyer_profiles 
 
 DROP TRIGGER IF EXISTS update_seller_profiles_updated_at ON seller_profiles;
 CREATE TRIGGER update_seller_profiles_updated_at BEFORE UPDATE ON seller_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Grant schema permissions for API access
+GRANT ALL ON TABLE public.users TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.admin_profiles TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.buyer_profiles TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.seller_profiles TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.guest_checkout_tracking TO anon, authenticated, service_role;
+

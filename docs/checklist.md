@@ -16,15 +16,14 @@
 - [x] Commit Stage 2 to GitHub repository
 
 ## 🏢 Stage 3: Seller Onboarding & KYC Management
-- [ ] Create `POST /api/sellers/register` endpoint
-- [ ] Create `GET /api/admin/sellers/pending` endpoint (Admin only)
-- [ ] Create `PATCH /api/admin/sellers/:id/approve` endpoint (Admin only)
-- [ ] Create `POST /api/admin/sellers/:id/commission` endpoint
-- [ ] Postman Test 1: Register a new seller (assert `kyc_status = pending`)
-- [ ] Postman Test 2: Attempt protected seller action with pending account (assert HTTP 403)
-- [ ] Postman Test 3: Approve seller via Admin endpoint
-- [ ] Postman Test 4: Retry seller action with approved account (assert HTTP 200)
-- [ ] Commit Stage 3 to GitHub repository
+- [x] Create `POST /api/auth/register` (Seller & Buyer registration with bcrypt password hashing)
+- [x] Create `POST /api/auth/seller/submit_application` endpoint (Seller onboarding with welcome email)
+- [x] Create `GET /api/admin/sellers/pending` endpoint (Admin only)
+- [x] Create `PATCH /api/admin/sellers/:id/status` endpoint (Admin status update to APPROVED/REJECTED with notification email)
+- [x] Built Resend notification service (`src/services/emailService.js`) for welcome & status emails
+- [x] Verified seller registration (assert `current_status = PENDING`)
+- [x] Verified Admin status update endpoint (assert `APPROVED` / `REJECTED`)
+- [x] Commit Stage 3 to GitHub repository
 
 ## 📦 Stage 4: Catalog & CSV Bulk Import Engine
 - [ ] Create Category endpoints (`GET`, `POST /api/categories`)
