@@ -3,7 +3,8 @@
 #
 # This brings up everything the service needs and nothing needs a paid
 # account: Redis for caching, LibreTranslate as the free translation
-# fallback, and optionally Ollama for the tier 2 intent model.
+# fallback, a mock backend standing in for the not-yet-built Node
+# endpoints, and optionally Ollama for the tier 2 intent model.
 
 services:
   ai-pipeline:
@@ -17,8 +18,18 @@ services:
     depends_on:
       - redis
       - libretranslate
+      - mock-backend
     volumes:
       - ./app:/app/app  # live reload during local dev
+
+  mock-backend:
+    build:
+      context: .
+      dockerfile: mock_backend/Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./mock_backend:/app/mock_backend  # live reload during local dev
 
   redis:
     image: redis:7-alpine

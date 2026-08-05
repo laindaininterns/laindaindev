@@ -33,7 +33,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Lint
-        run: ruff check app tests
+        run: ruff check app tests scripts mock_backend
 
       - name: Run tests
         # Integration tests need a downloaded Whisper model and real voice

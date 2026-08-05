@@ -51,7 +51,7 @@ Open `.env` and fill in `SERVICE_API_KEY` (generate one with `openssl rand -hex 
 docker compose up --build
 ```
 
-This starts three containers: the service itself on port 8000, Redis on 6379, and LibreTranslate on 5000. First boot downloads the Whisper model and the LibreTranslate language models, so it can take a few minutes. Once it's up:
+This starts four containers: the service itself on port 8000, Redis on 6379, LibreTranslate on 5000, and `mock-backend` on 8001, a small fixture-data stand-in for the Node backend's not-yet-built endpoints (see "Why mock-backend exists" below). First boot downloads the Whisper model and the LibreTranslate language models, so it can take a few minutes. Once it's up:
 
 ```
 curl http://localhost:8000/health
@@ -88,6 +88,12 @@ You'll need Redis and LibreTranslate running somewhere reachable (locally instal
 ```
 uvicorn app.main:app --reload
 ```
+
+## Why mock-backend exists
+
+There are no real buyers, sellers, or listings on the platform yet, and the Node backend doesn't have search or messaging endpoints built either. Without something to stand in for that, a voice command like "find me a bike under 20,000" would transcribe fine, get classified fine, and then hit silence: the tier 3 agent's tools would have nothing real to call, so there'd be no way to tell whether the whole pipeline actually works end to end, only whether the understanding part does.
+
+`mock_backend/` is a small FastAPI app with fixed, deterministic fake data (a handful of listings and sellers, see `mock_backend/fixtures.py`) implementing the exact contract documented in `docs/api_contract.md` under "Tool contract this service expects from the Node backend". The agent's tools call `BACKEND_BASE_URL`, which points at `mock-backend` in dev. This means you can say "find me a bike under 20,000" for real, get a real (if fake) matching listing back, and check that against a known correct answer, proving the full path works. When the real Node backend gets these endpoints, changing `BACKEND_BASE_URL` to point at it is the only change needed, both sides just need to keep matching the documented contract.
 
 ## Testing with your own voice
 
@@ -147,10 +153,11 @@ ai-pipeline/
     static/          the /dev/voice-tester page
     config.py        all environment variables, read once
     main.py          FastAPI app entrypoint
+  mock_backend/     dev-only stand-in for the Node backend's not-yet-built endpoints
   tests/            pytest suite, plus tests/integration and tests/fixtures/audio
   scripts/          test_voice_pipeline.py, the CLI voice testing harness
   docker/           Dockerfile for the service
-  docker-compose.yml  local dev stack (Redis, LibreTranslate, optional Ollama)
+  docker-compose.yml  local dev stack (Redis, LibreTranslate, mock-backend, optional Ollama)
   docs/             architecture, planning, and API contract docs
 ```
 
@@ -160,12 +167,13 @@ ai-pipeline/
 2. Set the service's root directory to `ai-pipeline` and its Dockerfile path to `docker/Dockerfile`.
 3. Copy every variable from `.env.example` into the service's Variables tab with real values. Generate a fresh `SERVICE_API_KEY` for production, don't reuse the local dev one.
 4. Redis and LibreTranslate need their own Railway services (or another host), pointed at by `REDIS_URL` and `LIBRETRANSLATE_URL`. They're cheap to self-host and covered by the same free-tier reasoning as local dev.
-5. Give the Node backend the production `SERVICE_API_KEY` and this service's URL so it can call it.
+5. Set `BACKEND_BASE_URL` to the real Node backend's internal API URL, not `mock-backend`. `mock-backend` is dev-only fixture data, it should never be deployed or pointed at in production, see "Why mock-backend exists" above.
+6. Give the Node backend the production `SERVICE_API_KEY` and this service's URL so it can call it.
 
 ## Known limitations, for whoever picks this up next
 
-- The tier 3 agent (`app/services/intent/tier3_agent.py`) has a real planning loop now (propose a tool call or finish, strict JSON each turn, bounded by step count and a timeout), but its tools (`search_listings`, `contact_seller`) are still stubs. They need to be wired up to real endpoints on the Node backend once those exist, see the `TODO` comments in that file.
-- No real audio has been tested yet, only mocked pipeline logic. The tooling to do this exists (`/dev/voice-tester`, `scripts/test_voice_pipeline.py`, the `integration` test marker), it just hasn't been exercised with real recordings and turned into a fixture set. That's the next concrete step, not a someday item.
+- The tier 3 agent (`app/services/intent/tier3_agent.py`) has a real planning loop (propose a tool call or finish, strict JSON each turn, bounded by step count and a timeout), and its tools call a real backend (`mock-backend`'s fixture data, see "Why mock-backend exists" above). What's still missing is the real Node backend itself, `mock-backend` needs swapping out for it once those endpoints exist there, which is a one-line config change, not a rewrite.
+- No real audio has been tested yet, only mocked STT and real-but-fake backend calls. The tooling to do this exists (`/dev/voice-tester`, `scripts/test_voice_pipeline.py`, the `integration` test marker), it just hasn't been exercised with real recordings and turned into a fixture set. That's the next concrete step, not a someday item.
 - Roman Urdu detection (`looks_like_roman_urdu` in `app/utils/lang_detect.py`) is a keyword heuristic, not a real classifier. It's a known weak spot, worth deliberately over-representing in the fixture set once real recordings start getting added.
 - No load testing has been done yet. The Whisper model runs on CPU by default, which is fine for occasional voice notes but will need attention if usage grows.
 

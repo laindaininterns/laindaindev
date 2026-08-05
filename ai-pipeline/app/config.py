@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     agent_max_steps: int = 4
     agent_timeout_seconds: int = 8
 
+    # Where the agent's tools call out to (search, contact seller, etc).
+    # Points at mock_backend for local dev, swap to the real Node
+    # monolith's internal API here once it has these endpoints, no code
+    # change needed on either side, see docs/api_contract.md.
+    backend_base_url: str = "http://mock-backend:8001"
+
     @property
     def azure_configured(self) -> bool:
         return bool(self.azure_translator_key and self.azure_translator_region)
