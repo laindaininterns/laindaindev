@@ -40,6 +40,12 @@ app = FastAPI(
 
 app.include_router(router)
 
+if settings.environment == "development":
+    from app.api.dev_routes import router as dev_router
+
+    app.include_router(dev_router)
+    logger.info("Development routes mounted, including /dev/voice-tester")
+
 
 @app.get("/health")
 async def health() -> dict:

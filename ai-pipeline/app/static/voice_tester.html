@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AI pipeline, local voice tester</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.25rem; }
+  p.note { color: #555; font-size: 0.9rem; }
+  label { display: block; margin-top: 1rem; font-weight: 600; font-size: 0.9rem; }
+  input[type=text], select { width: 100%; padding: 0.4rem; font-size: 1rem; box-sizing: border-box; }
+  button { margin-top: 1rem; padding: 0.6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+  #recordBtn.recording { background: #c0392b; color: white; }
+  .step { border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem 1rem; margin-top: 1rem; }
+  .step h3 { margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #f5f5f5; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+  .error { color: #c0392b; }
+  .timing { color: #777; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<h1>AI pipeline, local voice tester</h1>
+<p class="note">
+  This page only exists in development (ENVIRONMENT=development). It records from your
+  microphone, sends the audio straight to this service's own /transcribe endpoint,
+  then chains through /translate and /parse-intent so you can see the whole pipeline
+  react to your actual voice. Nothing here talks to any third party, it's all this
+  service, running locally.
+</p>
+
+<label for="serviceKey">Service key (from your local .env, SERVICE_API_KEY)</label>
+<input type="text" id="serviceKey" placeholder="paste SERVICE_API_KEY here" />
+
+<label for="targetLang">Translate the transcript into</label>
+<select id="targetLang">
+  <option value="ur">Urdu</option>
+  <option value="en">English</option>
+</select>
+
+<button id="recordBtn">Start recording</button>
+
+<div id="results"></div>
+
+<script>
+const recordBtn = document.getElementById("recordBtn");
+const resultsEl = document.getElementById("results");
+const serviceKeyEl = document.getElementById("serviceKey");
+const targetLangEl = document.getElementById("targetLang");
+
+// Remember the service key across reloads, this is a local dev tool only.
+serviceKeyEl.value = localStorage.getItem("ai_pipeline_service_key") || "";
+serviceKeyEl.addEventListener("change", () => {
+  localStorage.setItem("ai_pipeline_service_key", serviceKeyEl.value);
+});
+
+let mediaRecorder = null;
+let chunks = [];
+
+recordBtn.addEventListener("click", async () => {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    return;
+  }
+
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  mediaRecorder = new MediaRecorder(stream);
+  chunks = [];
+
+  mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+  mediaRecorder.onstop = async () => {
+    stream.getTracks().forEach((track) => track.stop());
+    recordBtn.textContent = "Start recording";
+    recordBtn.classList.remove("recording");
+    const blob = new Blob(chunks, { type: "audio/webm" });
+    await runPipeline(blob);
+  };
+
+  mediaRecorder.start();
+  recordBtn.textContent = "Stop recording";
+  recordBtn.classList.add("recording");
+});
+
+function headers(extra) {
+  return Object.assign({ "X-Service-Key": serviceKeyEl.value }, extra || {});
+}
+
+function renderStep(title, data, ms) {
+  const div = document.createElement("div");
+  div.className = "step";
+  div.innerHTML = `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre><div class="timing">${ms} ms</div>`;
+  resultsEl.appendChild(div);
+}
+
+function renderError(title, err) {
+  const div = document.createElement("div");
+  div.className = "step error";
+  div.innerHTML = `<h3>${title}</h3><pre>${err}</pre>`;
+  resultsEl.appendChild(div);
+}
+
+async function runPipeline(blob) {
+  resultsEl.innerHTML = "";
+
+  // Step 1: transcribe
+  const form = new FormData();
+  form.append("audio", blob, "recording.webm");
+
+  let transcribeResult;
+  try {
+    const start = performance.now();
+    const res = await fetch("/transcribe", { method: "POST", headers: headers(), body: form });
+    const ms = Math.round(performance.now() - start);
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    transcribeResult = await res.json();
+    renderStep("1. Transcribe", transcribeResult, ms);
+  } catch (err) {
+    renderError("1. Transcribe failed", err);
+    return;
+  }
+
+  // Step 2: translate the English transcript into the chosen target language
+  try {
+    const start = performance.now();
+    const res = await fetch("/translate", {
+      method: "POST",
+      headers: headers({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        text: transcribeResult.transcript_english,
+        source_lang: "en",
+        target_lang: targetLangEl.value,
+      }),
+    });
+    const ms = Math.round(performance.now() - start);
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    renderStep("2. Translate", await res.json(), ms);
+  } catch (err) {
+    renderError("2. Translate failed", err);
+  }
+
+  // Step 3: parse intent from the English transcript
+  try {
+    const start = performance.now();
+    const res = await fetch("/parse-intent", {
+      method: "POST",
+      headers: headers({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ text: transcribeResult.transcript_english }),
+    });
+    const ms = Math.round(performance.now() - start);
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    renderStep("3. Parse intent", await res.json(), ms);
+  } catch (err) {
+    renderError("3. Parse intent failed", err);
+  }
+}
+</script>
+
+</body>
+</html>

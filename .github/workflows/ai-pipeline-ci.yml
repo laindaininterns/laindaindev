@@ -36,4 +36,7 @@ jobs:
         run: ruff check app tests
 
       - name: Run tests
-        run: pytest tests/ -v
+        # Integration tests need a downloaded Whisper model and real voice
+        # recordings, neither of which CI has. Run those locally with
+        # `pytest -m integration`, see tests/fixtures/audio/README.md.
+        run: pytest tests/ -v -m "not integration"

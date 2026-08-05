@@ -41,4 +41,6 @@
 
 ## Where things currently stand
 
-Phases 1 through 3 are scaffolded with working code and passing tests. Phase 4's agent loop is stubbed but not implemented. Phase 5 hasn't been started. See `docs/checklist.md` for the granular, up to date task list.
+Phases 1 through 4 are implemented with working code and passing tests, including the tier 3 agent's actual planning loop. What's left in phase 4 is wiring the agent's tools to real backend endpoints, which is blocked on the Node side existing. Phase 5 hasn't been started. See `docs/checklist.md` for the granular, up to date task list.
+
+The other open item across every phase is real audio. Everything so far has been tested against mocked providers and mocked LLM responses, which proves the logic is correct but says nothing about actual transcription accuracy, actual translation quality, or how the tiers behave against real, messy speech (background noise, code-switching, Roman Urdu). `/dev/voice-tester` and `scripts/test_voice_pipeline.py` exist specifically to close that gap, the next concrete step is recording a real fixture set covering each intent in English, Urdu, and Roman Urdu, and turning that into the regression suite tracked in `tests/integration/`.

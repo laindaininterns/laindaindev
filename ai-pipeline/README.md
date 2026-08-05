@@ -89,14 +89,34 @@ You'll need Redis and LibreTranslate running somewhere reachable (locally instal
 uvicorn app.main:app --reload
 ```
 
+## Testing with your own voice
+
+Two ways to run real audio through the pipeline once the service is up (Docker or not):
+
+**In the browser**, with `ENVIRONMENT=development` (the default), open `http://localhost:8000/dev/voice-tester`. Paste in your `SERVICE_API_KEY`, hit record, say something, hit stop. It chains through `/transcribe`, `/translate`, and `/parse-intent` and shows you all three results with timing. This route only exists in development, it's not mounted when `ENVIRONMENT=production`.
+
+**From the terminal**, with a saved recording:
+
+```
+python scripts/test_voice_pipeline.py path/to/recording.wav --service-key <your key>
+```
+
+Add `--save some_case_name` to keep a recording that's worth turning into a regression test, it copies the file into `tests/fixtures/audio/` alongside a `.expected.json` capturing what the pipeline returned. Review that file before committing it, since it becomes the expected answer for future runs, see `tests/fixtures/audio/README.md` for the full workflow and naming convention.
+
 ## Running tests and lint before committing anything
 
 ```
-pytest tests/ -v
-ruff check app tests
+pytest tests/ -v -m "not integration"
+ruff check app tests scripts
 ```
 
-Both are also run automatically in CI on any pull request that touches `ai-pipeline/`, see `.github/workflows/ai-pipeline-ci.yml`. A PR shouldn't be opened with either of these failing.
+The `integration` marker covers tests that need a downloaded Whisper model and real audio fixtures, neither of which CI has, so CI runs with `-m "not integration"` too (see `.github/workflows/ai-pipeline-ci.yml`). Once you've saved some fixtures with the CLI harness above, run them locally with:
+
+```
+pytest -m integration
+```
+
+Both the standard suite and lint run automatically in CI on any pull request that touches `ai-pipeline/`. A PR shouldn't be opened with either failing.
 
 ## Environment variables
 
@@ -120,13 +140,15 @@ Full request and response shapes are in `docs/api_contract.md` and in `app/model
 ```
 ai-pipeline/
   app/
-    api/           request handlers and auth dependency
+    api/           request handlers, auth dependency, and dev-only routes
     services/       translation, speech to text, and the three intent tiers
     models/         request and response schemas
     utils/          small helpers (language detection)
+    static/          the /dev/voice-tester page
     config.py        all environment variables, read once
     main.py          FastAPI app entrypoint
-  tests/            pytest suite
+  tests/            pytest suite, plus tests/integration and tests/fixtures/audio
+  scripts/          test_voice_pipeline.py, the CLI voice testing harness
   docker/           Dockerfile for the service
   docker-compose.yml  local dev stack (Redis, LibreTranslate, optional Ollama)
   docs/             architecture, planning, and API contract docs
@@ -142,9 +164,9 @@ ai-pipeline/
 
 ## Known limitations, for whoever picks this up next
 
-- The tier 3 agent (`app/services/intent/tier3_agent.py`) is scaffolded but its actual planning loop isn't implemented yet, it currently just enforces the step and timeout limits. See the `TODO` comments in that file.
-- The agent's tools (`search_listings`, `contact_seller`) are stubs. They need to be wired up to real endpoints on the Node backend once those exist.
-- Roman Urdu detection (`looks_like_roman_urdu` in `app/utils/lang_detect.py`) is a keyword heuristic, not a real classifier. It's a known weak spot, see `docs/planning.md` for the reasoning.
+- The tier 3 agent (`app/services/intent/tier3_agent.py`) has a real planning loop now (propose a tool call or finish, strict JSON each turn, bounded by step count and a timeout), but its tools (`search_listings`, `contact_seller`) are still stubs. They need to be wired up to real endpoints on the Node backend once those exist, see the `TODO` comments in that file.
+- No real audio has been tested yet, only mocked pipeline logic. The tooling to do this exists (`/dev/voice-tester`, `scripts/test_voice_pipeline.py`, the `integration` test marker), it just hasn't been exercised with real recordings and turned into a fixture set. That's the next concrete step, not a someday item.
+- Roman Urdu detection (`looks_like_roman_urdu` in `app/utils/lang_detect.py`) is a keyword heuristic, not a real classifier. It's a known weak spot, worth deliberately over-representing in the fixture set once real recordings start getting added.
 - No load testing has been done yet. The Whisper model runs on CPU by default, which is fine for occasional voice notes but will need attention if usage grows.
 
 ## Questions

@@ -32,6 +32,11 @@ def _write_file(path: str, contents: bytes) -> None:
         f.write(contents)
 
 
+def _remove_file_if_exists(path: str) -> None:
+    if os.path.exists(path):
+        os.remove(path)
+
+
 @router.post("/translate", response_model=TranslateResponse)
 async def translate_text(payload: TranslateRequest) -> TranslateResponse:
     try:
@@ -69,8 +74,7 @@ async def transcribe_audio(audio: UploadFile) -> TranscribeResponse:
         await anyio.to_thread.run_sync(_write_file, tmp_path, contents)
         result = await anyio.to_thread.run_sync(stt.transcribe, tmp_path)
     finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+        await anyio.to_thread.run_sync(_remove_file_if_exists, tmp_path)
 
     return TranscribeResponse(**result)
 
