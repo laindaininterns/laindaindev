@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+markers = [
+  "integration: needs a downloaded Whisper model and real audio fixtures in tests/fixtures/audio, run explicitly with `pytest -m integration`",
+]
+asyncio_mode = "strict"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "ASYNC", "BLE", "SIM"]

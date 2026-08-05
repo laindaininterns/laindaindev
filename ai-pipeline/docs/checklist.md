@@ -18,31 +18,35 @@
 - [x] Ran `pytest` and `ruff check` locally, both clean
 
 ## Stage 3: Speech to Text
-- [x] `faster-whisper` wrapper, model loaded once at startup
+- [x] `faster-whisper` wrapper, model loaded once at startup, imported lazily so the rest of the test suite doesn't need it installed
 - [x] Single audio pass producing both the original-language transcript and an English translation
 - [x] `POST /transcribe` endpoint with a file size cap
-- [ ] Real audio sample tests (Urdu, English, Roman Urdu, background noise), currently untested against actual audio, only unit-testable code paths are covered so far
+- [ ] Real audio sample tests (Urdu, English, Roman Urdu, background noise). Tooling for this now exists (`/dev/voice-tester`, `scripts/test_voice_pipeline.py`, `tests/integration/test_real_pipeline.py`), but no actual recordings have been captured yet, see `tests/fixtures/audio/README.md`
 - [ ] Latency benchmark on the target deployment hardware
 
 ## Stage 4: Intent Parsing, Tiers 1 and 2
 - [x] Rule-based matcher for core intents (search, order status, create listing, negotiate price, complaint)
 - [x] Single-shot LLM classifier with structured JSON output and a `requires_multi_step` flag
 - [x] Escalation router (rules first, then LLM)
-- [x] Unit tests for tier 1 matching and entity extraction
-- [ ] Regression test set of real sample phrases per intent, including Roman Urdu and code-switched examples
+- [x] Unit tests for tier 1, tier 2, and the router's escalation logic
+- [ ] Regression test set of real sample phrases per intent, including Roman Urdu and code-switched examples, once real recordings exist
 - [ ] Tune the confidence threshold against real traffic once there is any
 
 ## Stage 5: Intent Parsing, Tier 3 Agent
 - [x] Bounded loop scaffolding (step cap, timeout, whitelisted tool registry)
-- [ ] Actual planning logic (the loop currently just enforces limits, it doesn't reason yet)
-- [ ] Wire `search_listings` and `contact_seller` tools to real Node backend endpoints, once those exist
-- [ ] Shadow-mode evaluation before trusting tier 3 output unsupervised
+- [x] Real planning loop: the model proposes a tool call or finishes, each turn is strict JSON, never freeform text
+- [x] Unit tests covering finishing immediately, calling a tool then finishing, hitting the step limit, an unknown tool name, and an LLM failure
+- [ ] Wire `search_listings` and `contact_seller` tools to real Node backend endpoints, once those exist (currently stubbed, see the `TODO`s in `tier3_agent.py`)
+- [ ] Shadow-mode evaluation before trusting tier 3 output unsupervised, against real compound requests once there's real traffic
 
-## Stage 6: Local Dev and CI
+## Stage 6: Local Dev, Testing Tools, and CI
 - [x] `docker-compose.yml` for Redis, LibreTranslate, and optional Ollama
 - [x] `Dockerfile` for the service
-- [x] GitHub Actions workflow, lint and test on every PR touching `ai-pipeline/`
+- [x] GitHub Actions workflow, lint and test on every PR touching `ai-pipeline/`, integration tests excluded (`-m "not integration"`) since CI has neither a downloaded model nor real audio
 - [x] README with full setup instructions from a clean clone
+- [x] `/dev/voice-tester`, a browser page (mic recording, dev environment only) that chains through transcribe, translate, and parse-intent so you can test with your own voice
+- [x] `scripts/test_voice_pipeline.py`, a CLI harness for the same chain against a saved recording, with `--save` to capture it as a regression fixture
+- [x] `tests/integration/test_real_pipeline.py`, runs against whatever real fixtures exist in `tests/fixtures/audio`, skips cleanly when there are none
 
 ## Stage 7: Production Hardening (not started)
 - [ ] Structured logging and tracing across the pipeline

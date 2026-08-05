@@ -13,20 +13,28 @@ intent parser, without a second model call.
 
 import logging
 import time
-
-from faster_whisper import WhisperModel
+from typing import TYPE_CHECKING
 
 from app.config import get_settings
+
+if TYPE_CHECKING:
+    from faster_whisper import WhisperModel
 
 logger = logging.getLogger("ai_pipeline.stt")
 settings = get_settings()
 
-_model: WhisperModel | None = None
+_model: "WhisperModel | None" = None
 
 
-def load_model() -> WhisperModel:
+def load_model() -> "WhisperModel":
+    # Imported lazily, not at module load time, so that code which never
+    # touches speech to text (translation, intent tests, etc.) doesn't
+    # need faster-whisper and its large ML dependencies installed just to
+    # be imported or tested.
     global _model
     if _model is None:
+        from faster_whisper import WhisperModel
+
         logger.info(
             "Loading Whisper model=%s device=%s compute_type=%s",
             settings.whisper_model_size,
