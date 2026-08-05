@@ -529,6 +529,37 @@ setImmediate(async () => {
 
 This ensures the frontend never waits for analytics writes.
 
+### How the Backend Team Calls the AI Engine
+
+Your Node.js endpoints don't need to do any heavy lifting. The `matchingEngine.js` service just calls the database RPC using the Supabase JavaScript client:
+
+```javascript
+// src/services/matchingEngine.js
+import { supabase } from '../config/supabaseClient.js';
+import { generateQueryEmbedding } from './embeddingService.js';
+
+export async function getRecommendations(categoryId, lat, lng, searchQuery = null) {
+  // 1. Generate embedding if search query exists
+  let queryEmbedding = null;
+  if (searchQuery) {
+    queryEmbedding = await generateQueryEmbedding(searchQuery);
+  }
+
+  // 2. Call the AI Engine in Postgres
+  const { data, error } = await supabase.rpc('match_sellers', {
+    p_category_id: categoryId,
+    p_buyer_lat: lat,
+    p_buyer_lng: lng,
+    p_search_query: searchQuery,
+    p_query_embedding: queryEmbedding
+    // Weights use the defaults defined in SQL unless you override them here
+  });
+
+  if (error) throw error;
+  return data; // Perfect, ranked list of sellers!
+}
+```
+
 ### Caching Strategy (Upstash Redis)
 
 - **Cache key:** `matching:cat:{category_id}:loc:{lat_rounded}:{lng_rounded}`
