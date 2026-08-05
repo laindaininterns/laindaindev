@@ -24,7 +24,11 @@ async def test_finishes_immediately_when_llm_has_enough_info():
 
 
 @pytest.mark.asyncio
-async def test_calls_a_tool_then_finishes():
+async def test_calls_a_tool_then_finishes(route_to_mock_backend):
+    # search_listings is a real tool now, calling it needs somewhere to
+    # call, route_to_mock_backend points it at the in-process mock
+    # backend so this stays fast and deterministic instead of trying a
+    # real network call to a host that only exists inside Docker.
     tool_call = {"thought": "search first", "action": "search_listings", "action_input": {"query": "bike"}}
     finish = {"thought": "done", "action": "finish", "intent": "compound_request", "entities": [], "confidence": 0.7}
 
@@ -38,7 +42,7 @@ async def test_calls_a_tool_then_finishes():
 
 
 @pytest.mark.asyncio
-async def test_raises_step_limit_error_when_never_finishing():
+async def test_raises_step_limit_error_when_never_finishing(route_to_mock_backend):
     keep_going = {"thought": "still searching", "action": "search_listings", "action_input": {"query": "bike"}}
     with (
         patch("app.services.intent.tier3_agent.chat_json", new=AsyncMock(return_value=keep_going)),

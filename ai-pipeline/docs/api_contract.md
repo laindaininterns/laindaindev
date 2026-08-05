@@ -91,3 +91,39 @@ None of these endpoints being unreachable should fail the underlying operation:
 - A failed `/translate` call means deliver the original text.
 - A failed `/transcribe` call means tell the user the voice note couldn't be processed and ask them to try again or type instead.
 - A failed `/parse-intent` call means fall back to whatever the pre-AI flow was (manual search, typed commands), not a hard error.
+
+## Tool contract this service expects from the Node backend
+
+This is the other direction: the tier 3 agent calls out to the Node backend to actually do something (search listings, message a seller). These endpoints don't exist on the Node side yet, so `mock_backend/` implements this exact contract with fixed fixture data, purely for local development and testing. `BACKEND_BASE_URL` points at `mock_backend` in dev, swap it to the real Node backend's internal API URL once these endpoints exist there, matching this contract exactly means no code changes on either side.
+
+### POST /internal/search-listings
+
+Request:
+```json
+{ "query": "bike", "max_price": 20000 }
+```
+
+`max_price` is optional. Response, 200:
+```json
+{ "results": [{ "id": "L1", "title": "Used mountain bike, good condition", "category": "bike", "price": 18000, "seller_id": "S1" }] }
+```
+
+An empty `results` list is a normal, valid response, it means no matches, not an error.
+
+### POST /internal/contact-seller
+
+Request:
+```json
+{ "seller_id": "S1", "message": "Is this still available?" }
+```
+
+Response, 200:
+```json
+{ "sent": true, "message_id": "MSG-S1-24", "error": null }
+```
+
+If the seller doesn't exist: `{ "sent": false, "message_id": null, "error": "unknown seller_id 'S1'" }`. The agent treats any non-2xx response or a network failure the same way it treats any other tool failure, it's recorded as an observation in the agent's trace and reasoned about on the next step, it doesn't crash the request.
+
+### Why fixture data instead of waiting for the real backend
+
+There are no real buyers or sellers on the platform yet, so testing against the real backend isn't possible regardless of whether it's built. Testing against `mock_backend`'s fixed data proves the full path (voice note in, transcription, translation, intent, agent tool call, structured result out) works correctly and gives a known-correct expected answer to check against, `tests/test_mock_backend.py` and `tests/test_tier3_tools.py` do exactly that. That correctness carries over unchanged once real data exists, because the contract, not the data, is what the agent's logic depends on.

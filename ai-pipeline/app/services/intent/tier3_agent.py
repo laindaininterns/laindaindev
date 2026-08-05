@@ -11,9 +11,11 @@ never freeform text. Tools are whitelisted on purpose, the agent can
 only call the specific functions registered below, it never gets a raw
 "do anything" capability.
 
-Actual tool implementations are stubs for now, they should be wired up
-to the Node monolith's internal API once those endpoints exist (see
-docs/api_contract.md).
+Tool implementations call BACKEND_BASE_URL, which points at mock_backend
+(deterministic fixture data) for local dev, since there is no real Node
+backend with these endpoints yet. Swapping to the real backend once it
+exists is a config change, not a code change, both sides just need to
+keep matching the contract in docs/api_contract.md.
 """
 
 import asyncio
@@ -21,6 +23,8 @@ import json
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+
+import httpx
 
 from app.config import get_settings
 from app.models.schemas import IntentEntity
@@ -71,10 +75,11 @@ def register_tool(name: str, description: str, parameters: dict):
     "Search marketplace listings by keyword and an optional maximum price.",
     {"query": "keywords to search for", "max_price": "optional upper price limit, a number"},
 )
-async def _search_listings_stub(**kwargs) -> dict:
-    # TODO: call the Node monolith's internal search endpoint once it exists.
-    logger.info("search_listings tool called with %s (stub)", kwargs)
-    return {"results": [], "note": "stub, not yet wired to the backend"}
+async def _search_listings(**kwargs) -> dict:
+    async with httpx.AsyncClient(base_url=settings.backend_base_url, timeout=5.0) as client:
+        response = await client.post("/internal/search-listings", json=kwargs)
+        response.raise_for_status()
+        return response.json()
 
 
 @register_tool(
@@ -82,10 +87,11 @@ async def _search_listings_stub(**kwargs) -> dict:
     "Send a message to a specific seller about a specific listing.",
     {"seller_id": "the seller to contact", "message": "the message text to send"},
 )
-async def _contact_seller_stub(**kwargs) -> dict:
-    # TODO: call the Node monolith's messaging endpoint once it exists.
-    logger.info("contact_seller tool called with %s (stub)", kwargs)
-    return {"sent": False, "note": "stub, not yet wired to the backend"}
+async def _contact_seller(**kwargs) -> dict:
+    async with httpx.AsyncClient(base_url=settings.backend_base_url, timeout=5.0) as client:
+        response = await client.post("/internal/contact-seller", json=kwargs)
+        response.raise_for_status()
+        return response.json()
 
 
 def _build_system_prompt() -> str:
