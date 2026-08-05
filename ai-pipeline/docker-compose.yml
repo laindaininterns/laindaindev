@@ -1,0 +1,53 @@
+# Local development stack for the AI pipeline service.
+# Run with: docker compose up --build
+#
+# This brings up everything the service needs and nothing needs a paid
+# account: Redis for caching, LibreTranslate as the free translation
+# fallback, and optionally Ollama for the tier 2 intent model.
+
+services:
+  ai-pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - libretranslate
+    volumes:
+      - ./app:/app/app  # live reload during local dev
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - LT_LOAD_ONLY=en,ur
+    volumes:
+      - libretranslate_data:/home/libretranslate/.local
+
+  # Optional, only needed for the tier 2 intent model. Bring it up with:
+  # docker compose --profile llm up
+  ollama:
+    image: ollama/ollama:latest
+    profiles:
+      - llm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  redis_data:
+  libretranslate_data:
+  ollama_data:
