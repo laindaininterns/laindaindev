@@ -10,7 +10,14 @@ import re
 
 from app.models.schemas import IntentEntity
 
-_PRICE_PATTERN = re.compile(r"(?:rs\.?|pkr)?\s?(\d{2,7})", re.IGNORECASE)
+# Whisper writes numbers with thousands separators ("15,000"), not as a
+# single digit run, confirmed by actually running real speech through
+# the pipeline: "find me a bike under fifteen thousand" transcribed as
+# "under 15,000." and a naive \d{2,7} pattern only captured "15" before
+# the comma broke the match. Try the comma-grouped form first (it's more
+# specific), fall back to a plain digit run for text that never had
+# commas to begin with (typed messages, for instance).
+_PRICE_PATTERN = re.compile(r"(?:rs\.?|pkr)?\s?(\d{1,3}(?:,\d{3})+|\d{2,7})", re.IGNORECASE)
 
 _RULES: list[tuple[str, re.Pattern, float]] = [
     ("search_listing", re.compile(r"\b(find|looking for|need|search|show me)\b", re.IGNORECASE), 0.9),
@@ -38,5 +45,6 @@ def _extract_entities(text: str) -> list[IntentEntity]:
     entities = []
     price_match = _PRICE_PATTERN.search(text)
     if price_match:
-        entities.append(IntentEntity(name="price_limit", value=price_match.group(1)))
+        price = price_match.group(1).replace(",", "")
+        entities.append(IntentEntity(name="price_limit", value=price))
     return entities

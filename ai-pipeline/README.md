@@ -32,12 +32,11 @@ If a future teammate wants to swap in a paid provider for better quality, that's
 
 ## Prerequisites
 
-- Docker and Docker Compose (this is the recommended way to run everything locally, it starts Redis and LibreTranslate for you)
-- Python 3.11 or newer, only needed if you want to run the service outside Docker
+- Either Docker and Docker Compose, **or** Python 3.11+ with nothing else, see "Getting started without Docker" below if Docker isn't an option (it needs hardware virtualization enabled in your BIOS, which isn't always available or unlockable, especially on company-issued machines)
 - Access to the company's GitHub org and this repo
 - An Azure Translator resource under the company account, if you want the higher-quality primary translation path. The service still works without it, it just falls back to LibreTranslate for every request.
 
-## Getting started with Docker (recommended)
+## Getting started with Docker
 
 ```
 git clone https://github.com/laindaininterns/laindaindev.git
@@ -73,8 +72,9 @@ docker compose exec ollama ollama pull qwen2.5:7b-instruct
 
 ## Getting started without Docker
 
-Only do this if you have a specific reason not to use Docker, it's more setup for no real benefit otherwise.
+This is a real, supported path, not a fallback. Docker Desktop needs hardware virtualization (Intel VT-x / AMD-V) enabled in your BIOS, and on some machines that's off by default or the BIOS setting is locked down, especially on company-issued or older laptops. Every piece of this stack has a native alternative that needs no virtualization at all, this is exactly what was used to verify the whole pipeline end to end during development.
 
+**1. ai-pipeline itself:**
 ```
 cd ai-pipeline
 python -m venv .venv
@@ -83,11 +83,47 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-You'll need Redis and LibreTranslate running somewhere reachable (locally installed, or point `.env` at hosted instances). Then:
+**2. mock-backend, in its own venv** (keeps its light dependencies separate from ai-pipeline's heavier ones):
+```
+python -m venv mock_backend/.venv
+mock_backend\.venv\Scripts\pip install -r mock_backend/requirements.txt
+mock_backend\.venv\Scripts\python -m uvicorn mock_backend.main:app --port 8001
+```
 
+**3. LibreTranslate, natively, no Docker, no account needed:**
+```
+python -m venv .venv-libretranslate
+.venv-libretranslate\Scripts\pip install libretranslate
+```
+Run it with `PYTHONIOENCODING=utf-8` set. Without it, LibreTranslate's own startup log tries to print a `→` character, Windows' default console encoding can't handle it, and the crash happens *before* any language model finishes downloading, so you're left with zero usable languages and a confusing `IndexError` several layers down:
+```
+set PYTHONIOENCODING=utf-8
+.venv-libretranslate\Scripts\libretranslate.exe --host 127.0.0.1 --port 5000 --load-only en,ur
+```
+First run downloads the English and Urdu models (a few hundred MB), that only happens once.
+
+**4. Redis, optional:** the translation cache treats Redis as best effort, if it's unreachable, translation still works, it's just uncached (see `app/services/cache.py`). You can skip Redis entirely for local testing. If you want it, `REDIS_URL` in `.env` can point at a free hosted instance (e.g. Upstash, which the Node backend already uses) instead of needing a local install.
+
+**5. Ollama, for tier 2 and tier 3, native Windows installer, no virtualization needed:**
+```
+winget install --id Ollama.Ollama -e
+ollama pull qwen2.5:7b-instruct
+```
+It runs as a background service on `http://127.0.0.1:11434` automatically once installed.
+
+**6. Point `.env` at the local addresses** instead of the Docker service names:
+```
+LIBRETRANSLATE_URL=http://127.0.0.1:5000
+BACKEND_BASE_URL=http://127.0.0.1:8001
+INTENT_LLM_BASE_URL=http://127.0.0.1:11434/v1
+REDIS_URL=redis://127.0.0.1:6379/0   # fine to leave as-is even without Redis running
+```
+
+**7. Run it:**
 ```
 uvicorn app.main:app --reload
 ```
+First boot downloads the Whisper model, same as the Docker path.
 
 ## Why mock-backend exists
 
@@ -170,12 +206,52 @@ ai-pipeline/
 5. Set `BACKEND_BASE_URL` to the real Node backend's internal API URL, not `mock-backend`. `mock-backend` is dev-only fixture data, it should never be deployed or pointed at in production, see "Why mock-backend exists" above.
 6. Give the Node backend the production `SERVICE_API_KEY` and this service's URL so it can call it.
 
+## What's actually been live-verified, not just unit-tested
+
+Every endpoint has been run for real against a real native (no-Docker) stack: real Whisper transcription
+of synthesized speech, real translation through both Azure's fallback path and LibreTranslate, real tier 1
+rule matching, and real tier 2 LLM classification against a locally running Ollama model. That live run is
+what caught three real bugs that a fully mocked test suite did not:
+
+1. **The pinned `faster-whisper` version had no usable Windows wheel.** See the comment in
+   `requirements.txt`, it's fixed there, not something you need to rediscover.
+2. **LibreTranslate crashed on its own startup log on Windows.** It tries to print a `→` character that
+   the default console encoding can't handle, which aborted model loading before any language was usable.
+   Run it with `PYTHONIOENCODING=utf-8` set, see "Getting started without Docker" above.
+3. **The price-entity regex only captured part of a comma-formatted number.** Whisper writes "15,000", not
+   "15000", and the original pattern stopped at the comma. Fixed in `tier1_rules.py`, with a regression
+   test (`test_extracts_price_entity_with_thousands_comma`) that encodes exactly this case so it can't
+   silently come back.
+
+Tier 3's mechanism (the bounded loop, the step limit, the timeout, real tool calls against `mock-backend`)
+was also verified directly, not through the full router, since the small model used for this local
+verification pass doesn't reliably set `requires_multi_step` even for clearly compound requests. Two
+things worth tuning once running against the real production model:
+
+- A single tier 3 decision took roughly 3.5 seconds against the small model on this machine. The loop needs
+  at least two such round trips (a tool call, then a finish decision), which is tight against the current
+  8 second `AGENT_TIMEOUT_SECONDS` default. Worth re-measuring against the actual 7B production model
+  before assuming that default is right.
+- The small model called a tool with a parameter name (`keywords`) that didn't match the tool's actual
+  schema (`query`). Pydantic silently ignores the unexpected field rather than erroring, which means a
+  malformed tool call can fail quietly (an empty-filter search) instead of loudly. Worth deciding whether
+  tool argument validation should be stricter regardless of model quality, this isn't purely a small-model
+  problem.
+
 ## Known limitations, for whoever picks this up next
 
-- The tier 3 agent (`app/services/intent/tier3_agent.py`) has a real planning loop (propose a tool call or finish, strict JSON each turn, bounded by step count and a timeout), and its tools call a real backend (`mock-backend`'s fixture data, see "Why mock-backend exists" above). What's still missing is the real Node backend itself, `mock-backend` needs swapping out for it once those endpoints exist there, which is a one-line config change, not a rewrite.
-- No real audio has been tested yet, only mocked STT and real-but-fake backend calls. The tooling to do this exists (`/dev/voice-tester`, `scripts/test_voice_pipeline.py`, the `integration` test marker), it just hasn't been exercised with real recordings and turned into a fixture set. That's the next concrete step, not a someday item.
-- Roman Urdu detection (`looks_like_roman_urdu` in `app/utils/lang_detect.py`) is a keyword heuristic, not a real classifier. It's a known weak spot, worth deliberately over-representing in the fixture set once real recordings start getting added.
-- No load testing has been done yet. The Whisper model runs on CPU by default, which is fine for occasional voice notes but will need attention if usage grows.
+- The tier 3 agent's tools call a real backend now (`mock-backend`'s fixture data, see "Why mock-backend
+  exists" above), but the real Node backend still doesn't exist. Swapping `mock-backend` out for it once
+  those endpoints exist is a one-line config change, not a rewrite.
+- No real human voice has been tested yet, only synthesized speech and mocked STT paths. The tooling to do
+  this exists (`/dev/voice-tester`, `scripts/test_voice_pipeline.py`, the `integration` test marker), it
+  just hasn't been exercised with real recordings and turned into a fixture set. That's the next concrete
+  step, not a someday item.
+- Roman Urdu detection (`looks_like_roman_urdu` in `app/utils/lang_detect.py`) is a keyword heuristic, not
+  a real classifier. It's a known weak spot, worth deliberately over-representing in the fixture set once
+  real recordings start getting added.
+- No load testing has been done yet. The Whisper model runs on CPU by default, which is fine for occasional
+  voice notes but will need attention if usage grows.
 
 ## Questions
 

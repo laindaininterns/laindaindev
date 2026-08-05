@@ -56,6 +56,9 @@
 - [x] `/dev/voice-tester`, a browser page (mic recording, dev environment only) that chains through transcribe, translate, and parse-intent so you can test with your own voice
 - [x] `scripts/test_voice_pipeline.py`, a CLI harness for the same chain against a saved recording, with `--save` to capture it as a regression fixture
 - [x] `tests/integration/test_real_pipeline.py`, runs against whatever real fixtures exist in `tests/fixtures/audio`, skips cleanly when there are none
+- [x] A fully native (no Docker) setup path, documented in the README, needed since Docker Desktop requires BIOS-level virtualization that isn't available on every machine
+- [x] The native path actually run end to end: real Whisper transcription of synthesized speech, real translation through both Azure-fallback and LibreTranslate, real tier 1 and tier 2 classification against a live local Ollama model. Caught and fixed three real bugs in the process, see "What's actually been live-verified" in the README
+- [x] Tier 3's mechanism (bounded loop, step limit, timeout, real tool calls) verified directly against live Ollama and mock-backend. Full routed escalation through tier 2 wasn't reliably reproducible with the small model used for this pass, see the README for the two tuning notes that came out of that (timeout budget, tool argument fidelity)
 
 ## Stage 7: Production Hardening (not started)
 - [ ] Structured logging and tracing across the pipeline
