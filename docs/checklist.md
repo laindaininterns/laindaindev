@@ -1,21 +1,19 @@
 # Granular Task Checklist
 
 ## 🛠️ Stage 1: Database Initialization
-- [ ] Draft `supabase/migrations/01_schema.sql` containing all table schemas from `database_schema.md`
-- [ ] Draft `supabase/migrations/02_enums.sql` defining all status ENUMs
-- [ ] Draft `supabase/migrations/03_rls.sql` for Row-Level Security rules
-- [ ] Run migration scripts inside Supabase SQL Editor
-- [ ] Test table creations and foreign key constraints in Supabase Studio
-- [ ] Commit Stage 1 to GitHub repository
+- [x] Draft `supabase/migrations/01_auth_system.sql` containing all table schemas and status ENUMs
+- [x] Run migration scripts inside Supabase SQL Editor / Supabase MCP
+- [x] Test table creations and foreign key constraints in Supabase Studio
+- [x] Commit Stage 1 to GitHub repository
 
 ## 🔐 Stage 2: Backend Core & Auth Setup
-- [ ] Run `npm init -y` and install Express, `@supabase/supabase-js`, `dotenv`, `cors`, `helmet`
-- [ ] Set up project directory structure (`/src/config`, `/src/middleware`, `/src/routes`, `/src/controllers`)
-- [ ] Create `supabaseClient.js` service wrapper
-- [ ] Build `authMiddleware.js` for JWT token verification
-- [ ] Create test endpoint `/api/health` to verify server functionality
-- [ ] Test `/api/health` via Postman
-- [ ] Commit Stage 2 to GitHub repository
+- [x] Run `npm init -y` and install Express, `@supabase/supabase-js`, `dotenv`, `cors`, `helmet`, `jsonwebtoken`, `bcryptjs`, `ioredis`, `resend`, `bullmq`
+- [x] Set up project directory structure (`/src/config`, `/src/middleware`, `/src/routes`, `/src/controllers`)
+- [x] Create `src/config/supabase.js` service wrapper
+- [x] Build `src/middleware/auth.js` for JWT token verification
+- [x] Create initial auth routes and controllers (`POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/seller/submit_application`)
+- [x] Create test endpoint `/api/health` to verify server functionality
+- [x] Commit Stage 2 to GitHub repository
 
 ## 🏢 Stage 3: Seller Onboarding & KYC Management
 - [ ] Create `POST /api/sellers/register` endpoint
