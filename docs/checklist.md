@@ -26,8 +26,17 @@
 - [x] Commit Stage 3 to GitHub repository
 
 ## 📦 Stage 4: Catalog & CSV Bulk Import Engine
-- [ ] Create Category endpoints (`GET`, `POST /api/categories`)
-- [ ] Create Single Product endpoints (`POST`, `GET`, `PUT`, `DELETE /api/products`)
+- [x] Create `supabase/migrations/02_products_crud.sql` — categories table, product_status ENUM, products table, seeds, updated_at trigger
+- [x] Apply migration via Supabase MCP (`categories` + `products` tables live in DB)
+- [x] Seed default categories: Electronics, Apparel & Textiles, Industrial Machinery, Office Supplies, Home & Living
+- [x] Create `GET /api/products/categories` — public list categories
+- [x] Create `POST /api/products` — authenticated SELLER (APPROVED only) create product
+- [x] Create `GET /api/products` — public list with optional `?category_id=` filter
+- [x] Create `GET /api/products/:id` — public single product detail
+- [x] Create `PATCH /api/products/:id` — authenticated seller ownership update
+- [x] Create `DELETE /api/products/:id` — authenticated seller ownership delete
+- [x] Register `productRoutes` under `/api/products` in `src/server.js`
+- [x] Verified all 7 CRUD operations pass automated tests on port 5000
 - [ ] Install `multer` and `csv-parser`
 - [ ] Create `POST /api/products/bulk-upload` endpoint
 - [ ] Implement validation logic for CSV columns (`name`, `base_price`, `stock_qty`, `moq`)
