@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --font-poppins: 'Poppins', sans-serif;
+  --color-ash: #A3C1BF;
+  --color-snow: #FDF9F6;
+  --color-black: #000000;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #FDF9F6;
+  color: #000000;
+  overflow-x: hidden;
+}

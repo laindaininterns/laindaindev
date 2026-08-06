@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  html, body { margin:0; padding:0; }
+  body { font-family:'Poppins',sans-serif; background:#F9F9F6; color:#000; font-size:17px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  a { color:#000; text-decoration:none; }
+  a:hover { color:#5B5B58; }
+  :focus-visible { outline:2px solid #000; outline-offset:2px; border-radius:4px; }
+  @media (prefers-reduced-motion: reduce){ * { transition-duration:0.01ms !important; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#F9F9F6;">
+
+  <div style="position:sticky; top:0; z-index:200; height:64px; display:flex; align-items:center; background:#F9F9F6; border-bottom:1px solid #E9E8E2;">
+    <div style="max-width:1240px; width:100%; margin:0 auto; padding:0 32px; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between;">
+      <a href="#" style="display:flex; align-items:center; gap:8px; font-size:18px; font-weight:600;">
+        <span style="width:26px; height:26px; border-radius:7px; background:#A3C1BF; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">L10</span>Land10
+      </a>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button aria-label="Search" onClick="{{ openSearch }}" style="width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+        <button style="display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 18px; border:none; border-radius:16px; background:#A3C1BF; color:#000; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;">Register as Seller</button>
+        <a href="./Login v3.dc.html" style="display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 14px; border-radius:16px; font-size:15px; font-weight:500; color:#5B5B58; transition:color 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="color:#000;">Sign in</a>
+        <button aria-label="Wholesale cart" onClick="{{ openCart }}" style="position:relative; width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L21 7H6"></path><circle cx="9.5" cy="20.5" r="1.2"></circle><circle cx="17.5" cy="20.5" r="1.2"></circle></svg>
+          <span style="position:absolute; top:4px; right:4px; min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:999px; background:#000; color:#fff; font-size:10px; font-weight:600; display:flex; align-items:center; justify-content:center; line-height:1;">{{ cartCount }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:sticky; top:64px; z-index:190; background:#F9F9F6; border-bottom:1px solid #E9E8E2;">
+    <div style="max-width:1240px; margin:0 auto; padding:0 32px; box-sizing:border-box;">
+      <div style="display:flex; align-items:center; gap:6px; overflow-x:auto; padding:12px 0; scrollbar-width:none;">
+        <sc-for list="{{ categories }}" as="c" hint-placeholder-count="8">
+          <button onClick="{{ c.select }}" style="{{ c.style }}">{{ c.name }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1240px; margin:0 auto; padding:0 32px; box-sizing:border-box;">
+
+    <div style="padding:28px 0 8px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <h1 style="margin:0; font-size:26px; font-weight:600; letter-spacing:-0.01em;">Stock Your Inventory</h1>
+      <span style="font-size:13px; color:#5B5B58;">{{ resultCount }} verified suppliers</span>
+    </div>
+
+    <div style="padding:16px 0 48px;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px;">
+        <sc-for list="{{ suppliers }}" as="s" hint-placeholder-count="8">
+          <div style="background:#FFFFFF; border-radius:24px; box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04); overflow:hidden; display:flex; flex-direction:column; transition:box-shadow 150ms cubic-bezier(0.4,0,0.2,1), transform 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="box-shadow:0 8px 32px rgba(0,0,0,0.10); transform:translateY(-4px);">
+            <div style="position:relative; aspect-ratio:1/1; background:#EEF3F2;">
+              <image-slot id="{{ s.slotId }}" shape="rect" fit="cover" placeholder="{{ s.slotHint }}"></image-slot>
+            </div>
+            <div style="padding:16px; display:flex; flex-direction:column; gap:8px; flex:1;">
+              <div style="font-size:15px; font-weight:500;">{{ s.name }}</div>
+              <span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; color:#85A6A3;">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#85A6A3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 13 9 18 20 6"></polyline></svg>Verified
+              </span>
+              <p style="margin:0; font-size:13px; color:#5B5B58; flex:1;">{{ s.desc }}</p>
+              <span style="align-self:flex-start; font-size:11px; font-weight:500; color:#5B5B58; background:#F9F9F6; padding:3px 9px; border-radius:999px;">{{ s.cat }}</span>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;">
+                <span style="font-size:11px; color:#5B5B58;">Min. order</span>
+                <span style="font-size:13px; font-weight:500;">{{ s.moq }} units</span>
+              </div>
+              <button onClick="{{ s.add }}" style="width:100%; height:40px; border:none; border-radius:16px; background:#A3C1BF; color:#000; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;" style-active="transform:scale(0.97);">Add to Wholesale Cart</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex; justify-content:center; margin-top:32px;">
+        <button style="display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 18px; border:1px solid #000; border-radius:16px; background:transparent; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">Load more ↓</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #E9E8E2; padding:32px 0 24px; margin-top:16px;">
+    <div style="max-width:1240px; margin:0 auto; padding:0 32px; box-sizing:border-box;">
+      <div style="display:grid; grid-template-columns:1.3fr repeat(3, 1fr); gap:24px; margin-bottom:24px;">
+        <div>
+          <a href="#" style="display:flex; align-items:center; gap:8px; font-size:18px; font-weight:600;">
+            <span style="width:26px; height:26px; border-radius:7px; background:#A3C1BF; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">L10</span>Land10
+          </a>
+          <p style="margin:12px 0 0; font-size:13px; color:#5B5B58; max-width:220px;">Pakistan's wholesale sourcing platform for verified B2B trade.</p>
+        </div>
+        <div>
+          <h4 style="margin:0 0 12px; font-size:11px; font-weight:600; color:#5B5B58; text-transform:uppercase; letter-spacing:0.03em;">Categories</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <a href="#">Clothing &amp; Apparel</a>
+            <a href="#">Footwear</a>
+            <a href="#">Home Textiles</a>
+            <a href="#">All categories</a>
+          </div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 12px; font-size:11px; font-weight:600; color:#5B5B58; text-transform:uppercase; letter-spacing:0.03em;">Company</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <a href="#">How It Works</a>
+            <a href="#">Sell on Land10</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+          </div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 12px; font-size:11px; font-weight:600; color:#5B5B58; text-transform:uppercase; letter-spacing:0.03em;">Support</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <a href="#">Help Centre</a>
+            <a href="#">Buyer Protection</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms</a>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid #E9E8E2; font-size:11px; color:#5B5B58; flex-wrap:wrap; gap:10px;">
+        <span>© 2026 Land10. All rights reserved.</span>
+        <span>Made for Pakistani businesses</span>
+      </div>
+    </div>
+  </div>
+
+  <div onClick="{{ closeSearch }}" style="{{ searchBackdropStyle }}">
+    <div onClick="{{ stop }}" style="{{ searchPanelStyle }}">
+      <div style="display:flex; align-items:center; gap:10px; height:48px; padding:0 14px; border:1px solid #E9E8E2; border-radius:16px; margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#5B5B58" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input ref="{{ searchRef }}" value="{{ query }}" onChange="{{ onQuery }}" type="text" placeholder="Search suppliers or products" autocomplete="off" style="flex:1; min-width:0; border:none; outline:none; background:transparent; font-family:'Poppins',sans-serif; font-size:15px; color:#000;">
+        <button onClick="{{ closeSearch }}" aria-label="Close search" style="width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#F9F9F6;">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg>
+        </button>
+      </div>
+
+      <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:15px; font-weight:600; margin-bottom:10px;">{{ resultsLabel }}</div>
+        <div style="display:flex; flex-direction:column; max-height:44vh; overflow-y:auto;">
+          <sc-for list="{{ results }}" as="r" hint-placeholder-count="0">
+            <button onClick="{{ r.select }}" style="display:flex; align-items:center; gap:12px; padding:10px; border:none; border-radius:10px; background:transparent; text-align:left; font-family:'Poppins',sans-serif; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#F9F9F6;">
+              <span style="width:40px; height:40px; flex-shrink:0; border-radius:10px; background:#EEF3F2; display:inline-flex; align-items:center; justify-content:center; font-size:18px;">{{ r.icon }}</span>
+              <span style="min-width:0;">
+                <span style="display:block; font-size:15px; font-weight:500;">{{ r.name }}</span>
+                <span style="display:block; font-size:11px; color:#5B5B58;">{{ r.cat }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ noQuery }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:15px; font-weight:600; margin-bottom:10px;">Popular categories</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <sc-for list="{{ popular }}" as="p" hint-placeholder-count="6">
+            <button onClick="{{ p.select }}" style="height:36px; padding:0 14px; display:inline-flex; align-items:center; border:1px solid #E9E8E2; border-radius:999px; background:transparent; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; color:#000; cursor:pointer; transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="border-color:#85A6A3;">{{ p.name }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div onClick="{{ backdropClick }}" style="{{ backdropStyle }}">
+    <div onClick="{{ stop }}" style="{{ dialogStyle }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid #E9E8E2;">
+        <h3 style="margin:0; font-size:20px; font-weight:600;">Wholesale Cart</h3>
+        <button onClick="{{ closeCart }}" aria-label="Close cart" style="width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg>
+        </button>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; padding:16px 24px; min-height:120px;">
+        <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center; color:#5B5B58; font-size:15px; padding:48px 20px;">
+            <div style="font-size:34px; margin-bottom:12px;">🛒</div>
+            Your cart is empty.<br>Browse suppliers to get started.
+          </div>
+        </sc-if>
+        <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="0">
+          <div style="display:flex; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid #E9E8E2;">
+            <div style="width:52px; height:52px; flex-shrink:0; border-radius:10px; background:#EEF3F2; display:flex; align-items:center; justify-content:center; font-size:20px;">{{ it.icon }}</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:15px; font-weight:500;">{{ it.name }}</div>
+              <div style="font-size:11px; color:#5B5B58; margin-top:2px;">{{ it.meta }}</div>
+            </div>
+            <div style="display:flex; align-items:center; border:1px solid #E9E8E2; border-radius:10px; overflow:hidden;">
+              <button onClick="{{ it.dec }}" aria-label="Decrease quantity" style="width:30px; height:30px; border:none; background:transparent; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#F9F9F6;">−</button>
+              <span style="width:34px; height:30px; display:inline-flex; align-items:center; justify-content:center; border-left:1px solid #E9E8E2; border-right:1px solid #E9E8E2; font-size:13px; font-weight:500;">{{ it.qty }}</span>
+              <button onClick="{{ it.inc }}" aria-label="Increase quantity" style="width:30px; height:30px; border:none; background:transparent; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#F9F9F6;">+</button>
+            </div>
+            <button onClick="{{ it.remove }}" style="border:none; background:transparent; font-family:inherit; font-size:11px; color:#5B5B58; text-decoration:underline; cursor:pointer; transition:color 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="color:#000;">Remove</button>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding:18px 24px; border-top:1px solid #E9E8E2;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:15px;">
+          <span>Subtotal (excl. tax)</span>
+          <span style="font-size:20px; font-weight:600;">{{ subtotal }}</span>
+        </div>
+        <button disabled="{{ cartEmpty }}" style="{{ checkoutStyle }}">Proceed to Checkout →</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="{{ toastStyle }}">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#A3C1BF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 13 9 18 20 6"></polyline></svg>
+    <span>{{ toastText }}</span>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { cat: 'All Suppliers', cart: {}, toast: '', cartOpen: false, searchOpen: false, query: '' };
+
+  searchRef = React.createRef();
+
+  componentDidMount() {
+    this._esc = (e) => { if (e.key === 'Escape') this.setState({ cartOpen: false, searchOpen: false }); };
+    document.addEventListener('keydown', this._esc);
+  }
+  componentWillUnmount() { clearTimeout(this._t); document.removeEventListener('keydown', this._esc); }
+
+  addToCart(item) {
+    clearTimeout(this._t);
+    this.setState(s => {
+      const cart = { ...s.cart };
+      const cur = cart[item.name];
+      cart[item.name] = { ...item, qty: cur ? cur.qty + item.moq : item.moq };
+      return { cart, toast: `Added ${item.name} to cart` };
+    });
+    this._t = setTimeout(() => this.setState({ toast: '' }), 2400);
+  }
+  setQty(name, delta) {
+    this.setState(s => {
+      const cart = { ...s.cart };
+      const it = cart[name];
+      if (!it) return null;
+      const qty = it.qty + delta * (it.moq || 1);
+      if (qty < (it.moq || 1)) delete cart[name]; else cart[name] = { ...it, qty };
+      return { cart };
+    });
+  }
+  removeItem(name) {
+    this.setState(s => { const cart = { ...s.cart }; delete cart[name]; return { cart }; });
+  }
+
+  catNames = ['All Suppliers','Clothing & Apparel','Bags & Luggage','Footwear','Agriculture & Fertilizers','Paints & Chemicals','Home Appliances & Electronics','Bedding & Home Textiles','Cosmetics & Personal Care','Tiles & Construction','Sanitary & Bathroom Fittings'];
+
+  icons = {'Clothing & Apparel':'👕','Bags & Luggage':'👜','Footwear':'👟','Agriculture & Fertilizers':'🌾','Paints & Chemicals':'🎨','Home Appliances & Electronics':'🔌','Bedding & Home Textiles':'🛏️','Cosmetics & Personal Care':'💄','Tiles & Construction':'🧱','Sanitary & Bathroom Fittings':'🚿'};
+
+  data = [
+    {name:'Faisalabad Textiles Co.', cat:'Clothing & Apparel', desc:'Cotton fabric rolls, wholesale bundles.'},
+    {name:'Lahore Ceramics Hub', cat:'Tiles & Construction', desc:'Glazed ceramic floor tiles, 60x60cm.'},
+    {name:'Karachi Steel Traders', cat:'Home Appliances & Electronics', desc:'Stainless steel kitchen appliances.'},
+    {name:'Gujranwala Leather Works', cat:'Footwear', desc:'Genuine leather formal shoes, bulk pairs.'},
+    {name:'Sialkot Bags & Co.', cat:'Bags & Luggage', desc:'Canvas duffel bags and backpacks.'},
+    {name:'Punjab AgroChem', cat:'Agriculture & Fertilizers', desc:'NPK fertilizer, 50kg sacks.'},
+    {name:'Multan Paints Ltd.', cat:'Paints & Chemicals', desc:'Weatherproof exterior emulsion paint.'},
+    {name:'Hyderabad Home Textiles', cat:'Bedding & Home Textiles', desc:'Cotton bedsheet sets, king size.'},
+    {name:'Islamabad Beauty Supplies', cat:'Cosmetics & Personal Care', desc:'Skincare range, retail-ready packs.'},
+    {name:'Rawalpindi Sanitary Co.', cat:'Sanitary & Bathroom Fittings', desc:'Chrome bathroom fixtures and taps.'},
+    {name:'Karachi Cotton Mills', cat:'Clothing & Apparel', desc:'Unstitched lawn fabric, printed.'},
+    {name:'Lahore Footwear Traders', cat:'Footwear', desc:'Rubber sole sandals, assorted sizes.'}
+  ];
+
+  pillStyle(active) {
+    return `flex-shrink:0; height:38px; padding:0 16px; border-radius:999px; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap; transition:all 150ms cubic-bezier(0.4,0,0.2,1); background:${active ? '#A3C1BF' : 'transparent'}; color:${active ? '#000' : '#5B5B58'}; border:1px solid ${active ? '#A3C1BF' : '#E9E8E2'};`;
+  }
+
+  moq(name) { return [50, 100, 25, 200][name.length % 4]; }
+  price(name) { return 400 + (name.length % 7) * 150; }
+
+  renderVals() {
+    const cat = this.state.cat;
+    const open = this.state.cartOpen;
+    const filtered = cat === 'All Suppliers' ? this.data : this.data.filter(p => p.cat === cat);
+    const sOpen = this.state.searchOpen;
+    const q = this.state.query.trim().toLowerCase();
+    const matches = q ? this.data.filter(s => (s.name + ' ' + s.cat + ' ' + s.desc).toLowerCase().includes(q)) : [];
+    const items = Object.values(this.state.cart);
+    const subtotal = items.reduce((sum, it) => sum + it.price * it.qty, 0);
+    return {
+      categories: this.catNames.map(name => ({
+        name,
+        style: this.pillStyle(name === cat),
+        select: () => this.setState({ cat: name })
+      })),
+      suppliers: filtered.map(s => {
+        const item = { name: s.name, cat: s.cat, icon: this.icons[s.cat], moq: this.moq(s.name), price: this.price(s.name) };
+        return {
+          ...s,
+          icon: item.icon,
+          moq: item.moq,
+          slotId: 'supplier-' + s.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          slotHint: s.desc,
+          add: () => this.addToCart(item)
+        };
+      }),
+      resultCount: filtered.length * 11 + 6,
+      cartCount: items.length,
+      cartEmpty: items.length === 0,
+      cartItems: items.map(it => ({
+        name: it.name,
+        icon: it.icon,
+        qty: it.qty,
+        meta: `Rs. ${(it.price * it.qty).toLocaleString()} · ${it.cat}`,
+        inc: () => this.setQty(it.name, 1),
+        dec: () => this.setQty(it.name, -1),
+        remove: () => this.removeItem(it.name)
+      })),
+      subtotal: `Rs. ${subtotal.toLocaleString()}`,
+      openCart: () => this.setState({ cartOpen: true }),
+      closeCart: () => this.setState({ cartOpen: false }),
+      backdropClick: () => this.setState({ cartOpen: false }),
+      stop: (e) => e.stopPropagation(),
+      backdropStyle: `position:fixed; inset:0; z-index:400; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); transition:opacity 250ms cubic-bezier(0.4,0,0.2,1), visibility 250ms; opacity:${open ? 1 : 0}; visibility:${open ? 'visible' : 'hidden'};`,
+      dialogStyle: `width:min(460px, 100%); max-height:88vh; box-sizing:border-box; display:flex; flex-direction:column; background:#FFFFFF; border-radius:24px; box-shadow:0 8px 32px rgba(0,0,0,0.10); transition:opacity 250ms cubic-bezier(0.4,0,0.2,1), transform 250ms cubic-bezier(0.4,0,0.2,1); opacity:${open ? 1 : 0}; transform:${open ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.98)'};`,
+      checkoutStyle: `width:100%; height:48px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:16px; font-family:'Poppins',sans-serif; font-size:15px; font-weight:500; transition:background 150ms cubic-bezier(0.4,0,0.2,1); background:${items.length ? '#A3C1BF' : '#E9E8E2'}; color:${items.length ? '#000' : '#5B5B58'}; cursor:${items.length ? 'pointer' : 'not-allowed'};`,
+      searchRef: this.searchRef,
+      query: this.state.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      hasQuery: q.length > 0,
+      noQuery: q.length === 0,
+      resultsLabel: matches.length ? `${matches.length} matching supplier${matches.length === 1 ? '' : 's'}` : 'No suppliers match that search',
+      results: matches.map(s => ({
+        name: s.name,
+        cat: s.cat,
+        icon: this.icons[s.cat],
+        select: () => this.setState({ cat: s.cat, searchOpen: false, query: '' })
+      })),
+      popular: this.catNames.slice(1, 7).map(name => ({
+        name,
+        select: () => this.setState({ cat: name, searchOpen: false, query: '' })
+      })),
+      openSearch: () => {
+        this.setState({ searchOpen: true });
+        setTimeout(() => this.searchRef.current && this.searchRef.current.focus(), 260);
+      },
+      closeSearch: () => this.setState({ searchOpen: false, query: '' }),
+      searchBackdropStyle: `position:fixed; inset:0; z-index:450; padding:24px; box-sizing:border-box; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); transition:opacity 250ms cubic-bezier(0.4,0,0.2,1), visibility 250ms; opacity:${sOpen ? 1 : 0}; visibility:${sOpen ? 'visible' : 'hidden'};`,
+      searchPanelStyle: `position:absolute; top:10vh; left:50%; width:min(560px, calc(100% - 32px)); box-sizing:border-box; padding:20px; background:#FFFFFF; border-radius:24px; box-shadow:0 8px 32px rgba(0,0,0,0.10); transition:opacity 250ms cubic-bezier(0.4,0,0.2,1), transform 250ms cubic-bezier(0.4,0,0.2,1); opacity:${sOpen ? 1 : 0}; transform:translate(-50%, ${sOpen ? '0' : '-12px'});`,
+      toastText: this.state.toast,
+      toastStyle: `position:fixed; bottom:24px; left:50%; z-index:500; display:flex; align-items:center; gap:10px; padding:12px 20px; border-radius:16px; background:#000; color:#fff; font-size:15px; font-weight:500; transition:opacity 250ms cubic-bezier(0.4,0,0.2,1), transform 250ms cubic-bezier(0.4,0,0.2,1); opacity:${this.state.toast ? 1 : 0}; visibility:${this.state.toast ? 'visible' : 'hidden'}; transform:translateX(-50%) translateY(${this.state.toast ? '0' : '12px'});`
+    };
+  }
+}
+</script>
+</body>
+</html>

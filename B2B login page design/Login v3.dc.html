@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; }
+  body { font-family:'Poppins',sans-serif; background:#F9F9F6; color:#000; font-size:17px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  a { color:#000; text-decoration:none; }
+  a:hover { color:#5B5B58; }
+  input::placeholder { color:#5B5B58; }
+  input:focus, select:focus { outline:none; border-color:#85A6A3 !important; }
+  :focus-visible { outline:2px solid #000; outline-offset:2px; border-radius:4px; }
+  @media (prefers-reduced-motion: reduce){ * { transition-duration:0.01ms !important; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; flex-direction:column; background:#F9F9F6;">
+
+  <div style="height:64px; display:flex; align-items:center; background:#F9F9F6; border-bottom:1px solid #E9E8E2;">
+    <div style="max-width:1240px; width:100%; margin:0 auto; padding:0 32px; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between;">
+      <a href="#" style="display:flex; align-items:center; gap:8px; font-size:18px; font-weight:600;">
+        <span style="width:26px; height:26px; border-radius:7px; background:#A3C1BF; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">L10</span>Land10
+      </a>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:13px; color:#5B5B58;">New to Land10?</span>
+        <button style="display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 18px; border:none; border-radius:16px; background:#A3C1BF; color:#000; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;">Register as Seller</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:48px 32px;">
+    <div style="width:min(460px, 100%); box-sizing:border-box; background:#FFFFFF; border-radius:24px; box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04); padding:32px;">
+
+      <h1 style="font-size:26px; font-weight:600; letter-spacing:-0.01em; margin:0 0 4px;">Sign in</h1>
+      <p style="margin:0 0 20px; font-size:15px; color:#5B5B58;">Access wholesale pricing from verified suppliers.</p>
+
+      <div style="display:flex; gap:6px; margin-bottom:20px;">
+        <button onClick="{{ pickBuyer }}" style="{{ buyerTabStyle }}">Buyer</button>
+        <button onClick="{{ pickSeller }}" style="{{ sellerTabStyle }}">Seller</button>
+      </div>
+
+      <form onSubmit="{{ submit }}">
+        <div style="margin-bottom:14px;">
+          <label for="email" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Business email</label>
+          <input id="email" type="email" autocomplete="username" placeholder="you@company.com" style="width:100%; box-sizing:border-box; height:46px; padding:0 14px; border:1px solid #E9E8E2; border-radius:10px; font-family:inherit; font-size:15px; background:#FFFFFF; transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);">
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <label for="password" style="font-size:13px; font-weight:500;">Password</label>
+            <a href="#" style="font-size:13px; color:#5B5B58;">Forgot password?</a>
+          </div>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%; box-sizing:border-box; height:46px; padding:0 14px; border:1px solid #E9E8E2; border-radius:10px; font-family:inherit; font-size:15px; background:#FFFFFF; transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);">
+          <p style="margin:6px 0 0; font-size:11px; color:#5B5B58;">Use the password linked to your verified business account.</p>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:18px; cursor:pointer;">
+          <input type="checkbox" checked="{{ true }}" style="width:16px; height:16px; accent-color:#85A6A3; margin:0;">
+          Keep me signed in on this device
+        </label>
+
+        <button type="submit" style="width:100%; height:48px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:16px; background:#A3C1BF; color:#000; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;" style-active="transform:scale(0.97);">Sign in →</button>
+      </form>
+
+      <sc-if value="{{ showSocial }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; align-items:center; gap:12px; margin:18px 0;">
+          <div style="flex:1; height:1px; background:#E9E8E2;"></div>
+          <span style="font-size:11px; font-weight:600; color:#5B5B58; text-transform:uppercase; letter-spacing:0.04em;">or</span>
+          <div style="flex:1; height:1px; background:#E9E8E2;"></div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button style="width:100%; height:48px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #000; border-radius:16px; background:transparent; font-family:inherit; font-size:15px; font-weight:500; color:#000; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">Continue with phone (OTP)</button>
+          <button style="width:100%; height:40px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:16px; background:transparent; font-family:inherit; font-size:15px; font-weight:500; color:#5B5B58; cursor:pointer; transition:color 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="color:#000;">Sign in with company SSO</button>
+        </div>
+      </sc-if>
+
+      <div style="display:flex; align-items:center; gap:6px; margin-top:20px; padding-top:18px; border-top:1px solid #E9E8E2; font-size:13px; color:#5B5B58;">
+        <span style="width:16px; height:16px; border-radius:999px; background:#EEF3F2; color:#85A6A3; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:600;">✓</span>
+        Buyer protection on every verified order
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #E9E8E2; padding:18px 0;">
+    <div style="max-width:1240px; margin:0 auto; padding:0 32px; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:11px; color:#5B5B58;">
+      <span>© 2026 Land10. All rights reserved.</span>
+      <div style="display:flex; gap:16px;">
+        <a href="#" style="color:#5B5B58; font-size:13px;">Help Centre</a>
+        <a href="#" style="color:#5B5B58; font-size:13px;">Privacy Policy</a>
+        <a href="#" style="color:#5B5B58; font-size:13px;">Terms</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showSocial&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Options&quot;}}">
+class Component extends DCLogic {
+  state = { role: 'buyer' };
+  tab(active) {
+    return `flex:1; height:38px; border-radius:999px; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 150ms cubic-bezier(0.4,0,0.2,1); background:${active ? '#A3C1BF' : 'transparent'}; color:${active ? '#000' : '#5B5B58'}; border:1px solid ${active ? '#A3C1BF' : '#E9E8E2'};`;
+  }
+  renderVals() {
+    const isBuyer = this.state.role === 'buyer';
+    return {
+      buyerTabStyle: this.tab(isBuyer),
+      sellerTabStyle: this.tab(!isBuyer),
+      pickBuyer: () => this.setState({ role: 'buyer' }),
+      pickSeller: () => this.setState({ role: 'seller' }),
+      submit: (e) => e.preventDefault(),
+      showSocial: this.props.showSocial ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>
