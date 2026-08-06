@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; }
+  body { font-family:'Poppins',sans-serif; background:#F9F9F6; color:#000; font-size:17px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  a { color:#000; text-decoration:none; }
+  a:hover { color:#5B5B58; }
+  input::placeholder, textarea::placeholder { color:#5B5B58; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#85A6A3 !important; }
+  :focus-visible { outline:2px solid #000; outline-offset:2px; border-radius:4px; }
+  @media (prefers-reduced-motion: reduce){ * { transition-duration:0.01ms !important; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; flex-direction:column; background:#F9F9F6;">
+
+  <div style="height:64px; display:flex; align-items:center; background:#F9F9F6; border-bottom:1px solid #E9E8E2;">
+    <div style="max-width:1240px; width:100%; margin:0 auto; padding:0 32px; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between;">
+      <a href="./Landing.dc.html" style="display:flex; align-items:center; gap:8px; font-size:18px; font-weight:600;">
+        <span style="width:26px; height:26px; border-radius:7px; background:#A3C1BF; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">LD</span>Lain Dain
+      </a>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:13px; color:#5B5B58;">Already registered?</span>
+        <a href="./Login v3.dc.html" style="display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 18px; border:1px solid #000; border-radius:16px; font-size:15px; font-weight:500; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1; display:flex; align-items:flex-start; justify-content:center; padding:48px 32px;">
+    <div style="width:min(560px, 100%); box-sizing:border-box; background:#FFFFFF; border-radius:24px; box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04); padding:32px;">
+
+      <sc-if value="{{ onStep1 }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; gap:6px; margin-bottom:20px;">
+          <button onClick="{{ pickSeller }}" style="{{ sellerTabStyle }}">Register as Seller</button>
+          <button onClick="{{ pickBuyer }}" style="{{ buyerTabStyle }}">Register as Buyer</button>
+        </div>
+
+        <div style="font-size:11px; font-weight:600; color:#85A6A3; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">{{ stepLabel }}</div>
+        <h1 style="margin:0 0 4px; font-size:26px; font-weight:600; letter-spacing:-0.01em;">Business Details</h1>
+        <p style="margin:0 0 20px; font-size:15px; color:#5B5B58;">{{ introCopy }}</p>
+
+        <div style="margin-bottom:14px;">
+          <label for="bizName" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Business Name</label>
+          <input id="bizName" type="text" placeholder="e.g. Faisalabad Textiles Co." value="{{ f.bizName }}" onChange="{{ set.bizName }}" onBlur="{{ blur.bizName }}" style="{{ style.bizName }}">
+          <p style="{{ hintStyle.bizName }}">{{ hint.bizName }}</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="margin-bottom:14px;">
+            <label for="bizType" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Business Type</label>
+            <select id="bizType" value="{{ f.bizType }}" onChange="{{ set.bizType }}" onBlur="{{ blur.bizType }}" style="{{ style.bizType }}">
+              <option value="">Select type</option>
+              <sc-for list="{{ bizTypes }}" as="t" hint-placeholder-count="4">
+                <option>{{ t }}</option>
+              </sc-for>
+            </select>
+            <p style="{{ hintStyle.bizType }}">{{ hint.bizType }}</p>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label for="bizPhone" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Phone Number</label>
+            <input id="bizPhone" type="tel" placeholder="03XX XXXXXXX" value="{{ f.bizPhone }}" onChange="{{ set.bizPhone }}" onBlur="{{ blur.bizPhone }}" style="{{ style.bizPhone }}">
+            <p style="{{ hintStyle.bizPhone }}">{{ hint.bizPhone }}</p>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="margin-bottom:14px;">
+            <label for="bizContact" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Contact Person</label>
+            <input id="bizContact" type="text" placeholder="Full name" value="{{ f.bizContact }}" onChange="{{ set.bizContact }}" onBlur="{{ blur.bizContact }}" style="{{ style.bizContact }}">
+            <p style="{{ hintStyle.bizContact }}">{{ hint.bizContact }}</p>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label for="bizEmail" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Email</label>
+            <input id="bizEmail" type="email" placeholder="you@company.com" value="{{ f.bizEmail }}" onChange="{{ set.bizEmail }}" onBlur="{{ blur.bizEmail }}" style="{{ style.bizEmail }}">
+            <p style="{{ hintStyle.bizEmail }}">{{ hint.bizEmail }}</p>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label for="bizIndustry" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">{{ industryLabel }}</label>
+          <select id="bizIndustry" value="{{ f.bizIndustry }}" onChange="{{ set.bizIndustry }}" onBlur="{{ blur.bizIndustry }}" style="{{ style.bizIndustry }}">
+            <option value="">Select industry</option>
+            <option>Clothing &amp; Apparel</option>
+            <option>Bags &amp; Luggage</option>
+            <option>Footwear</option>
+            <option>Agriculture &amp; Fertilizers</option>
+            <option>Paints &amp; Chemicals</option>
+            <option>Home Appliances &amp; Electronics</option>
+            <option>Bedding &amp; Home Textiles</option>
+            <option>Cosmetics &amp; Personal Care</option>
+            <option>Tiles &amp; Construction</option>
+            <option>Sanitary &amp; Bathroom Fittings</option>
+          </select>
+          <p style="{{ hintStyle.bizIndustry }}">{{ hint.bizIndustry }}</p>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label for="bizDesc" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">{{ descLabel }}</label>
+          <textarea id="bizDesc" placeholder="{{ descPlaceholder }}" value="{{ f.bizDesc }}" onChange="{{ set.bizDesc }}" style="width:100%; box-sizing:border-box; height:80px; padding:12px 14px; border:1px solid #E9E8E2; border-radius:10px; font-family:'Poppins',sans-serif; font-size:15px; resize:none; transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);"></textarea>
+        </div>
+
+        <button onClick="{{ next }}" style="width:100%; height:48px; display:inline-flex; align-items:center; justify-content:center; margin-top:4px; border:none; border-radius:16px; background:#A3C1BF; color:#000; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;" style-active="transform:scale(0.97);">{{ primaryLabel }}</button>
+      </sc-if>
+
+      <sc-if value="{{ onStep2 }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:11px; font-weight:600; color:#85A6A3; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Step 2 of 2</div>
+        <h1 style="margin:0 0 4px; font-size:26px; font-weight:600; letter-spacing:-0.01em;">Additional Details</h1>
+        <p style="margin:0 0 20px; font-size:15px; color:#5B5B58;">Almost done — this helps us verify your business faster.</p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="margin-bottom:14px;">
+            <label for="bizWebsite" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Company Website</label>
+            <input id="bizWebsite" type="text" placeholder="Optional" value="{{ f.bizWebsite }}" onChange="{{ set.bizWebsite }}" style="{{ style.bizWebsite }}">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label for="bizYear" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Year Established</label>
+            <input id="bizYear" type="text" placeholder="e.g. 2014" value="{{ f.bizYear }}" onChange="{{ set.bizYear }}" onBlur="{{ blur.bizYear }}" style="{{ style.bizYear }}">
+            <p style="{{ hintStyle.bizYear }}">{{ hint.bizYear }}</p>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label for="bizAddress" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Head Office Address</label>
+          <input id="bizAddress" type="text" placeholder="City, area" value="{{ f.bizAddress }}" onChange="{{ set.bizAddress }}" onBlur="{{ blur.bizAddress }}" style="{{ style.bizAddress }}">
+          <p style="{{ hintStyle.bizAddress }}">{{ hint.bizAddress }}</p>
+        </div>
+
+        <label style="display:block; font-size:13px; font-weight:500; margin-bottom:8px;">Current Sales Channels</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+          <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="6">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+              <input type="checkbox" checked="{{ ch.checked }}" onChange="{{ ch.toggle }}" style="width:16px; height:16px; accent-color:#85A6A3; margin:0;">{{ ch.name }}
+            </label>
+          </sc-for>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label for="bizEmployees" style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">No. of Employees</label>
+          <select id="bizEmployees" value="{{ f.bizEmployees }}" onChange="{{ set.bizEmployees }}" style="{{ style.bizEmployees }}">
+            <option value="">Select range</option>
+            <option>Less than 50</option>
+            <option>50–200</option>
+            <option>201–500</option>
+            <option>500–1000</option>
+            <option>1000+</option>
+          </select>
+        </div>
+
+        <label style="display:block; font-size:13px; font-weight:500; margin-bottom:8px;">Proof of Business</label>
+        <div onClick="{{ pickFile }}" style="{{ dropStyle }}">{{ fileLabel }}</div>
+        <p style="{{ hintStyle.proof }}">{{ hint.proof }}</p>
+
+        <div style="display:flex; gap:8px; margin-top:18px;">
+          <button onClick="{{ back }}" style="flex:1; height:48px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #000; border-radius:16px; background:transparent; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:rgba(0,0,0,0.04);">Back</button>
+          <button onClick="{{ submit }}" style="flex:1; height:48px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:16px; background:#A3C1BF; color:#000; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;" style-active="transform:scale(0.97);">Submit Application →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ onSuccess }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center; padding:16px 0;">
+          <div style="width:52px; height:52px; margin:0 auto 16px; border-radius:50%; background:#A3C1BF; display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 13 9 18 20 6"></polyline></svg>
+          </div>
+          <h1 style="margin:0 0 4px; font-size:26px; font-weight:600;">{{ successTitle }}</h1>
+          <p style="margin:0 0 20px; font-size:15px; color:#5B5B58;">{{ successCopy }}</p>
+          <a href="./Landing.dc.html" style="width:100%; height:48px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; border-radius:16px; background:#A3C1BF; color:#000; font-size:15px; font-weight:500; transition:background 150ms cubic-bezier(0.4,0,0.2,1);" style-hover="background:#85A6A3;">Back to marketplace</a>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #E9E8E2; padding:18px 0;">
+    <div style="max-width:1240px; margin:0 auto; padding:0 32px; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:11px; color:#5B5B58;">
+      <span>© 2026 Lain Dain. All rights reserved.</span>
+      <div style="display:flex; gap:16px;">
+        <a href="#" style="color:#5B5B58; font-size:13px;">Help Centre</a>
+        <a href="#" style="color:#5B5B58; font-size:13px;">Privacy Policy</a>
+        <a href="#" style="color:#5B5B58; font-size:13px;">Terms</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  channelNames = ['Retail Stores','Wholesale Markets','Online Store','Social Media','Marketplaces','Export'];
+
+  state = {
+    role: 'seller',
+    step: 1,
+    fields: { bizName:'', bizType:'', bizPhone:'', bizContact:'', bizEmail:'', bizIndustry:'', bizDesc:'',
+              bizWebsite:'', bizYear:'', bizAddress:'', bizEmployees:'' },
+    channels: [],
+    file: '',
+    errors: {}
+  };
+
+  rules = {
+    bizName: v => v.trim().length < 2 ? 'Enter your business name to continue.' : '',
+    bizType: v => !v ? 'Select a business type.' : '',
+    bizPhone: v => v.replace(/\D/g,'').length < 10 ? 'Enter a valid phone number, e.g. 0300 1234567.' : '',
+    bizContact: v => v.trim().length < 2 ? 'Enter the contact person\u2019s name.' : '',
+    bizEmail: v => !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? 'Enter a valid email address.' : '',
+    bizIndustry: v => !v ? 'Select the industry you supply.' : '',
+    bizYear: v => v && !/^(19|20)\d{2}$/.test(v.trim()) ? 'Enter a 4-digit year, e.g. 2014.' : '',
+    bizAddress: v => v.trim().length < 3 ? 'Enter your head office city or area.' : ''
+  };
+
+  step1Fields = ['bizName','bizType','bizPhone','bizContact','bizEmail','bizIndustry'];
+  step2Fields = ['bizYear','bizAddress'];
+
+  validate(name, value) {
+    const rule = this.rules[name];
+    return rule ? rule(value ?? this.state.fields[name] ?? '') : '';
+  }
+
+  setField(name, value) {
+    this.setState(s => {
+      const errors = { ...s.errors };
+      if (errors[name]) { const e = this.validate(name, value); if (!e) delete errors[name]; else errors[name] = e; }
+      return { fields: { ...s.fields, [name]: value }, errors };
+    });
+  }
+
+  blurField(name) {
+    const e = this.validate(name);
+    this.setState(s => {
+      const errors = { ...s.errors };
+      if (e) errors[name] = e; else delete errors[name];
+      return { errors };
+    });
+  }
+
+  validateGroup(names) {
+    const errors = { ...this.state.errors };
+    let ok = true;
+    names.forEach(n => {
+      const e = this.validate(n);
+      if (e) { errors[n] = e; ok = false; } else delete errors[n];
+    });
+    this.setState({ errors });
+    return ok;
+  }
+
+  next() {
+    if (!this.validateGroup(this.step1Fields)) return;
+    this.setState({ step: this.state.role === 'buyer' ? 3 : 2 });
+  }
+
+  setRole(role) { this.setState({ role, errors: {} }); }
+
+  tabStyle(active) {
+    return `flex:1; height:38px; border-radius:999px; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 150ms cubic-bezier(0.4,0,0.2,1); background:${active ? '#A3C1BF' : 'transparent'}; color:${active ? '#000' : '#5B5B58'}; border:1px solid ${active ? '#A3C1BF' : '#E9E8E2'};`;
+  }
+  back() { this.setState({ step: 1 }); }
+
+  submit() {
+    const ok = this.validateGroup(this.step2Fields);
+    if (!this.state.file) {
+      this.setState(s => ({ errors: { ...s.errors, proof: 'Upload a document that proves your business is registered.' } }));
+      return;
+    }
+    if (ok) this.setState({ step: 3 });
+  }
+
+  pickFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png';
+    input.onchange = () => {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      this.setState(s => { const errors = { ...s.errors }; delete errors.proof; return { file: f.name, errors }; });
+    };
+    input.click();
+  }
+
+  inputStyle(name) {
+    const bad = !!this.state.errors[name];
+    return `width:100%; box-sizing:border-box; height:46px; padding:0 14px; border:1px solid ${bad ? '#C6564D' : '#E9E8E2'}; border-radius:10px; font-family:'Poppins',sans-serif; font-size:15px; background:#FFFFFF; color:#000; transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);`;
+  }
+  hintCss(name) {
+    return `margin:6px 0 0; font-size:11px; color:#C6564D; display:${this.state.errors[name] ? 'block' : 'none'};`;
+  }
+
+  renderVals() {
+    const names = Object.keys(this.state.fields).concat(['proof']);
+    const set = {}, blur = {}, style = {}, hint = {}, hintStyle = {};
+    names.forEach(n => {
+      set[n] = (e) => this.setField(n, e.target.value);
+      blur[n] = () => this.blurField(n);
+      style[n] = this.inputStyle(n);
+      hint[n] = this.state.errors[n] || '';
+      hintStyle[n] = this.hintCss(n);
+    });
+
+    const buyer = this.state.role === 'buyer';
+
+    return {
+      pickSeller: () => this.setRole('seller'),
+      pickBuyer: () => this.setRole('buyer'),
+      sellerTabStyle: this.tabStyle(!buyer),
+      buyerTabStyle: this.tabStyle(buyer),
+      stepLabel: buyer ? 'Buyer account' : 'Step 1 of 2',
+      introCopy: buyer
+        ? 'Tell us what you source so we can match you with verified suppliers.'
+        : 'Tell us about your business so buyers can find you.',
+      bizTypes: buyer
+        ? ['Retailer', 'Distributor', 'Wholesaler', 'Institutional Buyer', 'Others']
+        : ['Manufacturer', 'Importer', 'Brand', 'Others'],
+      industryLabel: buyer ? 'Primary sourcing category' : 'Industry',
+      descLabel: buyer ? 'What do you buy?' : 'Describe your products',
+      descPlaceholder: buyer
+        ? 'Typical products and order volumes you source'
+        : 'A short description of what you supply',
+      primaryLabel: buyer ? 'Create buyer account →' : 'Continue →',
+      successTitle: buyer ? 'Account Created!' : 'Application Received!',
+      successCopy: buyer
+        ? 'Your buyer account is ready. Sign in to see wholesale pricing from verified suppliers.'
+        : "We'll review your details and get back to you within 48 hours. Thank you for choosing Lain Dain.",
+      f: this.state.fields,
+      set, blur, style, hint, hintStyle,
+      onStep1: this.state.step === 1,
+      onStep2: this.state.step === 2,
+      onSuccess: this.state.step === 3,
+      next: () => this.next(),
+      back: () => this.back(),
+      submit: () => this.submit(),
+      pickFile: () => this.pickFile(),
+      fileLabel: this.state.file || 'Tap to upload a document (PDF, JPG)',
+      dropStyle: `padding:20px; text-align:center; font-size:13px; color:${this.state.file ? '#000' : '#5B5B58'}; border:1.5px dashed ${this.state.errors.proof ? '#C6564D' : '#E9E8E2'}; border-radius:10px; cursor:pointer; transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);`,
+      channels: this.channelNames.map(name => ({
+        name,
+        checked: this.state.channels.includes(name),
+        toggle: () => this.setState(s => ({
+          channels: s.channels.includes(name) ? s.channels.filter(c => c !== name) : s.channels.concat(name)
+        }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
