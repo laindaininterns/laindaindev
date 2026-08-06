@@ -1,5 +1,5 @@
-# Land10 — Design System Reference
-### Extracted from the built `land10-v2.html` (as-shipped, source of truth)
+# LainDain — Design System Reference
+### Extracted from the built `laindain-v2.html` (as-shipped, source of truth)
 
 > This supersedes the earlier `landdain-design.md` spec wherever the two disagree. The hero-search direction was rejected during build; v2 is a **navbar → sticky category strip → grid** structure with no hero. Breakpoints, type scale, and a few tokens also shifted slightly during implementation. Use this file, not the original spec, for building new screens.
 
