@@ -1,0 +1,31 @@
+{
+  "name": "lain-dain-backend",
+  "version": "1.0.0",
+  "description": "Lain-Dain B2B SaaS Backend API",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "b2b",
+    "saas",
+    "lain-dain",
+    "express",
+    "supabase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "bcryptjs": "^3.0.2",
+    "bullmq": "^5.41.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "ioredis": "^5.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "resend": "^4.1.2"
+  }
+}

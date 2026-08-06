@@ -1,0 +1,16 @@
+### Variables
+@base_url = http://localhost:5000/api
+@content_type = application/json
+
+### 1. System Health Check
+GET {{base_url}}/health
+Content-Type: {{content_type}}
+
+### 2. Try Registering a New Seller
+POST {{base_url}}/sellers/register
+Content-Type: {{content_type}}
+
+{
+  "store_name": "Mohsin Bulk Traders",
+  "description": "B2B Wholesale textile products"
+}

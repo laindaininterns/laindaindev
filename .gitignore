@@ -1,4 +1,4 @@
-# Logs
+# ── Logs ──────────────────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -7,12 +7,22 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# ── Dependencies ───────────────────────────────────────────────────────
+node_modules/
+
+# ── Environment Variables (NEVER commit these) ─────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Build Outputs ──────────────────────────────────────────────────────
 dist
 dist-ssr
+
+# ── Vite / Frontend Specific ───────────────────────────────────────────
 *.local
 
-# Editor directories and files
+# ── Editor Directories & Files ────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
 .idea
