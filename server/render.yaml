@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: lain-dain-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
