@@ -1,4 +1,4 @@
-# Logs
+# ── Logs ──────────────────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -7,12 +7,25 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ── Dependencies ───────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
 
-# Editor directories and files
+# ── Environment Variables (NEVER commit these) ─────────────────────────
+.env
+*.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# ── Build Outputs ──────────────────────────────────────────────────────
+dist/
+**/dist/
+dist-ssr/
+.vite/
+
+# ── Editor Directories & Files ────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
 .idea
