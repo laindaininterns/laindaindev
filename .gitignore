@@ -9,18 +9,21 @@ lerna-debug.log*
 
 # ── Dependencies ───────────────────────────────────────────────────────
 node_modules/
+**/node_modules/
 
 # ── Environment Variables (NEVER commit these) ─────────────────────────
 .env
+*.env
 .env.local
 .env.*.local
+server/.env
+client/.env
 
 # ── Build Outputs ──────────────────────────────────────────────────────
-dist
-dist-ssr
-
-# ── Vite / Frontend Specific ───────────────────────────────────────────
-*.local
+dist/
+**/dist/
+dist-ssr/
+.vite/
 
 # ── Editor Directories & Files ────────────────────────────────────────
 .vscode/*
