@@ -5,18 +5,19 @@ A high-fidelity, interactive B2B wholesale platform built with **React**, **Vite
 ---
 
 ## 📌 Table of Contents
+
 1. [Overview](#-overview)
-2. [Design System & Aesthetics](#-design-system--aesthetics)
-3. [Page Screenshots & Breakdown](#-page-screenshots--breakdown)
+2. [Design System &amp; Aesthetics](#-design-system--aesthetics)
+3. [Page Screenshots &amp; Breakdown](#-page-screenshots--breakdown)
    - [1. Landing Page](#1-landing-page)
    - [2. Dedicated Category Catalog](#2-dedicated-category-catalog)
    - [3. Filtered Category View](#3-filtered-category-view)
    - [4. Product Description View](#4-product-description-view)
    - [5. My Shopping Bag](#5-my-shopping-bag)
-   - [6. Cart Overview & Payment Details](#6-cart-overview--payment-details)
+   - [6. Cart Overview &amp; Payment Details](#6-cart-overview--payment-details)
 4. [Component Architecture](#-component-architecture)
 5. [Tech Stack](#-tech-stack)
-6. [Getting Started & Run Commands](#-getting-started--run-commands)
+6. [Getting Started &amp; Run Commands](#-getting-started--run-commands)
 
 ---
 
@@ -41,6 +42,7 @@ Adhering strictly to brand guidelines:
 ## 📸 Page Screenshots & Breakdown
 
 ### 1. Landing Page
+
 The home view introduces LainDain with hero banners, category navigation, featured products, subscription callouts, and bestseller carousels.
 
 ![Landing Page](./figma-screens/Landing%20Page.png)
@@ -55,6 +57,7 @@ The home view introduces LainDain with hero banners, category navigation, featur
 ---
 
 ### 2. Dedicated Category Catalog
+
 The full catalog overview page presenting product listings, category cards, and wholesale offerings.
 
 ![Category Dedicated Page](./figma-screens/Category%20dediacted%20page.png)
@@ -67,6 +70,7 @@ The full catalog overview page presenting product listings, category cards, and 
 ---
 
 ### 3. Filtered Category View
+
 A specialized category browsing experience featuring dynamic headers and interactive sidebar filters.
 
 ![Filter a Specific Category Page](./figma-screens/filter%20a%20specific%20category%20page.png)
@@ -79,6 +83,7 @@ A specialized category browsing experience featuring dynamic headers and interac
 ---
 
 ### 4. Product Description View
+
 An in-depth detail page for individual product items with variant controls and recommendations.
 
 ![Product Description View Page](./figma-screens/description%20view%20page.png)
@@ -94,6 +99,7 @@ An in-depth detail page for individual product items with variant controls and r
 ---
 
 ### 5. My Shopping Bag
+
 The shopping bag view providing item summary, quantity updates, and checkout preparation.
 
 ![Shopping Bag](./figma-screens/shopping-bag.png)
@@ -107,6 +113,7 @@ The shopping bag view providing item summary, quantity updates, and checkout pre
 ---
 
 ### 6. Cart Overview & Payment Details
+
 The final order review and checkout step with delivery options and payment form.
 
 ![Cart Overview & Payment Details](./figma-screens/cart-overview.png)
@@ -157,36 +164,44 @@ src/
 Follow these steps to set up and run the project locally:
 
 ### 1. Prerequisites
+
 Ensure you have **Node.js** (v18 or higher) and **npm** installed on your system.
 
 ### 2. Clone the Repository
+
 ```bash
 git clone https://github.com/laindaininterns/laindaindev.git
 cd internship
 ```
 
 ### 3. Switch to Working Branch
+
 ```bash
 git checkout akif/demoUIPage01
 ```
 
 ### 4. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 5. Start Development Server
+
 ```bash
 npm run dev
 ```
+
 The application will start locally at **`http://localhost:5173`**.
 
 ### 6. Build for Production
+
 ```bash
 npm run build
 ```
 
 ### 7. Preview Production Build
+
 ```bash
 npm run preview
 ```
