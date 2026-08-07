@@ -193,6 +193,7 @@ PORT=5000
 For testing authentication without creating a new account:
 - **Email**: `demo@laindain.pk`
 - **Password**: `password123`
+- **Role & Scope**: Standard `BUYER` role (read-only catalog browsing & sandbox checkout; cannot access `/api/admin` or modify system configuration).
 - **Error Testing**: Enter password `wrongpass` to view validation states.
 
 ---
