@@ -104,7 +104,7 @@
 **Issue:** No file describing the site for AI crawlers/agents.
 **Verify:** `curl -I https://laindainstore.vercel.app/llms.txt` — confirm 404.
 **Fix:**
-- [ ] Add `client/public/llms.txt` with a short site/purpose description
+- [x] Add `client/public/llms.txt` with a short site/purpose description
 **Priority:** Low — do this last, after all other FE issues are closed.
 
 ---

@@ -1,0 +1,18 @@
+# LainDain (Land10) — B2B Wholesale Marketplace
+
+> Pakistan's premier B2B wholesale marketplace connecting verified manufacturers and suppliers with wholesale buyers, retailers, and distributors.
+
+## Overview
+LainDain provides a seamless digital trading experience for B2B transactions, featuring verified supplier listings, product catalog navigation, MOQ quantity setup, real-time search, and a streamlined wholesale checkout pipeline.
+
+## Main Services & Features
+- **Supplier Catalog**: Filtered supplier inventory across Textile & Apparel, Leather Goods, Surgical Instruments, Sporting Goods, Electronics, and Food & Agriculture.
+- **Wholesale Order Stepper**: Flexible Minimum Order Quantity (MOQ) ordering with bulk tier pricing.
+- **Supplier Verification**: AI-assisted supplier identity and verification scoring.
+- **Real-Time Search & Category Filters**: Multi-faceted product and supplier search.
+- **Secure Authentication**: JWT-based session control for buyers and sellers.
+
+## Technical Details
+- Frontend: React (Vite, TailwindCSS)
+- Backend: Node.js, Express, Supabase (PostgreSQL, Auth)
+- Deployment: Vercel (Frontend), Render (Backend API)
