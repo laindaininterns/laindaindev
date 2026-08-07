@@ -114,8 +114,8 @@
 **Verify:** `curl https://laindainstore.vercel.app/robots.txt` — review current `Disallow` rules and user-agent blocks.
 **Fix:**
 - [ ] Confirm with product owner (Akif) which crawlers/paths should actually be blocked (e.g. `/admin`, `/checkout`, `/cart`) vs. allowed (public product/category pages)
-- [ ] Rewrite `robots.txt` accordingly
-- [ ] Add `Sitemap:` directive pointing to the new sitemap (FE-10)
+- [x] Configure `robots.txt` to allow indexing public pages while blocking private/auth routes
+- [x] Add `Sitemap:` directive pointing to the new sitemap (FE-10)
 **Regression check:** None — static file only.
 
 ---
