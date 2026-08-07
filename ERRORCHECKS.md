@@ -349,9 +349,9 @@
 **Issue:** Need to confirm no real `.env` file was ever committed to git history, even if later removed.
 **Verify:** `git log --all --full-history -- "*.env" "server/.env" ".env"` — check for any historical commits.
 **Fix:**
-- [ ] If found: treat every key in that historical file as compromised — rotate all of them (Supabase keys, DB password, any third-party API keys) regardless of whether the file was later deleted
-- [ ] Optionally scrub history with `git filter-repo` if the exposure is severe (coordinate with the team before rewriting shared history)
-**Regression check:** After rotation, confirm the app still connects to Supabase/DB with the new keys in all environments (local, Render, Vercel).
+- [x] Verified via `git log --all --full-history` that no `.env` file was ever committed to the repository history
+- [x] Confirmed `.env` and `*.env` patterns are present in `.gitignore`
+**Regression check:** Confirm environment variables are properly passed via platform settings (Render/Vercel) without committing local `.env` files.
 
 ---
 
