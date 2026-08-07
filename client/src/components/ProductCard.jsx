@@ -5,7 +5,7 @@ export default function ProductCard({ product, onSelectProduct }) {
   return (
     <div
       onClick={() => onSelectProduct(product)}
-      className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-[#E9E8E2] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
+      className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-black/20 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Compact Product Visual Box */}
       <div className="relative h-[230px] p-3 select-none overflow-hidden bg-white">
