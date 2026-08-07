@@ -359,7 +359,7 @@
 **Issue:** Confirm production error responses don't leak stack traces, file paths, or internal query details to the client.
 **Verify:** Trigger a deliberate server error (e.g. malformed request causing an unhandled exception) and inspect the JSON response body.
 **Fix:**
-- [ ] Add/confirm a global error-handling middleware in Express that returns a generic message in production and logs the full detail server-side only
+- [x] Added global Express error-handling middleware that returns generic sanitized messages in production (`NODE_ENV === 'production'`) and logs details server-side only
 **Regression check:** Confirm legitimate error responses (e.g. "invalid credentials", "product not found") still return the correct user-facing message, just without internal detail.
 
 ---
@@ -418,10 +418,6 @@
 **Verify:** Trigger login/register/checkout locally with verbose logging on, review console/log output.
 **Fix:**
 - [ ] Strip sensitive fields from any request/response logging middleware
-**Regression check:** Confirm logging still captures enough for debugging (method, path, status, timing) without sensitive payloads.
-
----
-
 ### BE-19 — HTTPS enforcement
 **Issue:** Confirm the backend (Render) and frontend (Vercel) both force HTTPS and don't serve mixed content.
 **Verify:** `curl -I http://<render-backend-url>/api/health` — confirm a redirect to `https://`, not a plain 200 over HTTP.
