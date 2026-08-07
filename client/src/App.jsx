@@ -39,6 +39,16 @@ export default function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (selectedProduct) {
+      document.title = `${selectedProduct.name} | LainDain Wholesale`;
+    } else if (activeCategory && activeCategory !== "All Suppliers") {
+      document.title = `${activeCategory} Suppliers | LainDain (Land10)`;
+    } else {
+      document.title = "LainDain (Land10) — B2B Wholesale Marketplace";
+    }
+  }, [selectedProduct, activeCategory]);
+
   function triggerToast(message, tone = "success") {
     setToast({ show: true, message, tone });
     setTimeout(() => setToast({ show: false, message: "", tone: "success" }), 2800);
