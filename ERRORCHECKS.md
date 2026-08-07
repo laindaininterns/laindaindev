@@ -85,8 +85,8 @@
 **Issue:** Some pages have more than one `<h1>`, others have none — bad for accessibility and SEO hierarchy.
 **Verify:** For each route, `document.querySelectorAll('h1').length` in devtools console — flag anything ≠ 1.
 **Fix:**
-- [ ] Audit every page component; ensure exactly one `<h1>` per route, correctly describing the page's main content
-- [ ] Demote incorrectly-used `<h1>`s elsewhere on the page to `<h2>`/`<h3>` as semantically appropriate
+- [x] Ensure exactly one `<h1>` per page/view
+- [x] Change additional heading levels to follow `h1 -> h2 -> h3` sequence without skipping levels
 **Regression check:** Confirm visual styling unchanged (adjust CSS selectors if any styling was tag-based rather than class-based).
 
 ---

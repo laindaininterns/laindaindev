@@ -223,7 +223,7 @@ export default function App() {
             </div>
 
             <div>
-              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[#5B5B58] mb-3">Categories</h4>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#5B5B58] mb-3">Categories</h2>
               <div className="flex flex-col gap-2 text-[13px] text-black">
                 {CATEGORIES.slice(1, 5).map((c) => (
                   <button
@@ -238,7 +238,7 @@ export default function App() {
             </div>
 
             <div>
-              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[#5B5B58] mb-3">Company</h4>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#5B5B58] mb-3">Company</h2>
               <div className="flex flex-col gap-2 text-[13px] text-black">
                 <a href="#" className="hover:text-[#85A6A3]">How It Works</a>
                 <button onClick={() => { setAuthInitialScreen("register_seller"); setShowAuthModal(true); }} className="text-left hover:text-[#85A6A3]">
@@ -250,7 +250,7 @@ export default function App() {
             </div>
 
             <div>
-              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[#5B5B58] mb-3">Support</h4>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#5B5B58] mb-3">Support</h2>
               <div className="flex flex-col gap-2 text-[13px] text-black">
                 <a href="#" className="hover:text-[#85A6A3]">Help Centre</a>
                 <a href="#" className="hover:text-[#85A6A3]">Buyer Protection</a>
