@@ -273,8 +273,8 @@
 **Issue:** Need to confirm CORS is scoped to the exact production frontend domain, not `*` or leftover preview URLs.
 **Verify:** Review the `cors()` middleware config in `server/src/server.js`. Test with `curl -H "Origin: https://evil-example.com" -I https://<render-backend-url>/api/products` — confirm the response does not include `Access-Control-Allow-Origin: https://evil-example.com` or `*`.
 **Fix:**
-- [ ] Set an explicit allow-list: production domain + local dev origin only
-- [ ] Remove any wildcard or broad regex origin matching
+- [x] Set an explicit allow-list: production domain + local dev origin only
+- [x] Remove any wildcard or broad regex origin matching
 **Regression check:** Confirm the live frontend can still call the API successfully (no new CORS errors in browser console) after tightening.
 
 ---

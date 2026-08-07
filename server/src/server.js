@@ -15,9 +15,28 @@ const productRoutes = require('./routes/productRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security & Body Parser Middlewares
-app.use(helmet());
-app.use(cors());
+// CORS whitelist configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://laindain.vercel.app',
+  'https://laindaindev.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS policy violation: Origin not allowed.'));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
