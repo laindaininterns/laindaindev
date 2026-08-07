@@ -106,8 +106,9 @@ export default function LoginScreen({ onSwitchScreen, onLoginSuccess }) {
       <form onSubmit={handleSubmit} noValidate>
         {/* Email Field */}
         <div className="mb-4">
-          <label className="mb-1.5 block text-[12px] font-medium text-black">Email Address</label>
+          <label htmlFor="login-email" className="mb-1.5 block text-[12px] font-medium text-black">Email Address</label>
           <input
+            id="login-email"
             ref={emailRef}
             type="email"
             value={email}
@@ -124,9 +125,10 @@ export default function LoginScreen({ onSwitchScreen, onLoginSuccess }) {
 
         {/* Password Field */}
         <div className="mb-3">
-          <label className="mb-1.5 block text-[12px] font-medium text-black">Password</label>
+          <label htmlFor="login-password" className="mb-1.5 block text-[12px] font-medium text-black">Password</label>
           <div className="relative">
             <input
+              id="login-password"
               ref={passwordRef}
               type={showPassword ? "text" : "password"}
               value={password}
@@ -140,6 +142,7 @@ export default function LoginScreen({ onSwitchScreen, onLoginSuccess }) {
             />
             <button
               type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((s) => !s)}
               className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-[8px] hover:bg-black/5"
             >

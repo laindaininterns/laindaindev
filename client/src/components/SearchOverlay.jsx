@@ -43,6 +43,7 @@ export default function SearchOverlay({
             value={searchQuery}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search suppliers or products..."
+            aria-label="Search suppliers or products"
             className="flex-1 min-w-0 bg-transparent text-[15px] outline-none placeholder:text-[#5B5B58]"
           />
           <button

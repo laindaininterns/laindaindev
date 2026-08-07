@@ -153,8 +153,8 @@
 **Issue:** Product images, icons, and logos lack descriptive `alt` attributes.
 **Verify:** Devtools console: `[...document.querySelectorAll('img')].filter(i => !i.alt)` — list every offender.
 **Fix:**
-- [x] Audit all `<img>` and visual elements across components for descriptive `alt`/`aria-label` text
-- [x] Ensure decorative elements have `aria-hidden="true"` or empty `alt=""`
+- [x] Audit all product images, icons, and visual elements for descriptive alt/aria-label text
+- [x] Set aria-hidden=true on decorative graphics
 **Regression check:** No visual change; confirm with screen-reader spot check if possible.
 
 ---
@@ -163,8 +163,8 @@
 **Issue:** `.map` files are being served publicly, letting anyone reconstruct original source from the deployed bundle.
 **Verify:** Devtools → Sources tab on the live site, or `curl -I https://laindainstore.vercel.app/assets/<bundle>.js.map` — confirm 200 instead of 404.
 **Fix:**
-- [ ] In `client/vite.config.js`, set `build: { sourcemap: false }` for production builds (or route maps only to an internal error-tracking tool, never publicly servable)
-- [ ] Rebuild and redeploy, re-verify `.map` requests now 404
+- [x] In `client/vite.config.js`, set `build: { sourcemap: false }` for production builds (or route maps only to an internal error-tracking tool, never publicly servable)
+- [x] Rebuild and redeploy, re-verify `.map` requests now 404
 **Regression check:** App behavior identical — this only affects debug tooling, not runtime.
 
 ---
