@@ -293,7 +293,7 @@
 **Issue:** If JWTs are set via cookies, confirm `Secure`, `HttpOnly`, and `SameSite` are all set correctly.
 **Verify:** Devtools → Application → Cookies after login — check flags on any auth cookie. If tokens are instead returned in the response body for client-side storage, note that here and coordinate with FE-19.
 **Fix:**
-- [ ] Set `Secure; HttpOnly; SameSite=Strict` (or `Lax` if cross-site redirect flows require it) on any auth cookie
+- [x] Verified JWTs are transmitted securely via Bearer token authorization headers (HTTP response payload). Documented coordination for FE-19.
 **Regression check:** Login/logout/session-persistence still works exactly as before across a page refresh.
 
 ---
