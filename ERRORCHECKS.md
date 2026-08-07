@@ -53,8 +53,8 @@
 **Issue:** No `<meta name="description">` in `index.html`, so search/social previews show blank or fallback text.
 **Verify:** `grep -i "meta name=\"description\"" client/index.html` — confirm it's missing or empty.
 **Fix:**
-- [ ] Add a static default meta description to `index.html`
-- [ ] Add per-page overrides for product/category pages if using `react-helmet-async`
+- [x] Add a static default meta description to `index.html`
+- [x] Add per-page overrides for product/category pages if using `react-helmet-async`
 **Regression check:** No visible UI change; confirm via view-source only.
 
 ---
