@@ -86,5 +86,15 @@ export async function loginUserRequest(email, password) {
     localStorage.setItem('auth_token', data.token);
   }
 
-  return { name: data.user?.email ? data.user.email.split('@')[0] : email.split('@')[0], email: data.user?.email || email, role: data.user?.role, ...data };
+  // Extract real display name from profile object:
+  // - BUYER: profile.billing_address (or full_name)
+  // - SELLER: profile.business_name
+  // - Fallback: email username before @
+  const displayName =
+    data.profile?.billing_address ||
+    data.profile?.business_name ||
+    data.profile?.full_name ||
+    (data.user?.email ? data.user.email.split('@')[0] : email.split('@')[0]);
+
+  return { name: displayName, email: data.user?.email || email, role: data.user?.role, ...data };
 }
