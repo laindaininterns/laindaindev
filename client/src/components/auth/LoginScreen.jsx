@@ -198,13 +198,6 @@ export default function LoginScreen({ onSwitchScreen, onLoginSuccess }) {
           {status === "loading" ? "Logging in…" : "Log In →"}
         </button>
       </form>
-
-      {/* Demo Credentials Box */}
-      <div className="mt-4 rounded-[12px] bg-[#EEF3F2] p-3 text-[11px] text-[#5B5B58] border border-[#E9E8E2] space-y-0.5">
-        <p className="font-semibold text-black">💡 Demo Credentials:</p>
-        <p>• Email: <code>demo@laindain.pk</code> | Password: <code>password123</code></p>
-        <p>• Error test: enter password <code>wrongpass</code></p>
-      </div>
     </div>
   );
 }
