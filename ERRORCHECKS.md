@@ -397,8 +397,7 @@
 **Issue:** Confirm no endpoint builds a raw SQL string from unsanitized user input.
 **Verify:** `grep -rn "query(\`\|+ req\.\|\${req\." server/src/` — review any matches for string-concatenated queries.
 **Fix:**
-- [ ] Confirm all Supabase calls use the client's parameterized query builder (`.eq()`, `.match()`, etc.), not raw interpolated SQL
-- [ ] If any raw query is found, convert to parameterized form
+- [x] Confirmed all Supabase calls use parameterized query builder methods (`.eq()`, `.match()`, `.insert()`, `.update()`) with zero raw SQL interpolation
 **Regression check:** Confirm the affected endpoint returns identical data for identical valid input after the change.
 
 ---
@@ -407,8 +406,8 @@
 **Issue:** Confirm passwords are hashed with a modern algorithm (bcrypt/argon2) at an adequate cost factor, never stored or logged in plaintext.
 **Verify:** Check the auth controller's registration/login logic and the `users` table schema. `grep -rn "console.log.*password" server/src/` to catch accidental logging.
 **Fix:**
-- [ ] Confirm bcrypt (or equivalent) with cost factor ≥ 10 is used
-- [ ] Remove any logging statement that could print raw password/token values
+- [x] Confirmed bcrypt with cost factor 10 is used for password hashing (`genSalt(10)`)
+- [x] Verified zero console logging of passwords across all backend controllers & middleware
 **Regression check:** Confirm existing user accounts can still log in (don't invalidate existing hashes) and new registrations still work.
 
 ---
