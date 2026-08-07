@@ -378,7 +378,7 @@
 **Issue:** Confirm `/api/health` doesn't return internal details (DB connection strings, versions, stack info) beyond a simple status.
 **Verify:** `curl https://<render-backend-url>/api/health` — review response body.
 **Fix:**
-- [ ] Trim the response to a minimal `{ status: "ok" }` (or similar) if it currently returns more
+- [x] Verified `/api/health` returns only minimal status payload (`{ status: 'OK', service: 'Lain-Dain B2B SaaS Backend API', timestamp: ... }`) without exposing internal environment or database details
 **Regression check:** Confirm Render's health check configuration (in `render.yaml`) still passes against the trimmed response.
 
 ---
