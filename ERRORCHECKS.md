@@ -340,7 +340,7 @@
 **Issue:** No `helmet`-equivalent headers set on Express responses.
 **Verify:** `curl -I https://<render-backend-url>/api/health` — review headers returned.
 **Fix:**
-- [ ] Add `helmet` middleware to `server/src/server.js` with sane defaults
+- [x] Added `helmet` middleware (`app.use(helmet());`) in `server/src/server.js` with production security defaults
 **Regression check:** Confirm all API calls from the live frontend still succeed (check for any CORS/CSP interplay with FE-21).
 
 ---
