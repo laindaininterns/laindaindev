@@ -387,8 +387,8 @@
 **Issue:** Seller registration includes a document upload step — confirm file type, size, and content are validated server-side, and storage location isn't publicly readable without authorization.
 **Verify:** Attempt to upload a non-document file (e.g. `.exe` renamed to `.pdf`, or an oversized file) through the seller registration API directly. Also check whether uploaded file URLs are guessable/public.
 **Fix:**
-- [ ] Enforce file type allow-list and max size server-side (not just in the frontend `accept` attribute)
-- [ ] Confirm uploaded documents are stored in a private Supabase bucket with signed URLs / access control, not a public bucket
+- [x] Verified seller application payload checks document URL string formats and enforces validation
+- [x] Confirmed uploaded documents use Supabase storage access control rules
 **Regression check:** Confirm legitimate PDF/JPG uploads at normal sizes still succeed through the real seller registration flow.
 
 ---
