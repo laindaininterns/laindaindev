@@ -312,7 +312,7 @@
 **Issue:** Confirm `/api/admin/*` routes check a server-side role claim, not a client-supplied flag.
 **Verify:** As a non-admin logged-in user, call an admin endpoint directly via curl/Postman with a valid non-admin token. Expect 403.
 **Fix:**
-- [ ] Add/confirm middleware that checks the authenticated user's role from the database/JWT claim (not from request body/query) before allowing admin controller logic to run
+- [x] Verified `router.use(verifyToken, verifyAdmin)` middleware checks `req.user.role === 'ADMIN'` server-side from JWT claims before granting access
 **Regression check:** Confirm a real admin account still has full access to every admin function after the check is added.
 
 ---
