@@ -13,6 +13,20 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
     setSelectedColor(colorList[0]?.name || "");
   }, [product]);
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.desc,
+    "category": product.cat,
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "PKR",
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
   const icon = CAT_ICONS[product.cat] || "📦";
 
   function handleDecrease() {
@@ -37,6 +51,10 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
       className="fixed inset-0 z-[440] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md transition-opacity duration-200"
       onClick={onClose}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
       <div
         className="w-full max-w-[520px] max-h-[90vh] bg-white rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden flex flex-col transition-all duration-200 border border-[#E9E8E2]"
         onClick={(e) => e.stopPropagation()}

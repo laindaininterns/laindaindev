@@ -74,8 +74,9 @@
 **Issue:** No `Organization`/`Product`/`BreadcrumbList` schema — search engines can't build rich results.
 **Verify:** Run the live URL through Google's Rich Results Test — confirm "no structured data found."
 **Fix:**
-- [ ] Add `Organization` JSON-LD to the base `index.html` or root layout
-- [ ] Add `Product` JSON-LD dynamically on product detail pages
+- [x] Add `<script type="application/ld+json">` for `Organization` to base HTML or root layout
+- [x] Add `Product` JSON-LD schema dynamically on product detail pages
+- [x] Add `BreadcrumbList` if route hierarchy exists
 **Regression check:** Confirm JSON-LD script tag doesn't break page render (check console for JSON syntax errors).
 
 ---
