@@ -95,7 +95,7 @@
 **Issue:** No `<link rel="canonical">`, risking duplicate-content SEO issues (e.g. `?ref=` query params, trailing slashes).
 **Verify:** `grep -i "canonical" client/index.html` and check rendered `<head>` in devtools on a live route.
 **Fix:**
-- [ ] Add a canonical tag per route pointing to the clean production URL
+- [x] Add a canonical tag per route pointing to the clean production URL
 **Regression check:** None expected — head-only change.
 
 ---
