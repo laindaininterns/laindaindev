@@ -6,6 +6,7 @@ import ProductCard from "./components/ProductCard";
 import Toast from "./components/Toast";
 import NotFoundPage from "./components/NotFoundPage";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
@@ -337,7 +338,8 @@ export default function App() {
       {/* Global Toast */}
       <Toast toast={toast} />
 
-      {/* Vercel Speed Insights */}
+      {/* Vercel Web Analytics & Speed Insights */}
+      <Analytics />
       <SpeedInsights />
     </div>
   );
