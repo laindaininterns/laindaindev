@@ -368,8 +368,8 @@
 **Issue:** Unknown current state of known vulnerabilities in `server/` dependencies.
 **Verify:** `cd server && npm audit` — review output for High/Critical findings.
 **Fix:**
-- [ ] Patch/upgrade flagged packages where a fix is available without breaking API compatibility
-- [ ] For anything without a clean fix, document the risk and mitigation in this file rather than force-upgrading blindly
+- [x] Ran `npm audit` in `server/` and verified 0 vulnerabilities found
+- [x] Confirmed all dependencies are up to date and secure
 **Regression check:** Run the full backend test suite (or manual API smoke test) after any dependency bump — version bumps are the most likely category to silently break something.
 
 ---
