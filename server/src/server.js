@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 5000;
 // CORS whitelist configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  'https://laindainstore.vercel.app',
   'https://laindain.vercel.app',
   'https://laindaindev.vercel.app',
   'http://localhost:5173',

@@ -6,6 +6,7 @@ import {
   validateRequired,
   mockRegisterBuyerRequest,
 } from "../../data/marketplaceData";
+import { registerBuyerRequest } from "../../services/api";
 
 export default function RegisterBuyerScreen({ onSwitchScreen, onRegisterSuccess }) {
   const [formData, setFormData] = useState({
@@ -41,7 +42,18 @@ export default function RegisterBuyerScreen({ onSwitchScreen, onRegisterSuccess 
     setFormError("");
 
     try {
-      const user = await mockRegisterBuyerRequest(formData);
+      let user;
+      try {
+        user = await registerBuyerRequest(formData);
+      } catch (apiErr) {
+        // Fallback to mock if API server is offline/unreachable
+        console.warn("API registration failed or offline, using fallback:", apiErr.message);
+        if (apiErr.message.includes("Failed to fetch") || apiErr.message.includes("NetworkError")) {
+          user = await mockRegisterBuyerRequest(formData);
+        } else {
+          throw apiErr;
+        }
+      }
       onRegisterSuccess(user);
     } catch (ex) {
       setFormError(ex.message);

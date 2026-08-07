@@ -5,6 +5,7 @@ import {
   validatePassword,
   mockLoginRequest,
 } from "../../data/marketplaceData";
+import { loginUserRequest } from "../../services/api";
 
 function Hint({ message }) {
   if (!message) return null;
@@ -85,7 +86,17 @@ export default function LoginScreen({ onSwitchScreen, onLoginSuccess }) {
     setFormError("");
 
     try {
-      const user = await mockLoginRequest(email, password);
+      let user;
+      try {
+        user = await loginUserRequest(email, password);
+      } catch (apiErr) {
+        console.warn("API login failed, trying fallback:", apiErr.message);
+        if (apiErr.message.includes("Failed to fetch") || apiErr.message.includes("NetworkError")) {
+          user = await mockLoginRequest(email, password);
+        } else {
+          throw apiErr;
+        }
+      }
       setStatus("success");
       onLoginSuccess(user);
     } catch (err) {

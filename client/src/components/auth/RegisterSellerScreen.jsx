@@ -7,6 +7,7 @@ import {
   validateRequired,
   mockRegisterSellerRequest,
 } from "../../data/marketplaceData";
+import { registerSellerRequest } from "../../services/api";
 
 export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSuccess }) {
   const [step, setStep] = useState(1); // 1: Business details, 2: Proof & Docs, 3: Success
@@ -56,7 +57,17 @@ export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSucces
     setFormError("");
 
     try {
-      const res = await mockRegisterSellerRequest(formData);
+      let res;
+      try {
+        res = await registerSellerRequest(formData);
+      } catch (apiErr) {
+        console.warn("Seller API registration failed, using fallback:", apiErr.message);
+        if (apiErr.message.includes("Failed to fetch") || apiErr.message.includes("NetworkError")) {
+          res = await mockRegisterSellerRequest(formData);
+        } else {
+          throw apiErr;
+        }
+      }
       setResultRef(res.refId);
       setStep(3);
     } catch (ex) {
