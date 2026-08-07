@@ -263,8 +263,8 @@
 **Issue:** Cross-check with FE-18. Need backend-side confirmation the service role key is only used in server contexts, never logged, never returned in an API response/error body.
 **Verify:** `grep -r "SUPABASE_SERVICE_ROLE_KEY\|service_role" server/src/` — confirm it's only referenced in the Supabase admin client initializer, never in a response payload or `console.log`.
 **Fix:**
-- [ ] Remove any accidental logging of the key or the client object that contains it
-- [ ] If FE-18 found a leak, rotate the key in Supabase dashboard now, update `server/.env` / Render env vars, redeploy
+- [x] Verified service role key is only referenced in Supabase client initializer, never logged or returned in responses
+- [x] No exposure found in server code or log statements
 **Regression check:** All admin-only operations (product CRUD, seller approval) still function after any key rotation.
 
 ---
