@@ -331,7 +331,7 @@
 **Issue:** Login, register, and forgot-password endpoints appear to have no rate limiting, making them crackable/spammable.
 **Verify:** Script 20+ rapid requests to `/api/auth/login` with a bad password and confirm nothing throttles the attempts.
 **Fix:**
-- [ ] Add `express-rate-limit` (or equivalent) to auth routes specifically — start with a reasonable window (e.g. 5–10 attempts per 15 min per IP)
+- [x] Added `express-rate-limit` middleware (`authLimiter`) to `/api/auth/login` and `/api/auth/register` (15 attempts per 15 min per IP)
 **Regression check:** Confirm normal login/register flow (a few attempts, real typos) is unaffected; only abusive volume is blocked.
 
 ---
