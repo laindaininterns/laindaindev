@@ -63,9 +63,9 @@
 **Issue:** Sharing any page link (WhatsApp, LinkedIn, etc.) shows no image/title/description preview.
 **Verify:** Paste the live URL into a link-preview debugger (e.g. Facebook Sharing Debugger, or `curl -s https://laindainstore.vercel.app/ | grep og:`) — confirm no `og:*` or `twitter:*` tags returned.
 **Fix:**
-- [ ] Add `og:title`, `og:description`, `og:image`, `og:url`, `og:type` to `index.html`
-- [ ] Add `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
-- [ ] Create/host a static 1200×630 share image at a stable URL
+- [x] Add `og:title`, `og:description`, `og:image`, `og:url`, `og:type` to `index.html`
+- [x] Add `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
+- [x] Create/host a static 1200×630 share image at a stable URL
 **Regression check:** No UI/behavior change; verify only via debugger tool re-scan.
 
 ---
