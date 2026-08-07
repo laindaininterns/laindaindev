@@ -8,7 +8,7 @@ import {
   mockRegisterSellerRequest,
 } from "../../data/marketplaceData";
 
-export default function RegisterSellerScreen({ onSwitchScreen, onRegisterSuccess }) {
+export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSuccess }) {
   const [step, setStep] = useState(1); // 1: Business details, 2: Proof & Docs, 3: Success
   const [formData, setFormData] = useState({
     bizName: "",

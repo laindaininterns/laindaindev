@@ -3,7 +3,6 @@ import LoginScreen from "./LoginScreen";
 import ForgotPasswordScreen from "./ForgotPasswordScreen";
 import RegisterBuyerScreen from "./RegisterBuyerScreen";
 import RegisterSellerScreen from "./RegisterSellerScreen";
-import { TOKENS } from "../../data/marketplaceData";
 
 export default function AuthModal({
   isOpen,

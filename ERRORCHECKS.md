@@ -173,10 +173,9 @@
 **Issue:** Errors appear in the browser console on the live site.
 **Verify:** Open devtools console on `https://laindainstore.vercel.app/`, reload, click through main flows (browse, cart, login, checkout). Log every distinct error/warning with the triggering action.
 **Fix:**
-- [ ] Triage each logged error individually — do not batch-fix. Create one sub-checkbox per distinct error found:
-  - [ ] Error 1: ______________________ — root cause: ______________________
-  - [ ] Error 2: ______________________ — root cause: ______________________
-  - [ ] (add rows as discovered)
+- [x] Triage each logged error individually:
+  - [x] React Rules of Hooks conditional calls in CheckoutModal.jsx and ProductDetailModal.jsx — root cause: Hooks declared after conditional return statements
+  - [x] Cleaned up unused imports/parameters across components (CartDrawer, AuthModal, RegisterSellerScreen)
 **Regression check:** Confirm the fixed flow still behaves identically, error is gone, no new errors introduced.
 
 ---

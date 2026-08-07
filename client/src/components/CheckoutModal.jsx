@@ -7,8 +7,6 @@ export default function CheckoutModal({
   currentUser,
   onCompleteOrder,
 }) {
-  if (!isOpen) return null;
-
   const [step, setStep] = useState("form"); // form | success
   const [orderNum, setOrderNum] = useState("");
   const [formData, setFormData] = useState({
@@ -17,6 +15,8 @@ export default function CheckoutModal({
     phone: "",
     address: "",
   });
+
+  if (!isOpen) return null;
 
   function handleSubmit(e) {
     e.preventDefault();

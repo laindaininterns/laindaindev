@@ -1,5 +1,5 @@
 import React from "react";
-import { CAT_ICONS, TOKENS } from "../data/marketplaceData";
+import { CAT_ICONS } from "../data/marketplaceData";
 
 export default function CartDrawer({
   isOpen,

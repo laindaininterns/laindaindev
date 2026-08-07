@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import { CAT_ICONS, COLOR_OPTIONS, TOKENS } from "../data/marketplaceData";
 
 export default function ProductDetailModal({ product, onClose, onAddToCart }) {
-  if (!product) return null;
-
-  const [quantity, setQuantity] = useState(product.moq || 10);
-  const colorList = COLOR_OPTIONS[product.cat] || [];
+  const [quantity, setQuantity] = useState(product?.moq || 10);
+  const colorList = product ? COLOR_OPTIONS[product.cat] || [] : [];
   const [selectedColor, setSelectedColor] = useState(colorList[0]?.name || "");
 
   useEffect(() => {
-    setQuantity(product.moq || 10);
-    setSelectedColor(colorList[0]?.name || "");
+    if (product) {
+      setQuantity(product.moq || 10);
+      const colors = COLOR_OPTIONS[product.cat] || [];
+      setSelectedColor(colors[0]?.name || "");
+    }
   }, [product]);
+
+  if (!product) return null;
 
   const productSchema = {
     "@context": "https://schema.org",
