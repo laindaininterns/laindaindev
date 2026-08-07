@@ -134,8 +134,8 @@
 **Issue:** No sitemap for search engines to discover routes.
 **Verify:** `curl -I https://laindainstore.vercel.app/sitemap.xml` — confirm 404.
 **Fix:**
-- [ ] Generate a static `sitemap.xml` covering landing, category, and static pages (product pages can be added later if they're server-rendered/dynamic)
-- [ ] Reference it in `robots.txt` (see FE-08)
+- [x] Generate a static `sitemap.xml` covering landing, category, and static pages (product pages can be added later if they're server-rendered/dynamic)
+- [x] Reference it in `robots.txt` (see FE-08)
 **Regression check:** None.
 
 ---
