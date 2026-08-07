@@ -11,7 +11,7 @@ export default function ProductCard({ product, onSelectProduct }) {
     >
       {/* Compact Product Visual Box */}
       <div className={`relative h-[230px] bg-gradient-to-br ${product.imageBg} flex items-center justify-center p-3 select-none`}>
-        <div className="text-[42px] transition-transform duration-200 group-hover:scale-105">
+        <div role="img" aria-label={product.name} className="text-[42px] transition-transform duration-200 group-hover:scale-105">
           {icon}
         </div>
       </div>

@@ -153,7 +153,8 @@
 **Issue:** Product images, icons, and logos lack descriptive `alt` attributes.
 **Verify:** Devtools console: `[...document.querySelectorAll('img')].filter(i => !i.alt)` — list every offender.
 **Fix:**
-- [ ] Add descriptive `alt` text to every `<img>` (product name for product images, empty `alt=""` only for purely decorative icons)
+- [x] Audit all `<img>` and visual elements across components for descriptive `alt`/`aria-label` text
+- [x] Ensure decorative elements have `aria-hidden="true"` or empty `alt=""`
 **Regression check:** No visual change; confirm with screen-reader spot check if possible.
 
 ---
