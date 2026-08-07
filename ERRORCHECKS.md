@@ -195,8 +195,8 @@
 **Issue:** Unknown routes show a blank screen or the default host error instead of a real "page not found" UI.
 **Verify:** Visit `https://laindainstore.vercel.app/this-route-does-not-exist` — observe current behavior.
 **Fix:**
-- [ ] Add a catch-all route (`*`) in the router rendering a proper 404 component
-- [ ] Confirm `client/vercel.json` rewrite rules still route unmatched paths into the SPA (not an actual HTTP 404 from Vercel) so the in-app 404 component can render
+- [x] Add a catch-all route / fallback rendering a proper 404 component (`NotFoundPage.jsx`)
+- [x] Confirm `client/vercel.json` rewrite rules still route unmatched paths into the SPA (not an actual HTTP 404 from Vercel) so the in-app 404 component can render
 **Regression check:** All existing valid routes still resolve correctly; only truly unknown paths hit the new 404 UI.
 
 ---

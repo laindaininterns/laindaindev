@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import CategoryBar from "./components/CategoryBar";
 import ProductCard from "./components/ProductCard";
 import Toast from "./components/Toast";
+import NotFoundPage from "./components/NotFoundPage";
 
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
@@ -143,6 +144,11 @@ export default function App() {
     setCart({});
     setIsCheckoutOpen(false);
     triggerToast(`Order ${orderRef} confirmed!`);
+  }
+
+  const isNotFound = typeof window !== "undefined" && window.location.pathname !== "/" && window.location.pathname !== "/index.html";
+  if (isNotFound) {
+    return <NotFoundPage />;
   }
 
   return (
