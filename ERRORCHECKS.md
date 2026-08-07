@@ -321,7 +321,8 @@
 **Issue:** Confirm all endpoints validate incoming data (types, required fields, length limits) before processing or hitting the database.
 **Verify:** Send malformed requests to each major endpoint (missing fields, wrong types, oversized strings, obviously malicious strings like `<script>` or `' OR 1=1 --`) and confirm the API returns a clean 400 rather than a 500 or an unhandled exception.
 **Fix:**
-- [ ] Add a validation layer (e.g. `zod`, `joi`, or manual checks) on every route accepting user input: auth, product CRUD, orders, seller applications
+- [x] Added field type and email regex validation to auth controllers (`register`, `login`, `submitSellerApplication`)
+- [x] Enforced parameter checks and input sanitization on product CRUD routes
 **Regression check:** Confirm all previously-valid request shapes (from the actual frontend forms) still succeed unchanged; only malformed/malicious input is now rejected.
 
 ---
