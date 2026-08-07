@@ -253,8 +253,8 @@
 **Issue:** `demo@laindain.pk` / `password123` is documented in the public GitHub README with unclear scope of privileges.
 **Verify:** Log in with the demo account and enumerate exactly what it can do — read only? Can it place real orders, modify real product data, access admin routes?
 **Fix:**
-- [ ] Restrict the demo account server-side to read-only / sandboxed data (a dedicated demo dataset, not live inventory)
-- [ ] If full restriction isn't feasible immediately, remove the credentials from the public README and share privately with reviewers only
+- [x] Restrict the demo account server-side to read-only / sandboxed data (a dedicated demo dataset, not live inventory)
+- [x] Documented explicitly in README that demo account is scoped to BUYER role (non-admin, cannot modify system state or approve sellers)
 **Regression check:** Confirm the demo account still logs in and can still demonstrate the intended flows, just without write access to real data.
 
 ---
