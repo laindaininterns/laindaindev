@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { PRODUCTS, CATEGORIES, TOKENS } from "./data/marketplaceData";
 import Navbar from "./components/Navbar";
 import CategoryBar from "./components/CategoryBar";
 import ProductCard from "./components/ProductCard";
-import ProductDetailModal from "./components/ProductDetailModal";
-import CartDrawer from "./components/CartDrawer";
-import CheckoutModal from "./components/CheckoutModal";
-import SearchOverlay from "./components/SearchOverlay";
-import AuthModal from "./components/auth/AuthModal";
 import Toast from "./components/Toast";
+
+const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
+const CartDrawer = lazy(() => import("./components/CartDrawer"));
+const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
+const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
+const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 
 export default function App() {
   // App state
@@ -268,61 +269,63 @@ export default function App() {
       </footer>
 
       {/* 5. Modals & Overlays */}
-      {/* Mid-screen Product Info Popup */}
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-      />
+      <Suspense fallback={null}>
+        {/* Mid-screen Product Info Popup */}
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+        />
 
-      {/* Wholesale Cart Drawer */}
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
-        cartSubtotal={cartSubtotal}
-        onUpdateQty={handleUpdateCartQty}
-        onRemoveItem={handleRemoveCartItem}
-        onProceedToCheckout={() => {
-          setIsCartOpen(false);
-          setIsCheckoutOpen(true);
-        }}
-      />
+        {/* Wholesale Cart Drawer */}
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cartItems={cartItems}
+          cartSubtotal={cartSubtotal}
+          onUpdateQty={handleUpdateCartQty}
+          onRemoveItem={handleRemoveCartItem}
+          onProceedToCheckout={() => {
+            setIsCartOpen(false);
+            setIsCheckoutOpen(true);
+          }}
+        />
 
-      {/* Checkout Modal */}
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        cartSubtotal={cartSubtotal}
-        currentUser={currentUser}
-        onCompleteOrder={handleCompleteOrder}
-      />
+        {/* Checkout Modal */}
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          cartSubtotal={cartSubtotal}
+          currentUser={currentUser}
+          onCompleteOrder={handleCompleteOrder}
+        />
 
-      {/* Search Overlay */}
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        searchQuery={searchQuery}
-        onQueryChange={setSearchQuery}
-        searchResults={searchResults}
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          setIsSearchOpen(false);
-        }}
-        onSelectProduct={(p) => {
-          setSelectedProduct(p);
-          setIsSearchOpen(false);
-        }}
-      />
+        {/* Search Overlay */}
+        <SearchOverlay
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          searchQuery={searchQuery}
+          onQueryChange={setSearchQuery}
+          searchResults={searchResults}
+          onSelectCategory={(cat) => {
+            setActiveCategory(cat);
+            setIsSearchOpen(false);
+          }}
+          onSelectProduct={(p) => {
+            setSelectedProduct(p);
+            setIsSearchOpen(false);
+          }}
+        />
 
-      {/* Auth Modal Container */}
-      <AuthModal
-        isOpen={showAuthModal}
-        initialScreen={authInitialScreen}
-        onClose={() => setShowAuthModal(false)}
-        onLoginSuccess={handleLoginSuccess}
-        onRegisterSuccess={handleRegisterSuccess}
-      />
+        {/* Auth Modal Container */}
+        <AuthModal
+          isOpen={showAuthModal}
+          initialScreen={authInitialScreen}
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+          onRegisterSuccess={handleRegisterSuccess}
+        />
+      </Suspense>
 
       {/* Global Toast */}
       <Toast toast={toast} />
