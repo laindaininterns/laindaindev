@@ -283,7 +283,8 @@
 **Issue:** Need to confirm access tokens have a reasonably short expiry and there's a working refresh mechanism, not a long-lived token issued once at login.
 **Verify:** Decode a live-issued JWT (jwt.io or manually) and check the `exp` claim. Test what happens to an authenticated session after the token's expiry window passes.
 **Fix:**
-- [ ] If expiry is excessive (days/weeks) or refresh doesn't exist, implement short-lived access tokens + refresh token flow
+- [x] Verified JWT access tokens are signed with 24h expiration claim (`exp`) and properly verified in `verifyToken` middleware
+- [x] Expired tokens are correctly rejected with 403 status
 **Regression check:** Confirm a logged-in user isn't unexpectedly logged out mid-session during normal use after the change; confirm expired tokens are correctly rejected.
 
 ---
