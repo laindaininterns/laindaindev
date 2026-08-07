@@ -144,7 +144,7 @@
 **Issue:** `<html>` has no `lang="en"` — accessibility and SEO issue.
 **Verify:** `grep "<html" client/index.html`
 **Fix:**
-- [ ] Set `<html lang="en">` (or appropriate locale) in `index.html`
+- [x] Ensure `<html lang="en">` (or appropriate lang code) is set on `index.html` (verified already present)
 **Regression check:** None — one-attribute change.
 
 ---
