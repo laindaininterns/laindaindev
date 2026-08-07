@@ -75,8 +75,12 @@ export default function SearchOverlay({
                     }}
                     className="w-full flex items-center gap-3 p-2.5 rounded-[12px] hover:bg-[#F9F9F6] text-left transition-colors"
                   >
-                    <span className="h-[40px] w-[40px] flex-shrink-0 rounded-[10px] bg-[#EEF3F2] flex items-center justify-center text-[18px]">
-                      {icon}
+                    <span className="h-[40px] w-[40px] flex-shrink-0 rounded-[10px] bg-white overflow-hidden p-0.5 border border-[#E9E8E2] flex items-center justify-center select-none">
+                      {p.image ? (
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover rounded-[8px]" />
+                      ) : (
+                        <span className="text-[18px]">{icon}</span>
+                      )}
                     </span>
                     <span className="min-w-0">
                       <span className="block text-[14px] font-medium text-black truncate">{p.name}</span>
