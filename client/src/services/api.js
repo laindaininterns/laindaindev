@@ -86,19 +86,15 @@ export async function loginUserRequest(email, password) {
     localStorage.setItem('auth_token', data.token);
   }
 
-  let displayName = email.split('@')[0];
-  if (data.profile) {
-    if (data.profile.billing_address) {
-      displayName = data.profile.billing_address;
-    } else if (data.profile.business_name) {
-      displayName = data.profile.business_name;
-    }
-  }
+  // Extract real display name from profile object:
+  // - BUYER: profile.billing_address (or full_name)
+  // - SELLER: profile.business_name
+  // - Fallback: email username before @
+  const displayName =
+    data.profile?.billing_address ||
+    data.profile?.business_name ||
+    data.profile?.full_name ||
+    (data.user?.email ? data.user.email.split('@')[0] : email.split('@')[0]);
 
-  return {
-    name: displayName,
-    email: data.user?.email || email,
-    role: data.user?.role,
-    ...data,
-  };
+  return { name: displayName, email: data.user?.email || email, role: data.user?.role, ...data };
 }

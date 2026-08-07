@@ -13,6 +13,7 @@ const CartDrawer = lazy(() => import("./components/CartDrawer"));
 const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
 const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
+const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
 
 export default function App() {
   // App state
@@ -332,6 +333,24 @@ export default function App() {
           onClose={() => setShowAuthModal(false)}
           onLoginSuccess={handleLoginSuccess}
           onRegisterSuccess={handleRegisterSuccess}
+        />
+
+        {/* Laila B2B AI Assistant Widget */}
+        <ChatWidget
+          onNavigateCategory={(cat) => {
+            if (CATEGORIES.includes(cat)) {
+              setActiveCategory(cat);
+            } else {
+              setActiveCategory("All Suppliers");
+            }
+            window.scrollTo({ top: 300, behavior: "smooth" });
+          }}
+          onNavigateProduct={(prodId) => {
+            const found = PRODUCTS.find((p) => String(p.id) === String(prodId));
+            if (found) {
+              setSelectedProduct(found);
+            }
+          }}
         />
       </Suspense>
 
