@@ -124,8 +124,8 @@
 **Issue:** No favicon/app icons served; browser tab and bookmarks show a blank/default icon.
 **Verify:** `curl -I https://laindainstore.vercel.app/favicon.ico` — confirm 404.
 **Fix:**
-- [ ] Add `favicon.ico`, `apple-touch-icon.png`, and a `site.webmanifest` to `client/public/`
-- [ ] Reference them correctly in `index.html`
+- [x] Add `favicon.ico`, `apple-touch-icon.png`, and a `site.webmanifest` to `client/public/`
+- [x] Reference them correctly in `index.html`
 **Regression check:** None.
 
 ---
