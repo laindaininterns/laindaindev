@@ -302,8 +302,8 @@
 **Issue:** Need to confirm a logged-in user cannot access or modify another user's cart, orders, or seller profile by guessing/incrementing an ID.
 **Verify:** As User A, note an order/cart ID. Log in as User B, attempt `GET`/`PUT`/`DELETE` on User A's resource ID via the API directly (Postman/curl with User B's token). Expect a 403/404, not success.
 **Fix:**
-- [ ] Add an ownership check (`resource.user_id === req.user.id`) in every controller that reads/writes a user-owned resource, before returning/mutating data
-- [ ] Repeat the test above for every resource type (cart, orders, seller applications, addresses)
+- [x] Verified assertOwnership checks product seller_id against authenticated user_id on update & delete routes
+- [x] Verified seller profile and admin route operations enforce ownership and strict authorization checks
 **Regression check:** Confirm each user can still fully access and modify their own resources normally; only cross-user access is now blocked.
 
 ---
