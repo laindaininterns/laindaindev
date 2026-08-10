@@ -115,7 +115,7 @@ export async function loginUserRequest(email, password) {
 }
 
 /**
- * Fetch pending seller profiles for Admin Approvals queue
+ * Admin: Fetch pending seller profiles
  */
 export async function fetchPendingSellers() {
   try {
@@ -142,7 +142,7 @@ export async function fetchPendingSellers() {
 }
 
 /**
- * Update seller verification status (APPROVED or REJECTED)
+ * Admin: Update seller verification status
  */
 export async function updateSellerStatus(sellerId, status) {
   try {
@@ -165,6 +165,199 @@ export async function updateSellerStatus(sellerId, status) {
     return data.seller;
   } catch (error) {
     console.warn(`[API Fail-safe] updateSellerStatus (${status}) failed:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Fetch KYC status & documents
+ */
+export async function fetchSellerKyc() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/kyc`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch seller KYC');
+    }
+
+    const data = await response.json();
+    return data.kyc;
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchSellerKyc failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Upload / Submit KYC document
+ */
+export async function submitSellerKycDoc(docName) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/kyc`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ docName }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to upload document');
+    }
+
+    const data = await response.json();
+    return data.document;
+  } catch (error) {
+    console.warn('[API Fail-safe] submitSellerKycDoc failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Fetch seller products (Multi-Tenant Isolation)
+ */
+export async function fetchSellerProducts() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch seller products');
+    }
+
+    const data = await response.json();
+    return data.products || [];
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchSellerProducts failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Create a new wholesale product
+ */
+export async function createSellerProductRequest(productData) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(productData),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to create product');
+    }
+
+    const data = await response.json();
+    return data.product;
+  } catch (error) {
+    console.warn('[API Fail-safe] createSellerProductRequest failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Update product stock quantity or out-of-stock toggle
+ */
+export async function updateSellerStockRequest(productId, stockData) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/products/${productId}/stock`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(stockData),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to update product stock');
+    }
+
+    const data = await response.json();
+    return data.product;
+  } catch (error) {
+    console.warn('[API Fail-safe] updateSellerStockRequest failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Fetch purchase orders
+ */
+export async function fetchSellerOrders() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/orders`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch seller orders');
+    }
+
+    const data = await response.json();
+    return data.orders || [];
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchSellerOrders failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Seller: Update purchase order status
+ */
+export async function updateSellerOrderStatusRequest(orderId, status) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/seller/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to update order status');
+    }
+
+    const data = await response.json();
+    return data.order;
+  } catch (error) {
+    console.warn('[API Fail-safe] updateSellerOrderStatusRequest failed:', error.message);
     throw error;
   }
 }
