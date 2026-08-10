@@ -65,6 +65,17 @@ export default function ProductsTab({ products, setProducts, handleAdjustStock, 
                 </div>
               </div>
 
+              {/* Mini thumbnails preview */}
+              {product.photos && product.photos.length > 1 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {product.photos.map((photo, index) => (
+                    <div key={index} className="w-8 h-8 rounded-[6px] overflow-hidden border border-[#E9E8E2] bg-[#EEF3F2]">
+                      <img src={photo} alt={`${product.name} mini ${index}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4 my-4 p-3 rounded-[12px] bg-[#F9F9F6] border border-[#E9E8E2]">
                 <div>
                   <span className="text-[11px] text-[#5B5B58]">Wholesale Price</span>

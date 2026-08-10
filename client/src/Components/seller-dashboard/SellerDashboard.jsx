@@ -5,6 +5,12 @@ import OrdersTab from "./OrdersTab";
 import ProductsTab from "./ProductsTab";
 import AddProductModal from "./AddProductModal";
 
+import product01 from "../../assets/products/product-01-faisalabad-textiles.jpg";
+import product02 from "../../assets/products/product-02-lahore-ceramics.jpg";
+import product03 from "../../assets/products/product-03-karachi-steel.jpg";
+import product04 from "../../assets/products/product-04-gujranwala-leather.jpg";
+import product05 from "../../assets/products/product-05-sialkot-bags.jpg";
+
 // Mock initial data for products matching the LainDain catalog style
 const INITIAL_PRODUCTS = [
   {
@@ -16,6 +22,7 @@ const INITIAL_PRODUCTS = [
     stock: 250,
     isOutOfStock: false,
     moq: 50,
+    photos: [product01, product02, product03], // 3 photos
   },
   {
     id: 2,
@@ -26,6 +33,7 @@ const INITIAL_PRODUCTS = [
     stock: 45,
     isOutOfStock: false,
     moq: 10,
+    photos: [product02, product04], // 2 photos
   },
   {
     id: 3,
@@ -36,6 +44,7 @@ const INITIAL_PRODUCTS = [
     stock: 0,
     isOutOfStock: true,
     moq: 20,
+    photos: [product03, product01, product05, product02, product04], // 5 photos
   },
   {
     id: 4,
@@ -46,6 +55,7 @@ const INITIAL_PRODUCTS = [
     stock: 80,
     isOutOfStock: false,
     moq: 15,
+    photos: [product04, product05, product01], // 3 photos
   }
 ];
 
