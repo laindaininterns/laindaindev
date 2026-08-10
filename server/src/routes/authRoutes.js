@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { verifyToken } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
 
 // Rate limiter for authentication routes: max 15 requests per 15 minutes per IP
@@ -35,5 +36,19 @@ router.post('/login', authLimiter, authController.login);
  * @access  Public / Authenticated
  */
 router.post('/seller/submit_application', authController.submitSellerApplication);
+
+/**
+ * @route   GET /api/auth/profile
+ * @desc    Get authenticated user profile details
+ * @access  Private
+ */
+router.get('/profile', verifyToken, authController.getProfile);
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update authenticated user profile details
+ * @access  Private
+ */
+router.put('/profile', verifyToken, authController.updateProfile);
 
 module.exports = router;

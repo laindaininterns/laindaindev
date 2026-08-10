@@ -7,12 +7,15 @@ import Toast from "./components/Toast";
 import NotFoundPage from "./components/NotFoundPage";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
+import { Agentation } from 'agentation';
+
 
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
 const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
 const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
+const UserSettingsModal = lazy(() => import("./components/UserSettingsModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
 
 export default function App() {
@@ -27,6 +30,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
 
@@ -166,6 +170,7 @@ export default function App() {
           setAuthInitialScreen(screen);
           setShowAuthModal(true);
         }}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={handleLogout}
         scrolled={scrolled}
       />
@@ -335,6 +340,21 @@ export default function App() {
           onRegisterSuccess={handleRegisterSuccess}
         />
 
+        {/* User Settings Modal */}
+        <UserSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          currentUser={currentUser}
+          onProfileUpdated={(updatedUser) => {
+            setCurrentUser((prev) => ({
+              ...prev,
+              ...updatedUser,
+              name: updatedUser.name || prev?.name,
+            }));
+            triggerToast("Account details updated successfully!");
+          }}
+        />
+
         {/* Laila B2B AI Assistant Widget */}
         <ChatWidget
           onNavigateCategory={(cat) => {
@@ -360,6 +380,7 @@ export default function App() {
       {/* Vercel Web Analytics & Speed Insights */}
       <Analytics />
       <SpeedInsights />
+       {import.meta.env.DEV && <Agentation />}
     </div>
   );
 }

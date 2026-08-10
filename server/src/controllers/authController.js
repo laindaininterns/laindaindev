@@ -92,6 +92,7 @@ const register = async (req, res) => {
         .insert([
           {
             user_id: user.id,
+            full_name: profileData.full_name || null,
             contact_number: profileData.contact_number || null,
             billing_address: profileData.billing_address || null,
             shipping_address: profileData.shipping_address || null,
@@ -110,6 +111,7 @@ const register = async (req, res) => {
           {
             user_id: user.id,
             business_name: businessName,
+            contact_number: profileData.contact_number || null,
             business_address: profileData.business_address || null,
             tax_id: profileData.tax_id || null,
             current_status: 'PENDING',
@@ -393,8 +395,272 @@ const submitSellerApplication = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/auth/profile
+ * Fetch authenticated user details and profile
+ */
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Fetch core user
+    const { data: user, error: userErr } = await supabase
+      .from('users')
+      .select('id, email, role, created_at')
+      .eq('id', userId)
+      .single();
+
+    if (userErr || !user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User account not found.',
+      });
+    }
+
+    let profile = null;
+    if (user.role === 'BUYER') {
+      const { data: buyerProfile } = await supabase
+        .from('buyer_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      profile = buyerProfile || {};
+    } else if (user.role === 'SELLER') {
+      const { data: sellerProfile } = await supabase
+        .from('seller_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      profile = sellerProfile || {};
+    } else if (user.role === 'ADMIN') {
+      const { data: adminProfile } = await supabase
+        .from('admin_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      profile = adminProfile || {};
+    }
+
+    const displayName =
+      profile.full_name ||
+      profile.business_name ||
+      profile.billing_address ||
+      (user.email ? user.email.split('@')[0] : 'User');
+
+    return res.status(200).json({
+      success: true,
+      user,
+      profile,
+      displayName,
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error fetching profile.',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /api/auth/profile
+ * Update authenticated user profile details with role-based whitelisting
+ */
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const { email, full_name, business_name, contact_number, billing_address, shipping_address, business_address, tax_id } = req.body;
+
+    // Fetch existing user record
+    const { data: currentUser, error: fetchErr } = await supabase
+      .from('users')
+      .select('id, email, role')
+      .eq('id', userId)
+      .single();
+
+    if (fetchErr || !currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User account not found.',
+      });
+    }
+
+    let updatedEmail = currentUser.email;
+
+    // Email update & uniqueness check
+    if (email && email.trim() !== '' && email.trim() !== currentUser.email) {
+      const emailTrimmed = email.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid email address format.',
+        });
+      }
+
+      // Check if email already used by another user
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', emailTrimmed)
+        .neq('id', userId)
+        .single();
+
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: 'Email address is already in use by another account.',
+        });
+      }
+
+      const { data: updatedUserData, error: emailErr } = await supabase
+        .from('users')
+        .update({ email: emailTrimmed, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+        .select('id, email, role, created_at')
+        .single();
+
+      if (emailErr) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to update user email.',
+          error: emailErr.message,
+        });
+      }
+
+      if (updatedUserData) {
+        updatedEmail = updatedUserData.email;
+      }
+    }
+
+    // Role-based profile field whitelisting
+    let updatedProfile = {};
+    if (userRole === 'BUYER') {
+      const buyerUpdates = {};
+      if (full_name !== undefined) buyerUpdates.full_name = full_name;
+      if (billing_address !== undefined) buyerUpdates.billing_address = billing_address;
+      if (contact_number !== undefined) buyerUpdates.contact_number = contact_number;
+      if (shipping_address !== undefined) buyerUpdates.shipping_address = shipping_address;
+
+      if (Object.keys(buyerUpdates).length > 0) {
+        buyerUpdates.updated_at = new Date().toISOString();
+
+        // 1. Try upserting buyer profile
+        let { data: pData, error: pErr } = await supabase
+          .from('buyer_profiles')
+          .upsert({ user_id: userId, ...buyerUpdates }, { onConflict: 'user_id' })
+          .select('*')
+          .single();
+
+        // 2. Fallback if full_name column does not exist in Supabase DB yet
+        if (pErr && pErr.message && (pErr.message.includes('full_name') || pErr.code === 'PGRST204')) {
+          const fallbackUpdates = { ...buyerUpdates };
+          delete fallbackUpdates.full_name;
+          if (full_name && (!fallbackUpdates.billing_address || fallbackUpdates.billing_address === '')) {
+            fallbackUpdates.billing_address = full_name;
+          }
+          const retry = await supabase
+            .from('buyer_profiles')
+            .upsert({ user_id: userId, ...fallbackUpdates }, { onConflict: 'user_id' })
+            .select('*')
+            .single();
+          pData = retry.data;
+          pErr = retry.error;
+        }
+
+        if (pErr) {
+          console.error('Buyer profile update error:', pErr);
+          return res.status(400).json({
+            success: false,
+            message: `Failed to update buyer profile: ${pErr.message}`,
+            error: pErr.message,
+          });
+        }
+        updatedProfile = pData || {};
+      } else {
+        const { data: pData } = await supabase.from('buyer_profiles').select('*').eq('user_id', userId).single();
+        updatedProfile = pData || {};
+      }
+    } else if (userRole === 'SELLER') {
+      const sellerUpdates = {};
+      if (business_name !== undefined) sellerUpdates.business_name = business_name;
+      if (business_address !== undefined) sellerUpdates.business_address = business_address;
+      if (contact_number !== undefined) sellerUpdates.contact_number = contact_number;
+      if (tax_id !== undefined) sellerUpdates.tax_id = tax_id;
+
+      if (Object.keys(sellerUpdates).length > 0) {
+        sellerUpdates.updated_at = new Date().toISOString();
+
+        // 1. Try upserting seller profile
+        let { data: pData, error: pErr } = await supabase
+          .from('seller_profiles')
+          .upsert({ user_id: userId, ...sellerUpdates }, { onConflict: 'user_id' })
+          .select('*')
+          .single();
+
+        // 2. Fallback if contact_number column does not exist in Supabase DB yet
+        if (pErr && pErr.message && (pErr.message.includes('contact_number') || pErr.code === 'PGRST204')) {
+          const fallbackUpdates = { ...sellerUpdates };
+          delete fallbackUpdates.contact_number;
+          const retry = await supabase
+            .from('seller_profiles')
+            .upsert({ user_id: userId, ...fallbackUpdates }, { onConflict: 'user_id' })
+            .select('*')
+            .single();
+          pData = retry.data;
+          pErr = retry.error;
+        }
+
+        if (pErr) {
+          console.error('Seller profile update error:', pErr);
+          return res.status(400).json({
+            success: false,
+            message: `Failed to update seller profile: ${pErr.message}`,
+            error: pErr.message,
+          });
+        }
+        updatedProfile = pData || {};
+      } else {
+        const { data: pData } = await supabase.from('seller_profiles').select('*').eq('user_id', userId).single();
+        updatedProfile = pData || {};
+      }
+    }
+
+    const displayName =
+      updatedProfile.full_name ||
+      (full_name && full_name.trim() !== '' ? full_name.trim() : null) ||
+      updatedProfile.business_name ||
+      updatedProfile.billing_address ||
+      (updatedEmail ? updatedEmail.split('@')[0] : 'User');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully.',
+      user: {
+        id: userId,
+        email: updatedEmail,
+        role: userRole,
+      },
+      profile: updatedProfile,
+      displayName,
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error updating profile.',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   submitSellerApplication,
+  getProfile,
+  updateProfile,
 };
+

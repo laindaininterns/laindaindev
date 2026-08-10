@@ -12,5 +12,8 @@
     "dev:client": "npm --prefix client run dev",
     "start:server": "npm --prefix server start",
     "build:client": "npm --prefix client run build"
+  },
+  "devDependencies": {
+    "agentation": "^3.0.2"
   }
 }
