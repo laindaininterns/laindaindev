@@ -23,6 +23,13 @@ const authLimiter = rateLimit({
 router.post('/register', authLimiter, authController.register);
 
 /**
+ * @route   POST /api/auth/verify-email
+ * @desc    Verify 6-digit numeric OTP and set is_email_verified to true
+ * @access  Public
+ */
+router.post('/verify-email', authLimiter, authController.verifyEmail);
+
+/**
  * @route   POST /api/auth/login
  * @desc    Login user and issue JWT token
  * @access  Public

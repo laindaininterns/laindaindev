@@ -2,7 +2,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 const { JWT_SECRET } = require('../middleware/auth');
-const { sendSellerWelcomeEmail } = require('../services/emailService');
+const { sendSellerWelcomeEmail, sendVerificationCode } = require('../services/emailService');
+
+/**
+ * Generate a 6-digit numeric OTP code for email verification
+ */
+const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 /**
  * POST /api/auth/register
@@ -53,7 +58,10 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Insert core user
+    // Generate 6-digit verification OTP code
+    const verificationCode = generateVerificationCode();
+
+    // Insert core user with explicit verification states
     const { data: user, error: userError } = await supabase
       .from('users')
       .insert([
@@ -61,9 +69,11 @@ const register = async (req, res) => {
           email,
           password_hash,
           role: normalizedRole,
+          is_email_verified: false,
+          email_verification_token: verificationCode,
         },
       ])
-      .select('id, email, role, created_at')
+      .select('id, email, role, is_email_verified, created_at')
       .single();
 
     if (userError || !user) {
@@ -128,6 +138,9 @@ const register = async (req, res) => {
       });
     }
 
+    // Trigger 6-digit OTP verification code dispatch right after saving profile
+    await sendVerificationCode(user.email, verificationCode);
+
     // Generate JWT token including user id, role, email, and profile_id
     const token = jwt.sign(
       {
@@ -142,12 +155,13 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `${normalizedRole} registered successfully.`,
+      message: `${normalizedRole} registered successfully. Verification code dispatched to email.`,
       token,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
+        is_email_verified: user.is_email_verified,
         profile_id: profileId,
         created_at: user.created_at,
       },
@@ -164,8 +178,84 @@ const register = async (req, res) => {
 };
 
 /**
+ * POST /api/auth/verify-email
+ * Accepts email & 6-digit code to validate user and flip is_email_verified to true
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and verification code are required.',
+      });
+    }
+
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('id, email, is_email_verified, email_verification_token')
+      .eq('email', email)
+      .single();
+
+    if (findError || !user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User account not found.',
+      });
+    }
+
+    if (user.is_email_verified) {
+      return res.status(200).json({
+        success: true,
+        message: 'Email is already verified.',
+      });
+    }
+
+    if (user.email_verification_token !== String(code).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification code.',
+      });
+    }
+
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update({
+        is_email_verified: true,
+        email_verification_token: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id)
+      .select('id, email, role, is_email_verified, updated_at')
+      .single();
+
+    if (updateError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to update email verification status.',
+        error: updateError.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified successfully.',
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during email verification.',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * POST /api/auth/login
- * Validates email, compares password using bcryptjs, and returns JWT signed with user id, role, and profile id
+ * Validates email, compares password using bcryptjs, and returns JWT
  */
 const login = async (req, res) => {
   try {
@@ -265,6 +355,7 @@ const login = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
+        is_email_verified: user.is_email_verified,
         profile_id: profileId,
       },
       profile: profileData,
@@ -294,7 +385,6 @@ const submitSellerApplication = async (req, res) => {
       });
     }
 
-    // Register seller if password provided, or register seller application
     let userResult = null;
     let sellerProfileResult = null;
 
@@ -309,10 +399,19 @@ const submitSellerApplication = async (req, res) => {
       const userPassword = password || 'DefaultPass123!';
       const salt = await bcrypt.genSalt(10);
       const password_hash = await bcrypt.hash(userPassword, salt);
+      const verificationCode = generateVerificationCode();
 
       const { data: newUser, error: createErr } = await supabase
         .from('users')
-        .insert([{ email, password_hash, role: 'SELLER' }])
+        .insert([
+          {
+            email,
+            password_hash,
+            role: 'SELLER',
+            is_email_verified: false,
+            email_verification_token: verificationCode,
+          },
+        ])
         .select('id, email, role, created_at')
         .single();
 
@@ -335,6 +434,8 @@ const submitSellerApplication = async (req, res) => {
 
       if (profErr) throw profErr;
       sellerProfileResult = newSellerProfile;
+
+      await sendVerificationCode(newUser.email, verificationCode);
     } else {
       userResult = existingUser;
       const { data: existingProfile } = await supabase
@@ -395,6 +496,7 @@ const submitSellerApplication = async (req, res) => {
 
 module.exports = {
   register,
+  verifyEmail,
   login,
   submitSellerApplication,
 };

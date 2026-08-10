@@ -1,5 +1,5 @@
 const supabase = require('../config/supabase');
-const { sendSellerStatusEmail } = require('../services/emailService');
+const { sendSellerStatusAlert } = require('../services/emailService');
 
 /**
  * GET /api/admin/sellers/pending
@@ -123,19 +123,15 @@ const updateSellerStatus = async (req, res) => {
       });
     }
 
-    // Trigger notification email via resend
+    // Post-execution hook: immediately dispatch sendSellerStatusAlert notification
     const sellerEmail = existingSeller.users ? existingSeller.users.email : null;
     if (sellerEmail) {
-      await sendSellerStatusEmail({
-        email: sellerEmail,
-        businessName: updatedSeller.business_name,
-        status: normalizedStatus,
-      });
+      await sendSellerStatusAlert(sellerEmail, normalizedStatus);
     }
 
     return res.status(200).json({
       success: true,
-      message: `Seller status updated successfully to ${normalizedStatus}.`,
+      message: `Seller status updated successfully to ${normalizedStatus}. Notification dispatched.`,
       seller: updatedSeller,
     });
   } catch (error) {

@@ -5,6 +5,12 @@ import CategoryBar from "./components/CategoryBar";
 import ProductCard from "./components/ProductCard";
 import Toast from "./components/Toast";
 import NotFoundPage from "./components/NotFoundPage";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminSummaryPage from "./components/admin/AdminSummaryPage";
+import AdminApprovalsPage from "./components/admin/AdminApprovalsPage";
+import AdminSellersPage from "./components/admin/AdminSellersPage";
+import AdminBuyersPage from "./components/admin/AdminBuyersPage";
+import AdminProductsPage from "./components/admin/AdminProductsPage";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -16,6 +22,11 @@ const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
 
 export default function App() {
+  // Navigation & View state
+  const [currentView, setCurrentView] = useState("marketplace"); // 'marketplace' or 'admin'
+  const [adminTab, setAdminTab] = useState("summary");
+  const [pendingCount, setPendingCount] = useState(3);
+
   // App state
   const [activeCategory, setActiveCategory] = useState("All Suppliers");
   const [currentUser, setCurrentUser] = useState(null);
@@ -23,7 +34,7 @@ export default function App() {
   const [authInitialScreen, setAuthInitialScreen] = useState("login");
 
   // Modals & Overlays state
-  const [selectedProduct, setSelectedProduct] = useState(null); // ProductDetailModal
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -36,6 +47,45 @@ export default function App() {
   // Toast Notification state
   const [toast, setToast] = useState({ show: false, message: "", tone: "success" });
 
+  // Route Guard & Session Persistence on Mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem("auth_token");
+    const savedSession = localStorage.getItem("user_session");
+    const pathname = window.location.pathname;
+
+    let parsedUser = null;
+    if (savedSession) {
+      try {
+        parsedUser = JSON.parse(savedSession);
+        setCurrentUser(parsedUser);
+      } catch (err) {
+        console.warn("Failed to parse saved session:", err);
+      }
+    }
+
+    const isAdminRoute = pathname.startsWith("/admin");
+    if (isAdminRoute) {
+      if (savedToken && parsedUser?.role === "ADMIN") {
+        setCurrentView("admin");
+        setShowAuthModal(false);
+        const targetTab = pathname.split("/admin/")[1];
+        if (targetTab && ["summary", "approvals", "sellers", "buyers", "products"].includes(targetTab)) {
+          setAdminTab(targetTab);
+        }
+      } else {
+        // Block unauthorized access to /admin
+        setCurrentView("marketplace");
+        setShowAuthModal(true);
+        setAuthInitialScreen("login");
+        triggerToast("Access denied. Admin authentication required.", "error");
+      }
+    } else if (savedToken && parsedUser?.role === "ADMIN") {
+      setShowAuthModal(false);
+    } else if (savedToken && parsedUser) {
+      setShowAuthModal(false);
+    }
+  }, []);
+
   useEffect(() => {
     function handleScroll() {
       setScrolled(window.scrollY > 20);
@@ -45,14 +95,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (selectedProduct) {
+    if (currentView === "admin") {
+      document.title = "LainDain Admin Dashboard | Management";
+    } else if (selectedProduct) {
       document.title = `${selectedProduct.name} | LainDain Wholesale`;
     } else if (activeCategory && activeCategory !== "All Suppliers") {
       document.title = `${activeCategory} Suppliers | LainDain (Land10)`;
     } else {
       document.title = "LainDain (Land10) — B2B Wholesale Marketplace";
     }
-  }, [selectedProduct, activeCategory]);
+  }, [currentView, selectedProduct, activeCategory]);
 
   function triggerToast(message, tone = "success") {
     setToast({ show: true, message, tone });
@@ -125,21 +177,42 @@ export default function App() {
   const cartCount = cartItems.length;
   const cartSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  // Auth Handlers
+  // Auth Handlers with Role-Based Redirect & Persistence
   function handleLoginSuccess(user) {
     setCurrentUser(user);
     setShowAuthModal(false);
-    triggerToast(`Welcome back, ${user.name}!`);
+    localStorage.setItem("user_session", JSON.stringify(user));
+    if (user.role === "ADMIN") {
+      setCurrentView("admin");
+      setAdminTab("summary");
+      triggerToast(`Welcome Admin, ${user.name}! Redirected to Admin Dashboard.`);
+    } else {
+      setCurrentView("marketplace");
+      triggerToast(`Welcome back, ${user.name}!`);
+    }
   }
 
   function handleRegisterSuccess(user) {
     setCurrentUser(user);
     setShowAuthModal(false);
-    triggerToast(`Account created! Logged in as ${user.name}`);
+    localStorage.setItem("user_session", JSON.stringify(user));
+    if (user.role === "ADMIN") {
+      setCurrentView("admin");
+      setAdminTab("summary");
+      triggerToast(`Admin account created! Logged in as ${user.name}`);
+    } else {
+      setCurrentView("marketplace");
+      triggerToast(`Account created! Logged in as ${user.name}`);
+    }
   }
 
   function handleLogout() {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_session");
     setCurrentUser(null);
+    setCurrentView("marketplace");
+    setShowAuthModal(true);
+    setAuthInitialScreen("login");
     triggerToast("Logged out successfully.");
   }
 
@@ -149,11 +222,55 @@ export default function App() {
     triggerToast(`Order ${orderRef} confirmed!`);
   }
 
-  const isNotFound = typeof window !== "undefined" && window.location.pathname !== "/" && window.location.pathname !== "/index.html";
+  const isNotFound = typeof window !== "undefined" && window.location.pathname !== "/" && window.location.pathname !== "/index.html" && !window.location.pathname.startsWith("/admin");
   if (isNotFound) {
     return <NotFoundPage />;
   }
 
+  // Render Admin View if user is ADMIN or Admin view active
+  if (currentView === "admin") {
+    return (
+      <div className="relative">
+        {/* Top switch bar */}
+        <div className="bg-black text-white px-4 py-1.5 text-xs flex justify-between items-center z-[100] relative">
+          <span>🛡️ Admin Portal Active — Authenticated as {currentUser?.name || "Admin"}</span>
+          <button
+            onClick={() => setCurrentView("marketplace")}
+            className="text-[#A3C1BF] hover:underline font-medium"
+          >
+            ← Browse Wholesale Marketplace
+          </button>
+        </div>
+
+        <AdminLayout
+          activeTab={adminTab}
+          onSelectTab={setAdminTab}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          pendingCount={pendingCount}
+        >
+          {adminTab === "summary" && (
+            <AdminSummaryPage pendingCount={pendingCount} onSelectTab={setAdminTab} />
+          )}
+          {adminTab === "approvals" && (
+            <AdminApprovalsPage
+              onRefreshCount={setPendingCount}
+              triggerToast={triggerToast}
+            />
+          )}
+          {adminTab === "sellers" && (
+            <AdminSellersPage onSelectTab={setAdminTab} />
+          )}
+          {adminTab === "buyers" && <AdminBuyersPage />}
+          {adminTab === "products" && <AdminProductsPage />}
+        </AdminLayout>
+
+        <Toast toast={toast} />
+      </div>
+    );
+  }
+
+  // Render Marketplace View
   return (
     <div className="min-h-screen bg-[#F9F9F6] text-black font-sans antialiased selection:bg-[#A3C1BF] selection:text-black">
       {/* 1. Sticky Navigation Header */}
@@ -169,6 +286,19 @@ export default function App() {
         onLogout={handleLogout}
         scrolled={scrolled}
       />
+
+      {/* Admin Quick Switch Pill if Admin user browsing marketplace */}
+      {currentUser?.role === "ADMIN" && (
+        <div className="bg-[#EEF3F2] border-b border-[#A3C1BF]/40 py-2 px-4 text-center text-xs font-medium text-black">
+          🛡️ Admin session active.{" "}
+          <button
+            onClick={() => setCurrentView("admin")}
+            className="text-[#85A6A3] font-semibold underline ml-1"
+          >
+            Open Admin Dashboard →
+          </button>
+        </div>
+      )}
 
       {/* 2. Sticky Category Filter Pills Strip */}
       <CategoryBar
@@ -279,14 +409,12 @@ export default function App() {
 
       {/* 5. Modals & Overlays */}
       <Suspense fallback={null}>
-        {/* Mid-screen Product Info Popup */}
         <ProductDetailModal
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
         />
 
-        {/* Wholesale Cart Drawer */}
         <CartDrawer
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
@@ -300,7 +428,6 @@ export default function App() {
           }}
         />
 
-        {/* Checkout Modal */}
         <CheckoutModal
           isOpen={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}
@@ -309,7 +436,6 @@ export default function App() {
           onCompleteOrder={handleCompleteOrder}
         />
 
-        {/* Search Overlay */}
         <SearchOverlay
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
@@ -326,7 +452,6 @@ export default function App() {
           }}
         />
 
-        {/* Auth Modal Container */}
         <AuthModal
           isOpen={showAuthModal}
           initialScreen={authInitialScreen}
@@ -335,7 +460,6 @@ export default function App() {
           onRegisterSuccess={handleRegisterSuccess}
         />
 
-        {/* Laila B2B AI Assistant Widget */}
         <ChatWidget
           onNavigateCategory={(cat) => {
             if (CATEGORIES.includes(cat)) {
@@ -357,7 +481,6 @@ export default function App() {
       {/* Global Toast */}
       <Toast toast={toast} />
 
-      {/* Vercel Web Analytics & Speed Insights */}
       <Analytics />
       <SpeedInsights />
     </div>
