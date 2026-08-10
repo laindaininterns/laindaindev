@@ -82,6 +82,7 @@ export default function SellerDashboard({ onClose }) {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [uploadedDocs, setUploadedDocs] = useState([
     { name: "NTN_Certificate_2026.pdf", size: "1.2 MB", date: "2026-08-01", status: "Approved" },
     { name: "CNIC_Copy_Front_Back.pdf", size: "850 KB", date: "2026-08-01", status: "Approved" },
@@ -192,15 +193,27 @@ export default function SellerDashboard({ onClose }) {
             setProducts={setProducts}
             handleAdjustStock={handleAdjustStock}
             handleToggleOutOfStock={handleToggleOutOfStock}
-            onOpenAddModal={() => setIsAddModalOpen(true)}
+            onOpenAddModal={() => {
+              setEditingProduct(null);
+              setIsAddModalOpen(true);
+            }}
+            onOpenEditModal={(product) => {
+              setEditingProduct(product);
+              setIsAddModalOpen(true);
+            }}
           />
         )}
       </main>
 
       <AddProductModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingProduct(null);
+        }}
+        editingProduct={editingProduct}
         onAddProduct={(newProd) => setProducts(prev => [...prev, newProd])}
+        onEditProduct={(updatedProd) => setProducts(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p))}
       />
     </div>
   );

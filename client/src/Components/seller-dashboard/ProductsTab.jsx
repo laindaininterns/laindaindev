@@ -1,6 +1,4 @@
-import React from "react";
-
-export default function ProductsTab({ products, setProducts, handleAdjustStock, handleToggleOutOfStock, onOpenAddModal }) {
+export default function ProductsTab({ products, setProducts, handleAdjustStock, handleToggleOutOfStock, onOpenAddModal, onOpenEditModal }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -29,22 +27,42 @@ export default function ProductsTab({ products, setProducts, handleAdjustStock, 
           >
             <div>
               <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] font-semibold tracking-wider text-[#5B5B58] uppercase bg-[#EEF3F2] px-2 py-0.5 rounded-full border border-[#E9E8E2]">
-                    {product.cat}
-                  </span>
-                  <h3 className="font-semibold text-[16px] text-black mt-2">{product.name}</h3>
-                  <p className="text-[11px] text-[#5B5B58] mt-0.5">SKU: {product.sku}</p>
+                <div className="flex gap-3">
+                  {/* Photo thumbnail */}
+                  <div className="w-14 h-14 rounded-[12px] bg-[#EEF3F2] overflow-hidden flex-shrink-0 flex items-center justify-center border border-[#E9E8E2]">
+                    {product.photos && product.photos.length > 0 ? (
+                      <img src={product.photos[0]} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a6 6 0 018.486 0L21.75 15.75m-18 0l-1.35-1.35a2.25 2.25 0 010-3.181l1.35-1.35m0 0a2.25 2.25 0 013.18 0l1.35 1.35m-1.35-1.35L9 9m12 6.75V19.5a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 19.5v-3.75m18 0l-1.35-1.35a2.25 2.25 0 00-3.18 0l-1.35 1.35m0 0L15 15" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-semibold tracking-wider text-[#5B5B58] uppercase bg-[#EEF3F2] px-2 py-0.5 rounded-full border border-[#E9E8E2]">
+                      {product.cat}
+                    </span>
+                    <h3 className="font-semibold text-[15px] text-black mt-1 leading-tight">{product.name}</h3>
+                    <p className="text-[11px] text-[#5B5B58] mt-0.5">SKU: {product.sku}</p>
+                  </div>
                 </div>
                 
-                {/* Status displayed on the top right */}
-                <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                  product.isOutOfStock
-                    ? "bg-red-50 text-red-700 border-red-200"
-                    : "bg-green-50 text-green-700 border-green-200"
-                }`}>
-                  {product.isOutOfStock ? "Out of Stock" : "In Stock"}
-                </span>
+                {/* Status displayed on the top right + Edit button */}
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                    product.isOutOfStock
+                      ? "bg-red-50 text-red-700 border-red-200"
+                      : "bg-green-50 text-green-700 border-green-200"
+                  }`}>
+                    {product.isOutOfStock ? "Out of Stock" : "In Stock"}
+                  </span>
+                  <button
+                    onClick={() => onOpenEditModal(product)}
+                    className="text-[12px] text-[#85A6A3] hover:text-[#5B5B58] transition-colors flex items-center gap-1 font-medium"
+                  >
+                    Edit ✏️
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 my-4 p-3 rounded-[12px] bg-[#F9F9F6] border border-[#E9E8E2]">

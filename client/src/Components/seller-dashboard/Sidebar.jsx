@@ -53,7 +53,10 @@ export default function Sidebar({ activeTab, setActiveTab, kycStatus, setKycStat
               : "text-[#5B5B58] hover:bg-black/5 hover:text-black"
           }`}
         >
-          🛡️ KYC Status & Docs
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+          </svg>
+          <span>KYC Verification</span>
         </button>
         
         <button
@@ -64,7 +67,10 @@ export default function Sidebar({ activeTab, setActiveTab, kycStatus, setKycStat
               : "text-[#5B5B58] hover:bg-black/5 hover:text-black"
           }`}
         >
-          📦 Orders Placed
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.008 1.24l.885 1.77a2.25 2.25 0 002.007 1.24h1.98a2.25 2.25 0 002.007-1.24l.885-1.77a2.25 2.25 0 012.007-1.24h3.86m-18 0h18a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v4.5A2.25 2.25 0 002.25 13.5zm0 0l2.25 6h15l2.25-6"/>
+          </svg>
+          <span>Orders Placed</span>
         </button>
         
         <button
@@ -75,7 +81,10 @@ export default function Sidebar({ activeTab, setActiveTab, kycStatus, setKycStat
               : "text-[#5B5B58] hover:bg-black/5 hover:text-black"
           }`}
         >
-          👕 Products & Inventory
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.125 1.125 0 001.592 0l7.336-7.336a1.125 1.125 0 000-1.592L12.75 3.659a2.25 2.25 0 00-1.591-.659zm-3.068 5.625a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"/>
+          </svg>
+          <span>Products & Inventory</span>
         </button>
       </nav>
 

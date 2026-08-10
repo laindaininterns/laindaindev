@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CATEGORIES } from "../../data/marketplaceData";
 
-export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
+export default function AddProductModal({ isOpen, onClose, onAddProduct, onEditProduct, editingProduct }) {
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -10,25 +10,41 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
     moq: "",
     stock: "",
     desc: "",
+    photos: []
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // Reset form when modal opens
     if (isOpen) {
-      setFormData({
-        name: "",
-        sku: "TX-" + Math.floor(Math.random() * 9000 + 1000),
-        cat: CATEGORIES[1] || "Clothing & Apparel",
-        price: "",
-        moq: "",
-        stock: "",
-        desc: "",
-      });
+      if (editingProduct) {
+        // Edit Mode
+        setFormData({
+          name: editingProduct.name || "",
+          sku: editingProduct.sku || "",
+          cat: editingProduct.cat || CATEGORIES[1],
+          price: editingProduct.price || "",
+          moq: editingProduct.moq || "",
+          stock: editingProduct.stock !== undefined ? editingProduct.stock : "",
+          desc: editingProduct.desc || "",
+          photos: editingProduct.photos || []
+        });
+      } else {
+        // Add Mode
+        setFormData({
+          name: "",
+          sku: "TX-" + Math.floor(Math.random() * 9000 + 1000),
+          cat: CATEGORIES[1] || "Clothing & Apparel",
+          price: "",
+          moq: "",
+          stock: "",
+          desc: "",
+          photos: []
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, editingProduct]);
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -49,21 +65,45 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
     }
   };
 
+  // Photo Upload Handler (max 5)
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    if (formData.photos.length + files.length > 5) {
+      setErrors((prev) => ({ ...prev, photos: "Maximum of 5 photos allowed per product." }));
+      return;
+    }
+
+    const newPhotoUrls = files.map(file => URL.createObjectURL(file));
+    setFormData(prev => ({
+      ...prev,
+      photos: [...prev.photos, ...newPhotoUrls].slice(0, 5)
+    }));
+    setErrors((prev) => ({ ...prev, photos: "" }));
+  };
+
+  const handleRemovePhoto = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Product name is required";
     if (!formData.price || formData.price <= 0) newErrors.price = "Enter a valid wholesale price";
     if (!formData.moq || formData.moq <= 0) newErrors.moq = "Enter a valid minimum order quantity";
-    if (!formData.stock || formData.stock < 0) newErrors.stock = "Enter a valid initial stock quantity";
+    if (formData.stock === "" || formData.stock < 0) newErrors.stock = "Enter a valid stock quantity";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    onAddProduct({
-      id: Date.now(),
+    const payload = {
       name: formData.name,
       sku: formData.sku,
       cat: formData.cat,
@@ -71,8 +111,21 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
       moq: parseInt(formData.moq),
       stock: parseInt(formData.stock),
       desc: formData.desc,
+      photos: formData.photos,
       isOutOfStock: parseInt(formData.stock) === 0,
-    });
+    };
+
+    if (editingProduct) {
+      onEditProduct({
+        ...editingProduct,
+        ...payload
+      });
+    } else {
+      onAddProduct({
+        id: Date.now(),
+        ...payload
+      });
+    }
     onClose();
   };
 
@@ -87,7 +140,9 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3 bg-[#F9F9F6] border-b border-[#E9E8E2]">
-          <h2 className="text-[18px] font-semibold text-black">Add New Product</h2>
+          <h2 className="text-[18px] font-semibold text-black">
+            {editingProduct ? "Edit Product Details" : "Add New Product"}
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close modal"
@@ -197,10 +252,10 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
             </div>
           </div>
 
-          {/* Initial Stock */}
+          {/* Stock Input */}
           <div>
             <label className="block text-[13px] font-medium text-[#5B5B58] mb-1.5">
-              Initial Stock *
+              Available Stock *
             </label>
             <input
               type="number"
@@ -215,6 +270,42 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
             />
             {errors.stock && (
               <p className="mt-1 text-[11px] text-[#C6564D]">{errors.stock}</p>
+            )}
+          </div>
+
+          {/* Photos Upload Zone */}
+          <div>
+            <label className="block text-[13px] font-medium text-[#5B5B58] mb-1.5">
+              Product Photos (Max 5)
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.photos.map((photo, index) => (
+                <div key={index} className="relative w-16 h-16 rounded-[8px] overflow-hidden border border-[#E9E8E2]">
+                  <img src={photo} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(index)}
+                    className="absolute top-0.5 right-0.5 h-4 w-4 bg-red-600 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {formData.photos.length < 5 && (
+                <label className="w-16 h-16 rounded-[8px] border-2 border-dashed border-[#A3C1BF] hover:border-[#85A6A3] bg-[#EEF3F2]/30 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                  <span className="text-[18px] text-[#5B5B58]">+</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+            {errors.photos && (
+              <p className="text-[11px] text-[#C6564D]">{errors.photos}</p>
             )}
           </div>
 
@@ -244,7 +335,7 @@ export default function AddProductModal({ isOpen, onClose, onAddProduct }) {
               type="submit"
               className="h-11 px-6 rounded-[12px] bg-[#A3C1BF] text-black text-[14px] font-semibold hover:bg-[#85A6A3] transition-all active:scale-[0.97]"
             >
-              Add Product
+              {editingProduct ? "Save Changes" : "Add Product"}
             </button>
           </div>
 
