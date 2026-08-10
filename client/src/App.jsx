@@ -15,6 +15,7 @@ const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
 const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
+const AdminDashboard = lazy(() => import("./pages/admin-dashboard/AdminDashboard"));
 
 export default function App() {
   // App state
@@ -22,6 +23,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(true); // Pops up initially
   const [authInitialScreen, setAuthInitialScreen] = useState("login");
+  const [viewMode, setViewMode] = useState(() => {
+    return typeof window !== "undefined" && window.location.pathname.startsWith("/admin") ? "admin" : "marketplace";
+  });
 
   // Modals & Overlays state
   const [selectedProduct, setSelectedProduct] = useState(null); // ProductDetailModal
@@ -204,9 +208,22 @@ export default function App() {
     triggerToast(`Order ${orderRef} confirmed!`);
   }
 
-  const isNotFound = typeof window !== "undefined" && window.location.pathname !== "/" && window.location.pathname !== "/index.html";
+  const isNotFound =
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/" &&
+    window.location.pathname !== "/index.html" &&
+    !window.location.pathname.startsWith("/admin");
+
   if (isNotFound) {
     return <NotFoundPage />;
+  }
+
+  if (viewMode === "admin") {
+    return (
+      <Suspense fallback={<div className="p-12 text-center text-sm font-medium">Loading Admin Dashboard...</div>}>
+        <AdminDashboard onExitAdmin={() => setViewMode("marketplace")} />
+      </Suspense>
+    );
   }
 
   return (
@@ -221,6 +238,7 @@ export default function App() {
           setAuthInitialScreen(screen);
           setShowAuthModal(true);
         }}
+        onOpenAdmin={() => setViewMode("admin")}
         onLogout={handleLogout}
         scrolled={scrolled}
       />
