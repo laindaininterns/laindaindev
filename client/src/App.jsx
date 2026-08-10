@@ -14,6 +14,7 @@ const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
 const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
+const SellerDashboard = lazy(() => import("./components/seller-dashboard/SellerDashboard"));
 
 export default function App() {
   // App state
@@ -29,6 +30,7 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [isSellerDashboardOpen, setIsSellerDashboardOpen] = useState(false);
 
   // Cart State (map by product id + color)
   const [cart, setCart] = useState({});
@@ -130,12 +132,18 @@ export default function App() {
     setCurrentUser(user);
     setShowAuthModal(false);
     triggerToast(`Welcome back, ${user.name}!`);
+    if (user.role === "SELLER") {
+      setIsSellerDashboardOpen(true);
+    }
   }
 
   function handleRegisterSuccess(user) {
     setCurrentUser(user);
     setShowAuthModal(false);
     triggerToast(`Account created! Logged in as ${user.name}`);
+    if (user.role === "SELLER") {
+      setIsSellerDashboardOpen(true);
+    }
   }
 
   function handleLogout() {
@@ -154,6 +162,15 @@ export default function App() {
     return <NotFoundPage />;
   }
 
+  if (isSellerDashboardOpen) {
+    return (
+      <Suspense fallback={null}>
+        <SellerDashboard onClose={() => setIsSellerDashboardOpen(false)} />
+        <Toast toast={toast} />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F9F9F6] text-black font-sans antialiased selection:bg-[#A3C1BF] selection:text-black">
       {/* 1. Sticky Navigation Header */}
@@ -168,6 +185,7 @@ export default function App() {
         }}
         onLogout={handleLogout}
         scrolled={scrolled}
+        onOpenSellerDashboard={() => setIsSellerDashboardOpen(true)}
       />
 
       {/* 2. Sticky Category Filter Pills Strip */}
