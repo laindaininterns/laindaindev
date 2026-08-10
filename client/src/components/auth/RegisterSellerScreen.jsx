@@ -8,8 +8,9 @@ import {
   mockRegisterSellerRequest,
 } from "../../data/marketplaceData";
 import { registerSellerRequest } from "../../services/api";
+import posthog, { isPostHogEnabled } from "../../posthog";
 
-export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSuccess }) {
+export default function RegisterSellerScreen({ onRegisterSuccess }) {
   const [step, setStep] = useState(1); // 1: Business details, 2: Proof & Docs, 3: Success
   const [formData, setFormData] = useState({
     bizName: "",
@@ -25,6 +26,7 @@ export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSucces
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultRef, setResultRef] = useState("");
+  const [registeredUser, setRegisteredUser] = useState(null);
 
   function handleChange(field, value) {
     setFormData((p) => ({ ...p, [field]: value }));
@@ -68,7 +70,14 @@ export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSucces
           throw apiErr;
         }
       }
+      if (isPostHogEnabled) {
+        posthog.capture("seller_application_submitted", {
+          category: formData.category,
+          has_business_proof: Boolean(formData.proofFile),
+        });
+      }
       setResultRef(res.refId);
+      setRegisteredUser(res);
       setStep(3);
     } catch (ex) {
       setFormError(ex.message);
@@ -251,7 +260,11 @@ export default function RegisterSellerScreen({ _onSwitchScreen, onRegisterSucces
             Our verification team will review your business credentials within 24 hours.
           </p>
           <button
-            onClick={() => onRegisterSuccess({ name: formData.bizName, email: formData.email })}
+            onClick={() => onRegisterSuccess({
+              ...registeredUser,
+              name: registeredUser?.name || formData.bizName,
+              email: registeredUser?.email || formData.email,
+            })}
             className="mt-4 h-[44px] px-6 rounded-[14px] bg-black text-white font-medium text-[13px]"
           >
             Enter Marketplace →
