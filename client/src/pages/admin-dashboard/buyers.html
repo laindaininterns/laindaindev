@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buyers | LainDain Admin Dashboard</title>
+    <!-- Poppins Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sage: '#A3C1BF',
+              'sage-dark': '#85A6A3',
+              'sage-tint': '#EEF3F2',
+              'off-white': '#F9F9F6',
+              surface: '#FFFFFF',
+              black: '#000000',
+              'text-muted': '#5B5B58',
+              border: '#E9E8E2',
+              error: '#C6564D',
+            },
+            borderRadius: {
+              'sm': '10px',
+              'md': '16px',
+              'lg': '24px',
+            },
+            fontFamily: {
+              sans: ['Poppins', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #F9F9F6;
+        font-family: 'Poppins', sans-serif;
+        color: #000000;
+        -webkit-font-smoothing: antialiased;
+      }
+      .active-nav {
+        background-color: #EEF3F2;
+        color: #000000;
+        font-weight: 500;
+        border-left: 4px solid #85A6A3;
+      }
+      #toast-container {
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body class="flex min-h-screen bg-off-white">
+    
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-surface border-r border-border flex flex-col fixed h-full z-30">
+      <div class="h-[64px] border-b border-border flex items-center px-6">
+        <a href="summary.html" class="flex items-center gap-2.5 font-semibold text-[18px] tracking-tight">
+          <span class="inline-flex h-[28px] w-[28px] items-center justify-center rounded-[8px] text-[12px] font-bold text-black bg-sage">
+            LD
+          </span>
+          <span class="text-black font-semibold">LainDain <span class="text-xs font-medium text-text-muted px-1.5 py-0.5 rounded bg-sage-tint ml-1">Admin</span></span>
+        </a>
+      </div>
+      
+      <nav class="flex-1 py-6 px-4 space-y-1">
+        <a href="summary.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">📊</span> Summary
+        </a>
+        <a href="products.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">📦</span> Products
+        </a>
+        <a href="sellers.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">👤</span> Sellers
+        </a>
+        <a href="approvals.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">🛡️</span> Approvals
+          <span class="ml-auto bg-error/10 text-error text-[11px] px-2 py-0.5 rounded-full font-semibold">3</span>
+        </a>
+        <a href="buyers.html" class="active-nav flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">👥</span> Buyers
+        </a>
+      </nav>
+
+      <!-- User Info Footer inside Sidebar -->
+      <div class="p-4 border-t border-border bg-off-white/50">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-full bg-sage flex items-center justify-center font-bold text-black text-sm">
+            AD
+          </div>
+          <div>
+            <h4 class="text-[14px] font-semibold leading-none">Admin User</h4>
+            <span class="text-[11px] text-text-muted">system_admin@laindain.com</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 pl-[280px]">
+      <!-- Header -->
+      <header class="h-[64px] border-b border-border bg-surface flex items-center justify-between px-8 sticky top-0 z-20">
+        <div>
+          <h1 class="text-[18px] font-semibold text-black">Buyer Directory</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-xs text-text-muted bg-off-white px-3 py-1.5 rounded-full border border-border">Friday, 12:30 PM</span>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="p-8 max-w-[1200px] mx-auto space-y-6">
+        
+        <!-- Search and Stats Bar -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface p-4 rounded-lg border border-border">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <input type="text" placeholder="Search buyers by name or email..." class="w-full sm:w-80 px-4 py-2 rounded-sm border border-border text-[13px] focus:outline-none focus:border-sage-dark bg-off-white/40" />
+            <button class="px-4 py-2 bg-sage hover:bg-sage-dark transition-all text-[13px] font-medium text-black rounded-sm active:scale-[0.97]">Search</button>
+          </div>
+          <div class="text-[13px] text-text-muted font-medium">Total Registered Buyers: 3</div>
+        </div>
+
+        <!-- Buyers Directory Table -->
+        <div class="bg-surface rounded-lg border border-border p-6 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-border text-[11px] font-semibold text-text-muted uppercase tracking-wider pb-3 font-medium">
+                  <th class="pb-3">Buyer Name</th>
+                  <th class="pb-3">Contact Email</th>
+                  <th class="pb-3">Shipping Region</th>
+                  <th class="pb-3 text-right">Orders Placed</th>
+                  <th class="pb-3 text-right">Total Wholesale Spend</th>
+                  <th class="pb-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="buyers-table-body" class="divide-y divide-border">
+                
+                <!-- Buyer 1 -->
+                <tr id="buyer-row-1" class="text-[14px] hover:bg-off-white/30 transition-colors">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 rounded-full bg-sage-tint flex items-center justify-center text-sm font-semibold text-black">ZM</div>
+                      <div>
+                        <span id="buyer-name-val-1" class="font-medium text-black">Zahid Mahmood Fabrics</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 text-text-muted" id="buyer-email-val-1">zahid.mahmood@gmail.com</td>
+                  <td class="py-4 text-text-muted" id="buyer-region-val-1">Karachi, Sindh</td>
+                  <td class="py-4 text-right font-medium text-black">42 orders</td>
+                  <td class="py-4 text-right text-text-muted">Rs. 480,000</td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-2">
+                      <button onclick="openModifyModal(1)" class="px-2.5 py-1.5 border border-border hover:border-sage text-black rounded-sm text-[12px] font-medium transition-colors">
+                        Modify
+                      </button>
+                      <button onclick="confirmDeleteBuyer(1, 'Zahid Mahmood Fabrics')" class="px-2.5 py-1.5 border border-red-200 hover:bg-red-50 text-error rounded-sm text-[12px] font-medium transition-colors">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Buyer 2 -->
+                <tr id="buyer-row-2" class="text-[14px] hover:bg-off-white/30 transition-colors">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 rounded-full bg-sage-tint flex items-center justify-center text-sm font-semibold text-black">AI</div>
+                      <div>
+                        <span id="buyer-name-val-2" class="font-medium text-black">Anis Importers Ltd</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 text-text-muted" id="buyer-email-val-2">anis.importers@yahoo.com</td>
+                  <td class="py-4 text-text-muted" id="buyer-region-val-2">Lahore, Punjab</td>
+                  <td class="py-4 text-right font-medium text-black">28 orders</td>
+                  <td class="py-4 text-right text-text-muted">Rs. 320,000</td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-2">
+                      <button onclick="openModifyModal(2)" class="px-2.5 py-1.5 border border-border hover:border-sage text-black rounded-sm text-[12px] font-medium transition-colors">
+                        Modify
+                      </button>
+                      <button onclick="confirmDeleteBuyer(2, 'Anis Importers Ltd')" class="px-2.5 py-1.5 border border-red-200 hover:bg-red-50 text-error rounded-sm text-[12px] font-medium transition-colors">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Buyer 3 -->
+                <tr id="buyer-row-3" class="text-[14px] hover:bg-off-white/30 transition-colors">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 rounded-full bg-sage-tint flex items-center justify-center text-sm font-semibold text-black">QM</div>
+                      <div>
+                        <span id="buyer-name-val-3" class="font-medium text-black">Qasim General Store</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 text-text-muted" id="buyer-email-val-3">qasim.store@outlook.com</td>
+                  <td class="py-4 text-text-muted" id="buyer-region-val-3">Peshawar, KPK</td>
+                  <td class="py-4 text-right font-medium text-black">15 orders</td>
+                  <td class="py-4 text-right text-text-muted">Rs. 185,000</td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-2">
+                      <button onclick="openModifyModal(3)" class="px-2.5 py-1.5 border border-border hover:border-sage text-black rounded-sm text-[12px] font-medium transition-colors">
+                        Modify
+                      </button>
+                      <button onclick="confirmDeleteBuyer(3, 'Qasim General Store')" class="px-2.5 py-1.5 border border-red-200 hover:bg-red-50 text-error rounded-sm text-[12px] font-medium transition-colors">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-250">
+      <div class="bg-surface rounded-lg p-6 max-w-sm w-full mx-4 shadow-raised border border-border scale-[0.98] transition-transform duration-250">
+        <h3 class="text-[18px] font-semibold text-black mb-2 font-medium">Delete Buyer account?</h3>
+        <p class="text-[14px] text-text-muted mb-6">Are you sure you want to permanently delete buyer <strong id="delete-buyer-name" class="text-black font-medium"></strong>? This action cannot be undone.</p>
+        <div class="flex justify-end gap-3">
+          <button onclick="closeDeleteModal()" class="h-[40px] px-4 rounded-md border border-border hover:bg-off-white transition-colors text-[13px] font-medium text-black">Cancel</button>
+          <button id="modal-delete-confirm-btn" class="h-[40px] px-4 rounded-md bg-[#C6564D] hover:bg-[#C6564D]/90 transition-colors text-[13px] font-medium text-white">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modify Details Modal -->
+    <div id="modify-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[300] hidden opacity-0 transition-opacity duration-250">
+      <div class="bg-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-raised border border-border scale-[0.98] transition-transform duration-250">
+        <h3 class="text-[18px] font-semibold text-black mb-4 font-medium">Modify Buyer Details</h3>
+        
+        <form id="modify-form" onsubmit="saveBuyerChanges(event)" class="space-y-4">
+          <input type="hidden" id="modify-buyer-id">
+          
+          <div>
+            <label class="block text-[12px] font-semibold text-text-muted uppercase tracking-wider mb-1">Buyer Name</label>
+            <input type="text" id="modify-buyer-name" required class="w-full h-11 px-4 rounded-sm border border-border focus:outline-none focus:border-sage-dark text-[14px] bg-off-white/40">
+          </div>
+          
+          <div>
+            <label class="block text-[12px] font-semibold text-text-muted uppercase tracking-wider mb-1">Contact Email</label>
+            <input type="email" id="modify-buyer-email" required class="w-full h-11 px-4 rounded-sm border border-border focus:outline-none focus:border-sage-dark text-[14px] bg-off-white/40">
+          </div>
+
+          <div>
+            <label class="block text-[12px] font-semibold text-text-muted uppercase tracking-wider mb-1">Shipping Region / City</label>
+            <input type="text" id="modify-buyer-region" required class="w-full h-11 px-4 rounded-sm border border-border focus:outline-none focus:border-sage-dark text-[14px] bg-off-white/40">
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" onclick="closeModifyModal()" class="h-[40px] px-4 rounded-md border border-border hover:bg-off-white transition-colors text-[13px] font-medium text-black">Cancel</button>
+            <button type="submit" class="h-[40px] px-5 rounded-md bg-sage hover:bg-sage-dark transition-colors text-[13px] font-medium text-black">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 flex flex-col gap-2 z-[400]"></div>
+
+    <script>
+      let currentBuyerId = null;
+
+      // Delete Handling
+      function confirmDeleteBuyer(id, name) {
+        currentBuyerId = id;
+        document.getElementById('delete-buyer-name').innerText = name;
+        
+        const modal = document.getElementById('delete-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.add('opacity-100');
+          modal.querySelector('.bg-surface').classList.remove('scale-[0.98]');
+          modal.querySelector('.bg-surface').classList.add('scale-100');
+        }, 10);
+      }
+
+      function closeDeleteModal() {
+        const modal = document.getElementById('delete-modal');
+        modal.classList.remove('opacity-100');
+        modal.querySelector('.bg-surface').classList.remove('scale-100');
+        modal.querySelector('.bg-surface').classList.add('scale-[0.98]');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          currentBuyerId = null;
+        }, 250);
+      }
+
+      document.getElementById('modal-delete-confirm-btn').addEventListener('click', () => {
+        if (currentBuyerId) {
+          const row = document.getElementById(`buyer-row-${currentBuyerId}`);
+          if (row) {
+            const name = document.getElementById('delete-buyer-name').innerText;
+            row.remove();
+            showToast(`Deleted buyer "${name}"`);
+          }
+          closeDeleteModal();
+        }
+      });
+
+      // Modify Handling
+      function openModifyModal(id) {
+        currentBuyerId = id;
+        const nameVal = document.getElementById(`buyer-name-val-${id}`).innerText;
+        const emailVal = document.getElementById(`buyer-email-val-${id}`).innerText;
+        const regionVal = document.getElementById(`buyer-region-val-${id}`).innerText;
+
+        document.getElementById('modify-buyer-id').value = id;
+        document.getElementById('modify-buyer-name').value = nameVal;
+        document.getElementById('modify-buyer-email').value = emailVal;
+        document.getElementById('modify-buyer-region').value = regionVal;
+
+        const modal = document.getElementById('modify-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.add('opacity-100');
+          modal.querySelector('.bg-surface').classList.remove('scale-[0.98]');
+          modal.querySelector('.bg-surface').classList.add('scale-100');
+        }, 10);
+      }
+
+      function closeModifyModal() {
+        const modal = document.getElementById('modify-modal');
+        modal.classList.remove('opacity-100');
+        modal.querySelector('.bg-surface').classList.remove('scale-100');
+        modal.querySelector('.bg-surface').classList.add('scale-[0.98]');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          currentBuyerId = null;
+        }, 250);
+      }
+
+      function saveBuyerChanges(event) {
+        event.preventDefault();
+        const id = document.getElementById('modify-buyer-id').value;
+        const newName = document.getElementById('modify-buyer-name').value;
+        const newEmail = document.getElementById('modify-buyer-email').value;
+        const newRegion = document.getElementById('modify-buyer-region').value;
+
+        // Update DOM
+        document.getElementById(`buyer-name-val-${id}`).innerText = newName;
+        document.getElementById(`buyer-email-val-${id}`).innerText = newEmail;
+        document.getElementById(`buyer-region-val-${id}`).innerText = newRegion;
+
+        closeModifyModal();
+        showToast(`Updated details for buyer "${newName}"`);
+      }
+
+      function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = "flex items-center gap-2.5 px-4.5 py-3 rounded-md bg-black text-white text-[13px] font-medium shadow-raised pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 px-4 py-3";
+        toast.innerHTML = `<span>✓</span> <span>${message}</span>`;
+        container.appendChild(toast);
+        
+        // Anim in
+        setTimeout(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        }, 10);
+
+        // Dismiss
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 2800);
+      }
+    </script>
+
+  </body>
+</html>

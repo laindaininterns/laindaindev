@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Approvals | LainDain Admin Dashboard</title>
+    <!-- Poppins Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sage: '#A3C1BF',
+              'sage-dark': '#85A6A3',
+              'sage-tint': '#EEF3F2',
+              'off-white': '#F9F9F6',
+              surface: '#FFFFFF',
+              black: '#000000',
+              'text-muted': '#5B5B58',
+              border: '#E9E8E2',
+              error: '#C6564D',
+            },
+            borderRadius: {
+              'sm': '10px',
+              'md': '16px',
+              'lg': '24px',
+            },
+            fontFamily: {
+              sans: ['Poppins', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #F9F9F6;
+        font-family: 'Poppins', sans-serif;
+        color: #000000;
+        -webkit-font-smoothing: antialiased;
+      }
+      .active-nav {
+        background-color: #EEF3F2;
+        color: #000000;
+        font-weight: 500;
+        border-left: 4px solid #85A6A3;
+      }
+      #toast-container {
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body class="flex min-h-screen bg-off-white">
+    
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-surface border-r border-border flex flex-col fixed h-full z-30">
+      <div class="h-[64px] border-b border-border flex items-center px-6">
+        <a href="summary.html" class="flex items-center gap-2.5 font-semibold text-[18px] tracking-tight">
+          <span class="inline-flex h-[28px] w-[28px] items-center justify-center rounded-[8px] text-[12px] font-bold text-black bg-sage">
+            LD
+          </span>
+          <span class="text-black font-semibold">LainDain <span class="text-xs font-medium text-text-muted px-1.5 py-0.5 rounded bg-sage-tint ml-1">Admin</span></span>
+        </a>
+      </div>
+      
+      <nav class="flex-1 py-6 px-4 space-y-1">
+        <a href="summary.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">📊</span> Summary
+        </a>
+        <a href="products.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">📦</span> Products
+        </a>
+        <a href="sellers.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">👤</span> Sellers
+        </a>
+        <a href="approvals.html" class="active-nav flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">🛡️</span> Approvals
+          <span id="sidebar-badge" class="ml-auto bg-error/10 text-error text-[11px] px-2 py-0.5 rounded-full font-semibold">3</span>
+        </a>
+        <a href="buyers.html" class="flex items-center gap-3 px-4 py-3 rounded-md text-[15px] text-text-muted hover:bg-off-white hover:text-black transition-colors">
+          <span class="text-[18px]">👥</span> Buyers
+        </a>
+      </nav>
+
+      <!-- User Info Footer inside Sidebar -->
+      <div class="p-4 border-t border-border bg-off-white/50">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-full bg-sage flex items-center justify-center font-bold text-black text-sm">
+            AD
+          </div>
+          <div>
+            <h4 class="text-[14px] font-semibold leading-none">Admin User</h4>
+            <span class="text-[11px] text-text-muted">system_admin@laindain.com</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 pl-[280px]">
+      <!-- Header -->
+      <header class="h-[64px] border-b border-border bg-surface flex items-center justify-between px-8 sticky top-0 z-20">
+        <div>
+          <h1 class="text-[18px] font-semibold text-black">Seller Verification Requests</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-xs text-text-muted bg-off-white px-3 py-1.5 rounded-full border border-border">Friday, 12:30 PM</span>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="p-8 max-w-[1200px] mx-auto space-y-6">
+        
+        <!-- Instruction Card -->
+        <div class="bg-sage-tint border border-sage/40 rounded-lg p-5">
+          <h3 class="text-[15px] font-semibold text-black mb-1">🛡️ Verification Protocol</h3>
+          <p class="text-[13px] text-text-muted">Review the document uploads and business details submitted by Pakistani suppliers. Approving them tags them as a <strong>Verified Seller</strong> across the marketplace. Denying will retain their <strong>Pending</strong> status, keeping their request open for re-evaluation.</p>
+        </div>
+
+        <!-- Approvals Requests Table -->
+        <div class="bg-surface rounded-lg border border-border p-6 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-border text-[11px] font-semibold text-text-muted uppercase tracking-wider pb-3 font-medium">
+                  <th class="pb-3">Supplier Name</th>
+                  <th class="pb-3">Details Submitted</th>
+                  <th class="pb-3">Business Region</th>
+                  <th class="pb-3 text-center">Status</th>
+                  <th class="pb-3 text-right">Verification Actions</th>
+                  <th class="pb-3 text-right">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="approvals-table-body" class="divide-y divide-border">
+                
+                <!-- Request 1 -->
+                <tr id="req-row-1" class="text-[14px] hover:bg-off-white/30 transition-colors">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 rounded-[10px] bg-sage-tint flex items-center justify-center text-lg font-bold shrink-0">SG</div>
+                      <div>
+                        <div class="font-medium text-black">Sindh Green Agro</div>
+                        <div class="text-[12px] text-text-muted">sindh.green.agro@fertilizer.pk</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4">
+                    <div class="text-[13px] text-black">NTN & Chamber Certificate</div>
+                    <span class="text-[11px] text-sage-dark font-medium underline cursor-pointer">View Docs (2)</span>
+                  </td>
+                  <td class="py-4 text-text-muted">Sindh (Hyderabad)</td>
+                  <td class="py-4 text-center" id="req-status-1">
+                    <span class="status-badge inline-flex items-center gap-1 text-[11px] font-semibold text-[#C6564D] bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                      Pending
+                    </span>
+                  </td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-2">
+                      <button onclick="approveRequest(1, 'Sindh Green Agro')" class="px-3 py-1.5 bg-sage hover:bg-sage-dark text-black rounded-sm text-[12px] font-medium transition-colors">
+                        Approve
+                      </button>
+                      <button onclick="denyRequest(1, 'Sindh Green Agro')" class="px-3 py-1.5 border border-border hover:bg-off-white text-text-muted rounded-sm text-[12px] font-medium transition-colors">
+                        Deny
+                      </button>
+                    </div>
+                  </td>
+                  <td class="py-4 text-right">
+                    <button onclick="removeRequest(1, 'Sindh Green Agro')" class="text-text-muted hover:text-[#C6564D] text-[13px] font-medium transition-colors px-2">
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Request 2 -->
+                <tr id="req-row-2" class="text-[14px] hover:bg-off-white/30 transition-colors">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 rounded-[10px] bg-sage-tint flex items-center justify-center text-lg font-bold shrink-0">MB</div>
+                      <div>
+                        <div class="font-medium text-black">Multan Bedding Mills</div>
+                        <div class="text-[12px] text-text-muted">multan.bedding@wholesale.pk</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4">
+                    <div class="text-[13px] text-black">Export License, NTN</div>
+                    <span class="text-[11px] text-sage-dark font-medium underline cursor-pointer">View Docs (1)</span>
+                  </td>
+                  <td class="py-4 text-text-muted">Punjab (Multan)</td>
+                  <td class="py-4 text-center" id="req-status-2">
+                    <span class="status-badge inline-flex items-center gap-1 text-[11px] font-semibold text-[#C6564D] bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                      Pending
+                    </span>
+                  </td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-2">
+                      <button onclick="approveRequest(2, 'Multan Bedding Mills')" class="px-3 py-1.5 bg-sage hover:bg-sage-dark text-black rounded-sm text-[12px] font-medium transition-colors">
+                        Approve
+                      </button>
+                      <button onclick="denyRequest(2, 'Multan Bedding Mills')" class="px-3 py-1.5 border border-border hover:bg-off-white text-text-muted rounded-sm text-[12px] font-medium transition-colors">
+                        Deny
+                      </button>
+                    </div>
+                  </td>
+                  <td class="py-4 text-right">
+                    <button onclick="removeRequest(2, 'Multan Bedding Mills')" class="text-text-muted hover:text-[#C6564D] text-[13px] font-medium transition-colors px-2">
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Request 3 -->
+                <tr id="req-row-3" class="text-[14px] hover:bg-off-white/30 transition-colors">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 rounded-[10px] bg-sage-tint flex items-center justify-center text-lg font-bold shrink-0">KP</div>
+                      <div>
+                        <div class="font-medium text-black">Karachi Plastic Industries</div>
+                        <div class="text-[12px] text-text-muted">khi.plastic@wholesale.pk</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4">
+                    <div class="text-[13px] text-black">Sales Tax Registration, NTN</div>
+                    <span class="text-[11px] text-sage-dark font-medium underline cursor-pointer">View Docs (3)</span>
+                  </td>
+                  <td class="py-4 text-text-muted">Sindh (Karachi)</td>
+                  <td class="py-4 text-center" id="req-status-3">
+                    <span class="status-badge inline-flex items-center gap-1 text-[11px] font-semibold text-[#C6564D] bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                      Pending
+                    </span>
+                  </td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-2">
+                      <button onclick="approveRequest(3, 'Karachi Plastic Industries')" class="px-3 py-1.5 bg-sage hover:bg-sage-dark text-black rounded-sm text-[12px] font-medium transition-colors">
+                        Approve
+                      </button>
+                      <button onclick="denyRequest(3, 'Karachi Plastic Industries')" class="px-3 py-1.5 border border-border hover:bg-off-white text-text-muted rounded-sm text-[12px] font-medium transition-colors">
+                        Deny
+                      </button>
+                    </div>
+                  </td>
+                  <td class="py-4 text-right">
+                    <button onclick="removeRequest(3, 'Karachi Plastic Industries')" class="text-text-muted hover:text-[#C6564D] text-[13px] font-medium transition-colors px-2">
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 flex flex-col gap-2 z-[400]"></div>
+
+    <script>
+      let pendingCount = 3;
+
+      function updateSidebarBadge() {
+        const badge = document.getElementById('sidebar-badge');
+        if (badge) {
+          badge.innerText = pendingCount;
+          if (pendingCount === 0) {
+            badge.remove();
+          }
+        }
+      }
+
+      function approveRequest(id, name) {
+        const statusCell = document.getElementById(`req-status-${id}`);
+        statusCell.innerHTML = `
+          <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-sage-dark bg-sage-tint px-2.5 py-0.5 rounded-full border border-sage/30">
+            ✓ Verified
+          </span>
+        `;
+        
+        // Disable action buttons in that row
+        const row = document.getElementById(`req-row-${id}`);
+        const actionCell = row.cells[4];
+        actionCell.innerHTML = `<span class="text-[12px] text-sage-dark font-medium px-4">Approved</span>`;
+        
+        if (pendingCount > 0) pendingCount--;
+        updateSidebarBadge();
+        showToast(`Verification request for "${name}" has been approved!`);
+      }
+
+      function denyRequest(id, name) {
+        const statusCell = document.getElementById(`req-status-${id}`);
+        
+        // Under deny, it stays in the pending state but we give a visual feedback label
+        statusCell.innerHTML = `
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#C6564D] bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+              Pending
+            </span>
+            <span class="text-[9px] text-text-muted font-medium bg-off-white border border-border px-1.5 rounded">Denied Review</span>
+          </div>
+        `;
+        
+        showToast(`Verification denied. Status for "${name}" remains Pending.`);
+      }
+
+      function removeRequest(id, name) {
+        const row = document.getElementById(`req-row-${id}`);
+        row.remove();
+        
+        if (pendingCount > 0) pendingCount--;
+        updateSidebarBadge();
+        showToast(`Removed verification request for "${name}" from lists.`);
+      }
+
+      function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = "flex items-center gap-2.5 px-4.5 py-3 rounded-md bg-black text-white text-[13px] font-medium shadow-raised pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 px-4 py-3";
+        toast.innerHTML = `<span>🛡️</span> <span>${message}</span>`;
+        container.appendChild(toast);
+        
+        // Anim in
+        setTimeout(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        }, 10);
+
+        // Dismiss
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 2800);
+      }
+    </script>
+
+  </body>
+</html>
