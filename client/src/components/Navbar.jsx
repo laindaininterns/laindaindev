@@ -7,6 +7,7 @@ export default function Navbar({
   onOpenSearch,
   onOpenCart,
   onOpenAuth,
+  onOpenAdmin,
   onLogout,
   scrolled,
 }) {

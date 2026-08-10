@@ -9,6 +9,8 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import posthog, { isPostHogEnabled } from "./posthog";
 
+import { Agentation } from 'agentation';
+
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
 const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
@@ -222,6 +224,7 @@ export default function App() {
     return (
       <Suspense fallback={<div className="p-12 text-center text-sm font-medium">Loading Admin Dashboard...</div>}>
         <AdminDashboard onExitAdmin={() => setViewMode("marketplace")} />
+        <Agentation />
       </Suspense>
     );
   }
@@ -435,6 +438,8 @@ export default function App() {
 
       {/* Global Toast */}
       <Toast toast={toast} />
+
+      <Agentation />
 
       {/* Vercel Web Analytics & Speed Insights */}
       <Analytics />

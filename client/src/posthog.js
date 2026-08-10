@@ -8,8 +8,8 @@ export const isPostHogEnabled = Boolean(posthogKey && posthogHost)
 if (!isPostHogEnabled) {
   if (import.meta.env.DEV) {
     const missingVariable = posthogKey ? 'VITE_POSTHOG_HOST' : 'VITE_POSTHOG_KEY'
-    throw new Error(
-      `${missingVariable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${missingVariable} is configured`,
+    console.warn(
+      `[PostHog Warning]: ${missingVariable} variable required by PostHog is missing. Analytics is disabled in dev mode.`
     )
   }
 } else {
