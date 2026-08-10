@@ -21,29 +21,29 @@ export default function BuyersView() {
   });
 
   return (
-    <div className="p-8 max-w-[1200px] mx-auto space-y-6">
+    <div className="p-8 max-w-[1240px] mx-auto space-y-6">
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-[14px] border border-[#E9E8E2]">
-          <span className="text-[11px] font-medium text-[#5B5B58] uppercase">Total Registered Buyers</span>
-          <h4 className="text-[20px] font-semibold text-black mt-1">1,842</h4>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div className="bg-white p-5 rounded-[20px] border border-[#E9E8E2] shadow-2xs hover:border-[#85A6A3] transition-all">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider">Total Registered Buyers</span>
+          <h4 className="text-[26px] font-bold text-black tracking-tight mt-1">1,842</h4>
         </div>
-        <div className="bg-white p-4 rounded-[14px] border border-[#E9E8E2]">
-          <span className="text-[11px] font-medium text-[#5B5B58] uppercase">Active Corporate Accounts</span>
-          <h4 className="text-[20px] font-semibold text-[#85A6A3] mt-1">1,210</h4>
+        <div className="bg-white p-5 rounded-[20px] border border-[#E9E8E2] shadow-2xs hover:border-[#85A6A3] transition-all">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider">Active Corporate Accounts</span>
+          <h4 className="text-[26px] font-bold text-[#85A6A3] tracking-tight mt-1">1,210</h4>
         </div>
-        <div className="bg-white p-4 rounded-[14px] border border-[#E9E8E2]">
-          <span className="text-[11px] font-medium text-[#5B5B58] uppercase">Wholesale Orders</span>
-          <h4 className="text-[20px] font-semibold text-black mt-1">4,890</h4>
+        <div className="bg-white p-5 rounded-[20px] border border-[#E9E8E2] shadow-2xs hover:border-[#85A6A3] transition-all">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider">Wholesale Orders</span>
+          <h4 className="text-[26px] font-bold text-black tracking-tight mt-1">4,890</h4>
         </div>
-        <div className="bg-white p-4 rounded-[14px] border border-[#E9E8E2]">
-          <span className="text-[11px] font-medium text-[#5B5B58] uppercase">Total Spend (Mtd)</span>
-          <h4 className="text-[20px] font-semibold text-black mt-1">Rs. 18.5M</h4>
+        <div className="bg-white p-5 rounded-[20px] border border-[#E9E8E2] shadow-2xs hover:border-[#85A6A3] transition-all">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider">Total Spend (MTD)</span>
+          <h4 className="text-[26px] font-bold text-black tracking-tight mt-1">Rs. 18.5M</h4>
         </div>
       </div>
 
       {/* Filter Header */}
-      <div className="bg-white p-4 rounded-[16px] border border-[#E9E8E2] flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-[20px] border border-[#E9E8E2] shadow-2xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-[260px]">
           <div className="relative flex-1">
             <input
@@ -51,16 +51,21 @@ export default function BuyersView() {
               placeholder="Search by buyer company, contact person, city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-[40px] pl-9 pr-4 rounded-[12px] border border-[#E9E8E2] text-[13px] outline-none focus:border-[#85A6A3]"
+              className="w-full h-[42px] pl-10 pr-4 rounded-[12px] border border-[#E9E8E2] text-[14px] font-medium outline-none focus:border-[#85A6A3] bg-[#F9F9F6]/50"
             />
-            <span className="absolute left-3 top-2.5 text-[#5B5B58] text-[14px]">🔍</span>
+            <span className="absolute left-3.5 top-3 text-[#5B5B58]">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <select
             value={accountType}
             onChange={(e) => setAccountType(e.target.value)}
-            className="h-[40px] px-3 rounded-[12px] border border-[#E9E8E2] text-[13px] bg-white text-black outline-none focus:border-[#85A6A3]"
+            className="h-[42px] px-4 rounded-[12px] border border-[#E9E8E2] text-[13px] font-bold bg-white text-black outline-none focus:border-[#85A6A3] cursor-pointer shadow-2xs"
           >
             <option value="All">All Account Types</option>
             <option value="Corporate Wholesale">Corporate Wholesale</option>
@@ -72,10 +77,10 @@ export default function BuyersView() {
       </div>
 
       {/* Buyers Directory Table */}
-      <div className="bg-white rounded-[16px] border border-[#E9E8E2] p-6 shadow-sm overflow-x-auto">
+      <div className="bg-white rounded-[20px] border border-[#E9E8E2] p-6 shadow-xs overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#E9E8E2] text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider pb-3">
+            <tr className="border-b border-[#E9E8E2] text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider pb-3">
               <th className="pb-3">Buyer Company</th>
               <th className="pb-3">Contact Person</th>
               <th className="pb-3">City</th>
@@ -92,19 +97,19 @@ export default function BuyersView() {
                 <tr key={b.id} className="text-[14px] hover:bg-[#F9F9F6]/60 transition-colors">
                   <td className="py-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-[10px] bg-[#EEF3F2] flex items-center justify-center text-lg">
+                      <div className="h-10 w-10 rounded-[12px] bg-[#EEF3F2] border border-[#E9E8E2] flex items-center justify-center text-lg shrink-0">
                         {b.icon}
                       </div>
-                      <span className="font-medium text-black">{name}</span>
+                      <span className="font-bold text-black">{name}</span>
                     </div>
                   </td>
-                  <td className="py-4 text-[#5B5B58] text-[13px]">{b.contactPerson}</td>
-                  <td className="py-4 text-black text-[13px]">{b.city}</td>
-                  <td className="py-4 text-right font-medium">{b.orders}</td>
-                  <td className="py-4 text-right text-black font-semibold">{b.spent}</td>
-                  <td className="py-4 text-[#5B5B58] text-[13px]">{b.type}</td>
+                  <td className="py-4 text-[#5B5B58] text-[13px] font-semibold">{b.contactPerson}</td>
+                  <td className="py-4 text-black text-[13px] font-bold">{b.city}</td>
+                  <td className="py-4 text-right font-bold text-black">{b.orders}</td>
+                  <td className="py-4 text-right text-black font-bold">{b.spent}</td>
+                  <td className="py-4 text-[#5B5B58] text-[13px] font-semibold">{b.type}</td>
                   <td className="py-4 text-center">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#85A6A3] bg-[#EEF3F2] px-2.5 py-0.5 rounded-full border border-[#A3C1BF]/30">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#85A6A3] bg-[#EEF3F2] px-2.5 py-1 rounded-full border border-[#A3C1BF]/40">
                       ✓ Active
                     </span>
                   </td>
