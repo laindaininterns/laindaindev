@@ -1,10 +1,22 @@
 import React from "react";
 import { TOKENS } from "../data/marketplaceData";
+import posthog, { isPostHogEnabled } from "../posthog";
 
 export default function ProductCard({ product, onSelectProduct }) {
+  function handleProductSelect() {
+    if (isPostHogEnabled) {
+      posthog.capture("product_viewed", {
+        product_id: product.id,
+        category: product.cat,
+        unit_price: product.price,
+      });
+    }
+    onSelectProduct(product);
+  }
+
   return (
     <div
-      onClick={() => onSelectProduct(product)}
+      onClick={handleProductSelect}
       className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-black/20 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Compact Product Visual Box */}
@@ -39,7 +51,7 @@ export default function ProductCard({ product, onSelectProduct }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onSelectProduct(product);
+            handleProductSelect();
           }}
           className="mt-auto w-full h-[36px] rounded-[14px] text-[13px] font-medium text-black transition-all active:scale-[0.97] flex items-center justify-center"
           style={{ background: TOKENS.sage }}

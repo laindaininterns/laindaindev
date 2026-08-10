@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { CATEGORIES, CAT_ICONS } from "../data/marketplaceData";
+import posthog, { isPostHogEnabled } from "../posthog";
 
 export default function SearchOverlay({
   isOpen,
@@ -70,6 +71,13 @@ export default function SearchOverlay({
                   <button
                     key={p.id}
                     onClick={() => {
+                      if (isPostHogEnabled) {
+                        posthog.capture("search_result_selected", {
+                          product_id: p.id,
+                          category: p.cat,
+                          result_count: searchResults.length,
+                        });
+                      }
                       onSelectProduct(p);
                       onClose();
                     }}
