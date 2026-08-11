@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import KycTab from "./KycTab";
 import OrdersTab from "./OrdersTab";
 import ProductsTab from "./ProductsTab";
 import AddProductModal from "./AddProductModal";
+import { fetchSellerKyc, fetchSellerProducts, fetchSellerOrders } from "../../services/api";
 
 const INITIAL_PRODUCTS = [
   {
-    id: 1,
+    id: "1",
     name: "Cotton Fabric Rolls (100% Combed)",
     sku: "TX-COT-01",
     cat: "Clothing & Apparel",
@@ -18,7 +19,7 @@ const INITIAL_PRODUCTS = [
     photos: [],
   },
   {
-    id: 2,
+    id: "2",
     name: "Glazed Ceramic Vases",
     sku: "CR-GLZ-02",
     cat: "Home Decor",
@@ -29,7 +30,7 @@ const INITIAL_PRODUCTS = [
     photos: [],
   },
   {
-    id: 3,
+    id: "3",
     name: "Embroidered Kurta Dupatta Set",
     sku: "TX-EMB-03",
     cat: "Clothing & Apparel",
@@ -40,7 +41,7 @@ const INITIAL_PRODUCTS = [
     photos: [],
   },
   {
-    id: 4,
+    id: "4",
     name: "Leather Messenger Bags",
     sku: "BG-LTH-04",
     cat: "Bags & Luggage",
@@ -86,6 +87,50 @@ export default function SellerDashboard({ currentUser, onClose, onLogout, trigge
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+
+  useEffect(() => {
+    loadSellerDashboardData();
+  }, []);
+
+  async function loadSellerDashboardData() {
+    try {
+      const kycData = await fetchSellerKyc();
+      if (kycData && kycData.status) {
+        setKycStatus(kycData.status);
+      }
+    } catch (err) {
+      console.warn("Seller KYC fetch info:", err.message);
+    }
+
+    try {
+      const productsData = await fetchSellerProducts();
+      if (productsData && productsData.length > 0) {
+        const mapped = productsData.map((p) => ({
+          id: p.id,
+          name: p.title || p.name,
+          sku: p.sku || `SKU-${p.id.substring(0, 5).toUpperCase()}`,
+          cat: p.cat || p.category_id || "Wholesale Catalog",
+          price: p.price,
+          stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
+          isOutOfStock: p.status === "OUT_OF_STOCK" || p.stock_quantity === 0 || p.stock === 0,
+          moq: p.moq || 10,
+          photos: p.images || p.photos || [],
+        }));
+        setProducts(mapped);
+      }
+    } catch (err) {
+      console.warn("Seller Products fetch info:", err.message);
+    }
+
+    try {
+      const ordersData = await fetchSellerOrders();
+      if (ordersData && ordersData.length > 0) {
+        setOrders(ordersData);
+      }
+    } catch (err) {
+      console.warn("Seller Orders fetch info:", err.message);
+    }
+  }
 
   const handleAdjustStock = (productId, delta) => {
     setProducts((prev) =>
@@ -197,3 +242,4 @@ export default function SellerDashboard({ currentUser, onClose, onLogout, trigge
     </div>
   );
 }
+
