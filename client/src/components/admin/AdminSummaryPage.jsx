@@ -67,7 +67,7 @@ export default function AdminSummaryPage({ pendingCount, onSelectTab }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr class="border-b border-[#E9E8E2] text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider pb-3">
+                <tr className="border-b border-[#E9E8E2] text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider pb-3">
                   <th className="pb-3">Seller Details</th>
                   <th className="pb-3 text-right">Orders</th>
                   <th className="pb-3 text-right">Revenue</th>
