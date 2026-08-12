@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import posthog, { isPostHogEnabled } from '../../posthog';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laindaindev.onrender.com/api';
+import { API_BASE_URL } from '../../services/api';
 
 const INITIAL_WELCOME = {
   id: 'welcome-1',
