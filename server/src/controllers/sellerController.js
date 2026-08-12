@@ -22,11 +22,11 @@ const getSellerProfile = async (userId, profileIdFromToken) => {
   }
   // Safe fallback profile object for development / demo state
   return {
-    id: profileIdFromToken || userId || 'mock-seller-id',
-    user_id: userId || 'mock-user-id',
-    business_name: 'Faisalabad Textiles Co.',
+    id: profileIdFromToken || userId || '18c3ab26-a682-4388-b7a6-1b715dfcda16',
+    user_id: userId || 'cecd1622-cbcb-45cd-912e-09e3e36dfbc3',
+    business_name: 'Faisalabad Textile Mills Ltd.',
     business_address: 'Faisalabad, Punjab, Pakistan',
-    tax_id: 'NTN-9876543-1',
+    tax_id: 'NTN-9988776',
     current_status: 'APPROVED',
   };
 };
