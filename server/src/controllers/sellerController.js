@@ -303,94 +303,10 @@ const updateSellerStock = async (req, res) => {
   }
 };
 
-/**
- * GET /api/seller/orders
- * Fetch purchase orders belonging to the authenticated seller (Multi-Tenant Isolation)
- */
-const getSellerOrders = async (req, res) => {
-  try {
-    const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+const sellerOrderController = require('./sellerOrderController');
 
-    const { data: ordersData, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('seller_id', profile.id)
-      .order('created_at', { ascending: false });
-
-    if (!error && ordersData && ordersData.length > 0) {
-      return res.status(200).json({
-        success: true,
-        count: ordersData.length,
-        orders: ordersData,
-      });
-    }
-
-    const mockOrders = [
-      {
-        id: 'ORD-9982',
-        seller_id: profile.id,
-        buyer: 'Karachi Retail Hub',
-        date: '2026-08-09',
-        items: 'Cotton Fabric Rolls (x50)',
-        total: 42500,
-        status: 'Pending Verification',
-      },
-      {
-        id: 'ORD-9975',
-        seller_id: profile.id,
-        buyer: 'Lahore Boutique Association',
-        date: '2026-08-08',
-        items: 'Leather Messenger Bags (x15), Glazed Ceramic Vases (x10)',
-        total: 60000,
-        status: 'Approved',
-      },
-      {
-        id: 'ORD-9951',
-        seller_id: profile.id,
-        buyer: 'Islamabad Lifestyle Store',
-        date: '2026-08-05',
-        items: 'Cotton Fabric Rolls (x100)',
-        total: 85000,
-        status: 'Shipped',
-      },
-    ];
-
-    return res.status(200).json({
-      success: true,
-      count: mockOrders.length,
-      orders: mockOrders,
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: 'Error fetching seller orders.', error: error.message });
-  }
-};
-
-/**
- * PATCH /api/seller/orders/:id/status
- * Update order status (Pending -> Approved -> Shipped)
- */
-const updateSellerOrderStatus = async (req, res) => {
-  try {
-    const orderId = req.params.id;
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ success: false, message: 'Order status is required.' });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: `Order ${orderId} status updated to ${status}.`,
-      order: {
-        id: orderId,
-        status,
-        updated_at: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: 'Error updating order status.', error: error.message });
-  }
-};
+const getSellerOrders = sellerOrderController.getSellerOrders;
+const updateSellerOrderStatus = sellerOrderController.updateSellerOrderStatus;
 
 module.exports = {
   getSellerKyc,

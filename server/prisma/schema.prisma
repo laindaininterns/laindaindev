@@ -30,8 +30,16 @@ enum ProductStatus {
 
 enum OrderStatus {
   PENDING
-  PAID
+  PROCESSING
   SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderItemSellerStatus {
+  PENDING
+  ACCEPTED_BY_SELLER
+  READY_FOR_PICKUP
   CANCELLED
 }
 
@@ -148,17 +156,18 @@ model Order {
 }
 
 model OrderItem {
-  id               String        @id @default(uuid()) @db.Uuid
-  orderId          String        @map("order_id") @db.Uuid
-  productId        String        @map("product_id") @db.Uuid
-  sellerId         String        @map("seller_id") @db.Uuid
+  id               String                @id @default(uuid()) @db.Uuid
+  orderId          String                @map("order_id") @db.Uuid
+  productId        String                @map("product_id") @db.Uuid
+  sellerId         String                @map("seller_id") @db.Uuid
   quantity         Int
-  priceAtPurchase  Decimal       @map("price_at_purchase") @db.Decimal(12, 2)
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  priceAtPurchase  Decimal               @map("price_at_purchase") @db.Decimal(12, 2)
+  sellerStatus     OrderItemSellerStatus @default(PENDING) @map("seller_status")
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz
 
-  order            Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product          Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  seller           SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  order            Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  seller           SellerProfile         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@map("order_items")
 }

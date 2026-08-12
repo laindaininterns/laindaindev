@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const CartService = require('./cartService');
 const BuyerProfileService = require('./buyerProfileService');
+const NotificationService = require('./notificationService');
 
 /**
  * Service to execute Multivendor Checkout transactions for Authenticated Buyers and Guests.
@@ -10,10 +11,11 @@ class CheckoutService {
    * Transactional checkout logic for authenticated user session OR guest session:
    * 1. Fetch all current cart_items for buyer/guest
    * 2. Validate input and calculate aggregate total_amount
-   * 3. Create parent record in `orders` table (with buyer_profile_id or guest_id/guest_email/guest_phone)
+   * 3. Create parent record in `orders` table
    * 4. Map & bulk-insert items into `order_items` (capturing static price_at_purchase & seller_id)
    * 5. Atomically clear user/guest cart_items
-   * 6. Return generated order_id & breakdown summary
+   * 6. Trigger Resend notification emails to buyer and vendors
+   * 7. Return generated order_id & breakdown summary
    * 
    * @param {Object} context - { userId, buyerProfileId, guestId, isGuest }
    * @param {Object} [checkoutPayload] - { guest_email, guest_phone, shipping_address }
@@ -92,6 +94,7 @@ class CheckoutService {
         seller_id: item.product.seller_id,
         quantity: item.quantity,
         price_at_purchase: unitPrice,
+        seller_status: 'PENDING',
       });
     }
 
@@ -129,18 +132,31 @@ class CheckoutService {
     const { data: insertedOrderItems, error: itemsErr } = await supabase
       .from('order_items')
       .insert(finalOrderItems)
-      .select();
+      .select('*, products(title, images)');
 
     if (itemsErr) {
-      // Rollback order creation if order_items insert fails
+      // Rollback parent order if line items insert fails
       await supabase.from('orders').delete().eq('id', orderId);
       throw new Error(`Failed to insert order line items: ${itemsErr.message}`);
     }
 
-    // Step e: Atomically clear the user's/guest's cart_items
+    // Step e: Atomically clear user's/guest's cart_items
     await CartService.clearCart({ buyerProfileId, guestId });
 
-    // Step f: Return generated order_id and success status details
+    // Step f: Dispatch transactional Resend email notification
+    const orderSummary = {
+      ...order,
+      order_id: orderId,
+      guest_email: finalGuestEmail,
+      shipping_address: finalShippingAddress,
+      total_amount: totalAmountRounded,
+      order_items: insertedOrderItems || finalOrderItems,
+    };
+
+    NotificationService.sendOrderConfirmationNotification(orderSummary).catch(err => {
+      console.error('[Notification Non-blocking Error]', err.message);
+    });
+
     return {
       order_id: orderId,
       is_guest: !!isGuest,
