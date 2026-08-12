@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const productRoutes = require('./routes/productRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const voiceRoutes = require('./routes/voiceRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -57,6 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // 404 Route Handler
 app.use((req, res) => {
