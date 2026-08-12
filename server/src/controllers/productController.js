@@ -38,16 +38,29 @@ const resolveSellerForProduct = async (user) => {
   throw new Error('No active seller profile found in database.');
 };
 
-// POST /api/products — create product in Supabase database
+// POST /api/products — create product in Supabase database with category_id resolution
 const createProduct = async (req, res) => {
   try {
     const sellerId = await resolveSellerForProduct(req.user);
 
-    const { title, name, description, desc, price, stock_quantity, stock, moq, category_id, cat, sku, images, photos, isOutOfStock, is_out_of_stock } = req.body;
+    let { title, name, description, desc, price, stock_quantity, stock, moq, category_id, cat, sku, images, photos, isOutOfStock, is_out_of_stock } = req.body;
     const productTitle = title || name;
 
     if (!productTitle || price == null) {
       return res.status(400).json({ success: false, message: 'title/name and price are required.' });
+    }
+
+    // Resolve category_id if category name string (cat) is passed instead of UUID
+    if (!category_id && cat) {
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('id')
+        .ilike('name', cat.trim())
+        .maybeSingle();
+
+      if (categoryData && categoryData.id) {
+        category_id = categoryData.id;
+      }
     }
 
     const qty = stock_quantity !== undefined ? Number(stock_quantity) : (stock !== undefined ? Number(stock) : 0);
@@ -81,7 +94,7 @@ const createProduct = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Product created and persisted in Supabase database.',
+      message: 'Product created and persisted in Supabase database with category_id.',
       product: newProduct,
     });
   } catch (err) {
@@ -132,7 +145,7 @@ const getProduct = async (req, res) => {
   }
 };
 
-// PATCH /api/products/:id — update product fields and sync to Supabase database
+// PATCH /api/products/:id — update product fields and sync category_id to Supabase database
 const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -151,11 +164,24 @@ const updateProduct = async (req, res) => {
     if (req.body.desc && !updates.description) updates.description = req.body.desc;
     if (req.body.photos && !updates.images) updates.images = req.body.photos;
 
+    // Resolve category_id if category name string (cat) is passed instead of UUID
+    if (!updates.category_id && req.body.cat) {
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('id')
+        .ilike('name', req.body.cat.trim())
+        .maybeSingle();
+
+      if (categoryData && categoryData.id) {
+        updates.category_id = categoryData.id;
+      }
+    }
+
     const { data, error } = await supabase
       .from('products')
       .update(updates)
       .eq('id', productId)
-      .select('*')
+      .select('*, categories(id, name, slug)')
       .single();
 
     if (error) {

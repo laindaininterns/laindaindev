@@ -118,9 +118,9 @@ class SellerOrderService {
       const buyerUser = buyerProfile.users || {};
 
       const displayOrderId = `ORD-${(item.order_id || item.id).slice(0, 4).toUpperCase()}`;
-      const buyerName = order.buyer_name || buyerProfile.full_name || 'Karachi Retail Hub';
-      const buyerEmail = order.guest_email || buyerUser.email || 'buyer@marketplace.pk';
-      const buyerPhone = order.guest_phone || buyerProfile.phone_number || '0300-1234567';
+      const buyerName = order.buyer_name || buyerProfile.full_name || 'Buyer Customer';
+      const buyerEmail = order.guest_email || buyerUser.email || '';
+      const buyerPhone = order.guest_phone || buyerProfile.phone_number || '';
       const itemsSummary = order.items_summary || `${product.title || 'Wholesale Product'} (x${item.quantity})`;
       const totalValue = parseFloat(item.price_at_purchase || 0) * item.quantity;
 
@@ -135,17 +135,17 @@ class SellerOrderService {
         buyer_name: buyerName,
         buyer_email: buyerEmail,
         buyer_phone: buyerPhone,
-        shipping_address: order.shipping_address || 'Faisalabad, Punjab, Pakistan',
+        shipping_address: order.shipping_address || '',
         items: itemsSummary,
         product_title: product.title || 'Wholesale Item',
-        sku: product.sku || 'TX-9982',
+        sku: product.sku || '',
         quantity: item.quantity,
         price_at_purchase: parseFloat(item.price_at_purchase || 0),
-        total: totalValue > 0 ? totalValue : parseFloat(order.total_amount || 42500),
-        cogs: parseFloat(item.cogs) > 0 ? parseFloat(item.cogs) : (parseFloat(order.cogs) > 0 ? parseFloat(order.cogs) : 15000),
-        fees: parseFloat(item.fees) > 0 ? parseFloat(item.fees) : (parseFloat(order.fees) > 0 ? parseFloat(order.fees) : 2500),
-        shipping: parseFloat(item.shipping) > 0 ? parseFloat(item.shipping) : (parseFloat(order.shipping) > 0 ? parseFloat(order.shipping) : 1200),
-        returns: parseFloat(item.returns) > 0 ? parseFloat(item.returns) : parseFloat(order.returns || 0),
+        total: totalValue > 0 ? totalValue : parseFloat(order.total_amount || 0),
+        cogs: item.cogs !== undefined && item.cogs !== null ? parseFloat(item.cogs) : parseFloat(order.cogs || 0),
+        fees: item.fees !== undefined && item.fees !== null ? parseFloat(item.fees) : parseFloat(order.fees || 0),
+        shipping: item.shipping !== undefined && item.shipping !== null ? parseFloat(item.shipping) : parseFloat(order.shipping || 0),
+        returns: item.returns !== undefined && item.returns !== null ? parseFloat(item.returns) : parseFloat(order.returns || 0),
         status: frontendStatus,
         seller_status: item.seller_status || 'PENDING',
         global_status: order.status || 'PENDING',
@@ -169,14 +169,12 @@ class SellerOrderService {
     const databaseStatus = this._mapToDatabaseSellerStatus(newStatus);
     const frontendStatus = this._mapToFrontendStatus(databaseStatus, databaseStatus === 'READY_FOR_PICKUP' ? 'SHIPPED' : 'PENDING');
 
-    // Find order item by id or order_id
     let itemQuery = supabase
       .from('order_items')
       .select('id, seller_id, order_id, seller_status')
       .eq('seller_id', sellerId);
 
     if (orderItemIdOrDisplayId.includes('-')) {
-      // display ID match or UUID lookup
       const { data: itemMatch } = await itemQuery.eq('id', orderItemIdOrDisplayId).maybeSingle();
       if (itemMatch) {
         itemQuery = itemQuery.eq('id', orderItemIdOrDisplayId);
@@ -188,7 +186,6 @@ class SellerOrderService {
     const { data: matchedItems, error: fetchErr } = await itemQuery;
 
     if (fetchErr || !matchedItems || matchedItems.length === 0) {
-      // Fallback: update any order item belonging to seller
       const { data: fallbackItems } = await supabase
         .from('order_items')
         .select('id')
@@ -234,7 +231,6 @@ class SellerOrderService {
       throw new Error(`Failed to update order status: ${updateErr.message}`);
     }
 
-    // Auto update parent order status if all items accepted/ready
     if (databaseStatus === 'ACCEPTED_BY_SELLER' || databaseStatus === 'READY_FOR_PICKUP') {
       const parentGlobalStatus = databaseStatus === 'READY_FOR_PICKUP' ? 'SHIPPED' : 'PROCESSING';
       await supabase
@@ -286,7 +282,6 @@ class SellerOrderService {
         .update(payload)
         .eq('id', targetId);
 
-      // Also sync to parent order if order_id is present
       if (items[0].order_id) {
         await supabase
           .from('orders')
@@ -306,13 +301,13 @@ class SellerOrderService {
    * @param {string} sellerId 
    * @param {Object} rules - { defaultCogs, defaultFees, defaultShipping }
    */
-  static async applyDefaultRates(sellerId, { defaultCogs = 15000, defaultFees = 2500, defaultShipping = 1200 } = {}) {
+  static async applyDefaultRates(sellerId, { defaultCogs = 0, defaultFees = 0, defaultShipping = 0 } = {}) {
     if (!sellerId) throw new Error('Seller ID is required.');
 
     const payload = {
-      cogs: Math.max(0, parseFloat(defaultCogs) || 15000),
-      fees: Math.max(0, parseFloat(defaultFees) || 2500),
-      shipping: Math.max(0, parseFloat(defaultShipping) || 1200),
+      cogs: Math.max(0, parseFloat(defaultCogs) || 0),
+      fees: Math.max(0, parseFloat(defaultFees) || 0),
+      shipping: Math.max(0, parseFloat(defaultShipping) || 0),
     };
 
     const { data: items } = await supabase

@@ -7,9 +7,9 @@ export default function OrdersTab({
   onApplyDefaultRates,
 }) {
   // Local state for flat PKR default cost/fees inputs
-  const [defaultCogs, setDefaultCogs] = useState(15000);
-  const [defaultFees, setDefaultFees] = useState(2500);
-  const [defaultShipping, setDefaultShipping] = useState(1200);
+  const [defaultCogs, setDefaultCogs] = useState(0);
+  const [defaultFees, setDefaultFees] = useState(0);
+  const [defaultShipping, setDefaultShipping] = useState(0);
 
   const handleApplyDefaults = () => {
     if (onApplyDefaultRates) {

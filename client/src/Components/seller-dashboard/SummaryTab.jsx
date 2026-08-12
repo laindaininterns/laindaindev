@@ -208,11 +208,17 @@ export default function SummaryTab({ products = [], orders = [] }) {
   }, [products]);
 
   const formatPKR = (amount) => {
+    const cleanAmount = !amount || Object.is(amount, -0) || Math.abs(amount) < 0.001 ? 0 : amount;
     return new Intl.NumberFormat("en-PK", {
       style: "currency",
       currency: "PKR",
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(cleanAmount);
+  };
+
+  const formatDeduction = (val) => {
+    if (!val || val <= 0 || Object.is(val, -0)) return formatPKR(0);
+    return `-${formatPKR(val)}`;
   };
 
   return (
@@ -344,22 +350,22 @@ export default function SummaryTab({ products = [], orders = [] }) {
 
           <div className="bg-[#F5F5F0]/60 p-4 rounded-xl border border-[#E9E8E2]">
             <span className="text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider block">Product Cost (COGS)</span>
-            <span className="text-lg font-bold text-[#A84A3B] block mt-1">-{formatPKR(stats.cost)}</span>
+            <span className="text-lg font-bold text-[#A84A3B] block mt-1">{formatDeduction(stats.cost)}</span>
           </div>
 
           <div className="bg-[#F5F5F0]/60 p-4 rounded-xl border border-[#E9E8E2]">
             <span className="text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider block">Marketplace Fees</span>
-            <span className="text-lg font-bold text-[#A84A3B] block mt-1">-{formatPKR(stats.fees)}</span>
+            <span className="text-lg font-bold text-[#A84A3B] block mt-1">{formatDeduction(stats.fees)}</span>
           </div>
 
           <div className="bg-[#F5F5F0]/60 p-4 rounded-xl border border-[#E9E8E2]">
             <span className="text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider block">Shipping Costs</span>
-            <span className="text-lg font-bold text-[#A84A3B] block mt-1">-{formatPKR(stats.shipping)}</span>
+            <span className="text-lg font-bold text-[#A84A3B] block mt-1">{formatDeduction(stats.shipping)}</span>
           </div>
 
           <div className="bg-[#F5F5F0]/60 p-4 rounded-xl border border-[#E9E8E2]">
             <span className="text-[11px] font-semibold text-[#5B5B58] uppercase tracking-wider block">Returns & Refunds</span>
-            <span className="text-lg font-bold text-[#A84A3B] block mt-1">-{formatPKR(stats.returns)}</span>
+            <span className="text-lg font-bold text-[#A84A3B] block mt-1">{formatDeduction(stats.returns)}</span>
           </div>
 
           <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 col-span-2">

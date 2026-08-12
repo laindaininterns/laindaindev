@@ -1,5 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { PRODUCTS, CATEGORIES, TOKENS } from "./data/marketplaceData";
+import { fetchSellerProductsRequest } from "./services/api";
 import Navbar from "./components/Navbar";
 import CategoryBar from "./components/CategoryBar";
 import ProductCard from "./components/ProductCard";
@@ -106,15 +107,31 @@ export default function App() {
     triggerToast(`Removed ${item.name} from cart`, "info");
   }
 
+  const [productsList, setProductsList] = useState([]);
+
+  useEffect(() => {
+    async function loadLiveMarketplaceProducts() {
+      try {
+        const live = await fetchSellerProductsRequest();
+        if (Array.isArray(live)) {
+          setProductsList(live);
+        }
+      } catch (err) {
+        console.error('Failed to load marketplace products from database:', err.message);
+      }
+    }
+    loadLiveMarketplaceProducts();
+  }, []);
+
   // Compute Filtered Products
   const filteredProducts =
     activeCategory === "All Suppliers"
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.cat === activeCategory);
+      ? productsList
+      : productsList.filter((p) => p.cat === activeCategory);
 
   // Compute Search Results
   const searchResults = searchQuery.trim()
-    ? PRODUCTS.filter(
+    ? productsList.filter(
         (p) =>
           p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.cat.toLowerCase().includes(searchQuery.toLowerCase()) ||

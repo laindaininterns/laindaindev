@@ -27,7 +27,7 @@ const getSellerProfile = async (userId, profileIdFromToken) => {
     business_name: 'Faisalabad Textiles Co.',
     business_address: 'Faisalabad, Punjab, Pakistan',
     tax_id: 'NTN-9876543-1',
-    current_status: 'Approved',
+    current_status: 'APPROVED',
   };
 };
 
@@ -45,11 +45,8 @@ const getSellerKyc = async (req, res) => {
         business_name: profile.business_name || 'Faisalabad Textiles Co.',
         business_address: profile.business_address || 'Faisalabad, Punjab, Pakistan',
         tax_id: profile.tax_id || 'NTN-9876543-1',
-        status: profile.current_status || 'Approved',
-        documents: [
-          { name: 'NTN_Certificate_2026.pdf', size: '1.2 MB', date: '2026-08-01', status: 'Approved' },
-          { name: 'CNIC_Copy_Front_Back.pdf', size: '850 KB', date: '2026-08-01', status: 'Approved' },
-        ],
+        status: profile.current_status || 'APPROVED',
+        documents: profile.uploaded_docs || [],
       },
     });
   } catch (error) {
@@ -91,78 +88,18 @@ const getSellerProducts = async (req, res) => {
 
     const { data: products, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, categories(id, name, slug)')
       .eq('seller_id', profile.id)
       .order('created_at', { ascending: false });
 
-    if (!error && products && products.length > 0) {
-      return res.status(200).json({
-        success: true,
-        count: products.length,
-        products,
-      });
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
     }
-
-    // Default wholesale catalog items if seller has no db products yet
-    const initialProducts = [
-      {
-        id: '1',
-        seller_id: profile.id,
-        name: 'Cotton Fabric Rolls (100% Combed)',
-        sku: 'TX-COT-01',
-        cat: 'Clothing & Apparel',
-        price: 850,
-        stock: 250,
-        stock_quantity: 250,
-        isOutOfStock: false,
-        moq: 50,
-        photos: [],
-      },
-      {
-        id: '2',
-        seller_id: profile.id,
-        name: 'Glazed Ceramic Vases',
-        sku: 'CR-GLZ-02',
-        cat: 'Home Decor',
-        price: 1200,
-        stock: 45,
-        stock_quantity: 45,
-        isOutOfStock: false,
-        moq: 10,
-        photos: [],
-      },
-      {
-        id: '3',
-        seller_id: profile.id,
-        name: 'Embroidered Kurta Dupatta Set',
-        sku: 'TX-EMB-03',
-        cat: 'Clothing & Apparel',
-        price: 2450,
-        stock: 0,
-        stock_quantity: 0,
-        isOutOfStock: true,
-        moq: 20,
-        photos: [],
-      },
-      {
-        id: '4',
-        seller_id: profile.id,
-        name: 'Leather Messenger Bags',
-        sku: 'BG-LTH-04',
-        cat: 'Bags & Luggage',
-        price: 3200,
-        stock: 80,
-        stock_quantity: 80,
-        isOutOfStock: false,
-        moq: 15,
-        photos: [],
-      },
-    ];
 
     return res.status(200).json({
       success: true,
-      count: initialProducts.length,
-      products: initialProducts,
+      count: (products || []).length,
+      products: products || [],
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error fetching seller products.', error: error.message });
@@ -208,28 +145,8 @@ const createSellerProduct = async (req, res) => {
       .select('*')
       .single();
 
-    if (error || !newProduct) {
-      const fallbackProduct = {
-        id: `prod-${Date.now()}`,
-        seller_id: profile.id,
-        name: productTitle,
-        title: productTitle,
-        sku: productSku,
-        cat: cat || 'Clothing & Apparel',
-        price: Number(price),
-        stock: qty,
-        stock_quantity: qty,
-        isOutOfStock: outOfStockBool,
-        moq: productMoq,
-        desc: description || desc || '',
-        photos: photos || images || [],
-        created_at: new Date().toISOString(),
-      };
-      return res.status(201).json({
-        success: true,
-        message: 'Wholesale product created successfully.',
-        product: fallbackProduct,
-      });
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
     }
 
     return res.status(201).json({
@@ -253,66 +170,50 @@ const updateSellerStock = async (req, res) => {
 
     const { delta, stock, isOutOfStock } = req.body;
 
-    const { data: existing } = await supabase
+    const { data: existing, error: findErr } = await supabase
       .from('products')
       .select('*')
       .eq('id', productId)
       .eq('seller_id', profile.id)
       .single();
 
-    let currentStock = existing ? (existing.stock_quantity !== undefined ? existing.stock_quantity : existing.stock || 0) : 10;
-    let newStock = currentStock;
+    if (findErr || !existing) {
+      return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
+    }
 
-    if (delta !== undefined) {
-      newStock = Math.max(0, currentStock + Number(delta));
-    } else if (stock !== undefined) {
+    let newStock = existing.stock_quantity;
+    if (stock !== undefined) {
       newStock = Math.max(0, Number(stock));
+    } else if (delta !== undefined) {
+      newStock = Math.max(0, existing.stock_quantity + Number(delta));
     }
 
-    let newStatus = existing?.status || 'ACTIVE';
-    if (isOutOfStock === true) {
-      newStatus = 'OUT_OF_STOCK';
-      newStock = 0;
-    } else if (isOutOfStock === false) {
-      newStatus = 'ACTIVE';
-      if (newStock === 0) newStock = 10;
-    } else {
-      newStatus = newStock === 0 ? 'OUT_OF_STOCK' : 'ACTIVE';
-    }
+    const nextIsOut = isOutOfStock !== undefined ? Boolean(isOutOfStock) : (newStock === 0);
 
-    if (existing) {
-      await supabase
-        .from('products')
-        .update({
-          stock_quantity: newStock,
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', productId)
-        .eq('seller_id', profile.id);
+    const { data: updated, error: updateErr } = await supabase
+      .from('products')
+      .update({
+        stock_quantity: newStock,
+        is_out_of_stock: nextIsOut,
+        status: newStock > 0 && !nextIsOut ? 'APPROVED' : 'OUT_OF_STOCK',
+      })
+      .eq('id', productId)
+      .select('*')
+      .single();
+
+    if (updateErr) {
+      return res.status(400).json({ success: false, error: updateErr.message });
     }
 
     return res.status(200).json({
       success: true,
       message: 'Product stock updated successfully.',
-      product: {
-        id: productId,
-        seller_id: profile.id,
-        stock: newStock,
-        stock_quantity: newStock,
-        isOutOfStock: newStatus === 'OUT_OF_STOCK',
-        status: newStatus,
-      },
+      product: updated,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error updating stock.', error: error.message });
   }
 };
-
-const sellerOrderController = require('./sellerOrderController');
-
-const getSellerOrders = sellerOrderController.getSellerOrders;
-const updateSellerOrderStatus = sellerOrderController.updateSellerOrderStatus;
 
 module.exports = {
   getSellerKyc,
@@ -320,7 +221,4 @@ module.exports = {
   getSellerProducts,
   createSellerProduct,
   updateSellerStock,
-  getSellerOrders,
-  updateSellerOrderStatus,
 };
-
