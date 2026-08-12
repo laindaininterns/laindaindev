@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laindaindev.onrender.com/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Register a Buyer account in Supabase via backend API

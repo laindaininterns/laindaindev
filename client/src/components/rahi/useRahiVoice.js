@@ -1,24 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { API_BASE_URL } from '../../services/api';
 
 /**
- * Custom hook for Rahi 3D Voice Assistant
- * Manages voice states: idle -> listening -> processing -> speaking -> idle
- * Handles microphone recording, STT, Rahi LLM reasoning, TTS playback, and proposed navigation confirmation.
+ * Custom hook for Rahi 3D Interactive Voice Assistant
+ * Pure voice interaction state machine: idle -> listening -> processing -> speaking -> idle
+ * Handles mic recording, Whisper STT, Rahi LLM reasoning, TTS audio playback, and proposed navigation confirmation.
  */
 export default function useRahiVoice() {
   const [avatarState, setAvatarState] = useState('idle'); // 'idle' | 'listening' | 'processing' | 'speaking'
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      text: 'Salam! I am Rahi, your 3D voice guide for LainDain. Tap the mic to speak to me!',
-      language: 'en',
-    },
-  ]);
+  const [latestReply, setLatestReply] = useState('Salam! I am Rahi, your 3D voice guide. Tap me anytime to speak!');
+  const [showSpeechBubble, setShowSpeechBubble] = useState(false);
   const [proposedNav, setProposedNav] = useState(null);
   const [rahiError, setRahiError] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState([]);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -28,7 +23,7 @@ export default function useRahiVoice() {
 
   const hasMicSupport = typeof window !== 'undefined' && Boolean(navigator?.mediaDevices?.getUserMedia && window.MediaRecorder);
 
-  // Clean up on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -43,6 +38,9 @@ export default function useRahiVoice() {
   }, []);
 
   const speakRahiReply = useCallback(async (text, language = 'en') => {
+    setLatestReply(text);
+    setShowSpeechBubble(true);
+
     if (isMuted || !text) {
       setAvatarState('idle');
       return;
@@ -59,7 +57,7 @@ export default function useRahiVoice() {
     setAvatarState('speaking');
 
     try {
-      const response = await fetch('/api/voice/speak', {
+      const response = await fetch(`${API_BASE_URL}/voice/speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, language }),
@@ -99,22 +97,19 @@ export default function useRahiVoice() {
 
     setRahiError(null);
     setAvatarState('processing');
+    setShowSpeechBubble(false);
 
-    const userMsg = { id: `u_${Date.now()}`, role: 'user', text: userText.trim() };
-    setMessages((prev) => [...prev, userMsg]);
+    const newTurn = { role: 'user', content: userText.trim() };
+    const updatedHistory = [...conversationHistory, newTurn];
+    setConversationHistory(updatedHistory);
 
     try {
-      const historyTurns = messages.map((m) => ({
-        role: m.role,
-        content: m.text,
-      }));
-
-      const res = await fetch('/api/rahi/message', {
+      const res = await fetch(`${API_BASE_URL}/rahi/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userText.trim(),
-          history: historyTurns,
+          history: updatedHistory,
           currentPageContext: typeof window !== 'undefined' ? window.location.pathname : '',
         }),
       });
@@ -122,15 +117,10 @@ export default function useRahiVoice() {
       const data = await res.json();
 
       if (data.success) {
-        const assistantMsg = {
-          id: `a_${Date.now()}`,
-          role: 'assistant',
-          text: data.reply,
-          language: data.language || 'en',
-          quick_replies: data.quick_replies || [],
-        };
-
-        setMessages((prev) => [...prev, assistantMsg]);
+        setConversationHistory((prev) => [
+          ...prev,
+          { role: 'assistant', content: data.reply },
+        ]);
 
         if (data.proposed_navigation) {
           setProposedNav(data.proposed_navigation);
@@ -138,7 +128,6 @@ export default function useRahiVoice() {
           setProposedNav(null);
         }
 
-        // Trigger TTS playback
         speakRahiReply(data.reply, data.language || 'en');
       } else {
         setRahiError(data.message || 'Failed to connect to Rahi assistant.');
@@ -149,7 +138,7 @@ export default function useRahiVoice() {
       setRahiError('Network error reaching Rahi service.');
       setAvatarState('idle');
     }
-  }, [messages, speakRahiReply]);
+  }, [conversationHistory, speakRahiReply]);
 
   const stopListening = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -160,7 +149,7 @@ export default function useRahiVoice() {
 
   const startListening = useCallback(async () => {
     setRahiError(null);
-    setIsOpen(true);
+    setShowSpeechBubble(false);
 
     if (!hasMicSupport) {
       setRahiError('Microphone not supported in this browser.');
@@ -228,7 +217,7 @@ export default function useRahiVoice() {
           const formData = new FormData();
           formData.append('audio', audioBlob, 'rahi_speech.webm');
 
-          const res = await fetch('/api/voice/transcribe', {
+          const res = await fetch(`${API_BASE_URL}/voice/transcribe`, {
             method: 'POST',
             body: formData,
           });
@@ -256,9 +245,22 @@ export default function useRahiVoice() {
     }
   }, [hasMicSupport, sendRahiMessage, stopListening]);
 
-  const toggleOpen = useCallback(() => {
-    setIsOpen((prev) => !prev);
-  }, []);
+  const toggleListening = useCallback(() => {
+    if (avatarState === 'listening') {
+      stopListening();
+    } else if (avatarState === 'speaking') {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      setAvatarState('idle');
+    } else {
+      startListening();
+    }
+  }, [avatarState, startListening, stopListening]);
 
   const confirmNavigation = useCallback((onNavigate) => {
     if (proposedNav && typeof onNavigate === 'function') {
@@ -271,20 +273,25 @@ export default function useRahiVoice() {
     setProposedNav(null);
   }, []);
 
+  const closeSpeechBubble = useCallback(() => {
+    setShowSpeechBubble(false);
+  }, []);
+
   return {
     avatarState,
-    isOpen,
-    messages,
+    latestReply,
+    showSpeechBubble,
     proposedNav,
     rahiError,
     isMuted,
     hasMicSupport,
-    toggleOpen,
+    toggleListening,
     startListening,
     stopListening,
     sendRahiMessage,
     confirmNavigation,
     rejectNavigation,
+    closeSpeechBubble,
     setIsMuted,
   };
 }

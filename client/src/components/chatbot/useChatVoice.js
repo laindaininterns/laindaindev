@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { API_BASE_URL } from '../../services/api';
 
 /**
  * Custom Hook for Laila Voice I/O
@@ -113,7 +114,7 @@ export default function useChatVoice() {
           const formData = new FormData();
           formData.append('audio', audioBlob, 'utterance.webm');
 
-          const response = await fetch('/api/voice/transcribe', {
+          const response = await fetch(`${API_BASE_URL}/voice/transcribe`, {
             method: 'POST',
             body: formData,
           });
@@ -156,7 +157,7 @@ export default function useChatVoice() {
     setIsSpeaking(true);
 
     try {
-      const response = await fetch('/api/voice/speak', {
+      const response = await fetch(`${API_BASE_URL}/voice/speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, language }),
