@@ -3,6 +3,8 @@ import Sidebar from "./Sidebar";
 import KycTab from "./KycTab";
 import OrdersTab from "./OrdersTab";
 import ProductsTab from "./ProductsTab";
+import SummaryTab from "./SummaryTab";
+import InventoryTab from "./InventoryTab";
 import AddProductModal from "./AddProductModal";
 
 import product01 from "../../assets/products/product-01-faisalabad-textiles.jpg";
@@ -67,6 +69,10 @@ const INITIAL_ORDERS = [
     items: "Cotton Fabric Rolls (x50)",
     total: 42500,
     status: "Pending Verification",
+    cogs: 23375,
+    fees: 3400,
+    shipping: 2975,
+    returns: 0,
   },
   {
     id: "ORD-9975",
@@ -75,6 +81,10 @@ const INITIAL_ORDERS = [
     items: "Leather Messenger Bags (x15), Glazed Ceramic Vases (x10)",
     total: 60000,
     status: "Approved",
+    cogs: 33000,
+    fees: 4800,
+    shipping: 4200,
+    returns: 0,
   },
   {
     id: "ORD-9951",
@@ -83,11 +93,75 @@ const INITIAL_ORDERS = [
     items: "Cotton Fabric Rolls (x100)",
     total: 85000,
     status: "Shipped",
+    cogs: 46750,
+    fees: 6800,
+    shipping: 5950,
+    returns: 0,
+  },
+  {
+    id: "ORD-9940",
+    buyer: "Multan Trade Center",
+    date: "2026-07-28",
+    items: "Glazed Ceramic Vases (x30)",
+    total: 36000,
+    status: "Shipped",
+    cogs: 19800,
+    fees: 2880,
+    shipping: 2520,
+    returns: 0,
+  },
+  {
+    id: "ORD-9932",
+    buyer: "Peshawar Goods Co.",
+    date: "2026-07-15",
+    items: "Cotton Fabric Rolls (x30), Leather Messenger Bags (x10)",
+    total: 57500,
+    status: "Shipped",
+    cogs: 31625,
+    fees: 4600,
+    shipping: 4025,
+    returns: 5000,
+  },
+  {
+    id: "ORD-9921",
+    buyer: "Faisalabad Weavers Ltd",
+    date: "2026-07-02",
+    items: "Cotton Fabric Rolls (x120)",
+    total: 102000,
+    status: "Shipped",
+    cogs: 56100,
+    fees: 8160,
+    shipping: 7140,
+    returns: 0,
+  },
+  {
+    id: "ORD-9910",
+    buyer: "Quetta Retailers Group",
+    date: "2026-06-20",
+    items: "Glazed Ceramic Vases (x15)",
+    total: 18000,
+    status: "Shipped",
+    cogs: 9900,
+    fees: 1440,
+    shipping: 1260,
+    returns: 0,
+  },
+  {
+    id: "ORD-9902",
+    buyer: "Sialkot Sports Hub",
+    date: "2026-06-05",
+    items: "Leather Messenger Bags (x25)",
+    total: 80000,
+    status: "Shipped",
+    cogs: 44000,
+    fees: 6400,
+    shipping: 5600,
+    returns: 0,
   }
 ];
 
 export default function SellerDashboard({ onClose }) {
-  const [activeTab, setActiveTab] = useState("kyc"); // "kyc", "orders", "products"
+  const [activeTab, setActiveTab] = useState("summary"); // "summary", "kyc", "orders", "products"
   const [kycStatus, setKycStatus] = useState("Pending Verification"); // "Approved", "Pending Verification"
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [orders, setOrders] = useState(INITIAL_ORDERS);
@@ -169,6 +243,24 @@ export default function SellerDashboard({ onClose }) {
     );
   };
 
+  // Profitability modifications
+  const handleUpdateOrderProfitability = (orderId, updatedFields) => {
+    setOrders(prev =>
+      prev.map(o => (o.id === orderId ? { ...o, ...updatedFields } : o))
+    );
+  };
+
+  const handleApplyDefaultRates = (cogsRs, feesRs, shippingRs) => {
+    setOrders(prev =>
+      prev.map(o => ({
+        ...o,
+        cogs: cogsRs,
+        fees: feesRs,
+        shipping: shippingRs,
+      }))
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#F9F9F6] text-black font-sans antialiased flex flex-col md:flex-row">
       <Sidebar
@@ -180,6 +272,10 @@ export default function SellerDashboard({ onClose }) {
       />
 
       <main className="flex-1 p-6 md:p-8 max-w-[1200px] overflow-y-auto">
+        {activeTab === "summary" && (
+          <SummaryTab products={products} orders={orders} />
+        )}
+
         {activeTab === "kyc" && (
           <KycTab
             kycStatus={kycStatus}
@@ -194,6 +290,17 @@ export default function SellerDashboard({ onClose }) {
           <OrdersTab
             orders={orders}
             handleUpdateOrderStatus={handleUpdateOrderStatus}
+            onUpdateOrderProfitability={handleUpdateOrderProfitability}
+            onApplyDefaultRates={handleApplyDefaultRates}
+          />
+        )}
+
+        {activeTab === "inventory" && (
+          <InventoryTab
+            products={products}
+            setProducts={setProducts}
+            handleAdjustStock={handleAdjustStock}
+            handleToggleOutOfStock={handleToggleOutOfStock}
           />
         )}
 
