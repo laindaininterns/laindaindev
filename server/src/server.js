@@ -36,6 +36,10 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+      // Allow any localhost/127.0.0.1 origin in development mode
+      if (process.env.NODE_ENV !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
+        return callback(null, true);
+      }
       return callback(new Error('CORS policy violation: Origin not allowed.'));
     },
     credentials: true,
