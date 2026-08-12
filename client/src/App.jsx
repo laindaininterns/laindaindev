@@ -17,6 +17,7 @@ const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
 const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
+const RahiWidget = lazy(() => import("./components/rahi/RahiWidget"));
 const AdminDashboard = lazy(() => import("./pages/admin-dashboard/AdminDashboard"));
 
 export default function App() {
@@ -433,6 +434,25 @@ export default function App() {
               setSelectedProduct(found);
             }
           }}
+        />
+
+        {/* Rahi 3D Interactive Voice Assistant */}
+        <RahiWidget
+          onNavigateCategory={(cat) => {
+            if (CATEGORIES.includes(cat)) {
+              setActiveCategory(cat);
+            } else {
+              setActiveCategory("All Suppliers");
+            }
+            window.scrollTo({ top: 300, behavior: "smooth" });
+          }}
+          onNavigateProduct={(prodId) => {
+            const found = PRODUCTS.find((p) => String(p.id) === String(prodId));
+            if (found) {
+              setSelectedProduct(found);
+            }
+          }}
+          onNavigateAdmin={() => setViewMode("admin")}
         />
       </Suspense>
 
