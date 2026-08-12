@@ -5,6 +5,8 @@ export default function InventoryTab({
   setProducts,
   handleAdjustStock,
   handleToggleOutOfStock,
+  onSaveInventory,
+  isSavingInventory,
 }) {
   const [activeSubTab, setActiveSubTab] = useState("all"); // "all", "low", "out"
 
@@ -21,12 +23,30 @@ export default function InventoryTab({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-[24px] font-semibold text-black tracking-tight">Inventory Management</h1>
-        <p className="text-[13px] text-[#5B5B58] mt-0.5">
-          Dedicated datasheet view of product stock levels, visibility overrides, and catalog health.
-        </p>
+      {/* Header & Save Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-[24px] font-semibold text-black tracking-tight">Inventory Management</h1>
+          <p className="text-[13px] text-[#5B5B58] mt-0.5">
+            Dedicated datasheet view of product stock levels, visibility overrides, and catalog health.
+          </p>
+        </div>
+        <button
+          onClick={onSaveInventory}
+          disabled={isSavingInventory}
+          className="h-[42px] px-5 rounded-[12px] bg-[#A3C1BF] text-black text-[13px] font-bold hover:bg-[#85A6A3] transition-all active:scale-[0.97] flex items-center gap-2 shadow-xs disabled:opacity-50 cursor-pointer"
+        >
+          {isSavingInventory ? (
+            <>
+              <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+              Saving to Database...
+            </>
+          ) : (
+            <>
+              <span>💾</span> Save Inventory Changes
+            </>
+          )}
+        </button>
       </div>
 
       {/* Internal Tabs */}

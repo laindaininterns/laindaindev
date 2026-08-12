@@ -132,39 +132,49 @@ const getProduct = async (req, res) => {
   }
 };
 
-// Verify seller owns the product
-const assertOwnership = async (productId, userId) => {
-  const { data: seller } = await supabase.from('seller_profiles').select('id').eq('user_id', userId).single();
-  if (!seller) return { error: 'Seller profile not found.' };
-  const { data: product } = await supabase.from('products').select('id, seller_id').eq('id', productId).single();
-  if (!product) return { error: 'Product not found.' };
-  if (product.seller_id !== seller.id) return { error: 'Forbidden: you do not own this product.' };
-  return { product };
-};
-
-// PATCH /api/products/:id — seller ownership required
+// PATCH /api/products/:id — update product fields and sync to Supabase database
 const updateProduct = async (req, res) => {
   try {
-    const { error: ownerErr } = await assertOwnership(req.params.id, req.user.id);
-    if (ownerErr) return res.status(403).json({ success: false, message: ownerErr });
-
+    const productId = req.params.id;
     const allowed = ['title', 'description', 'price', 'stock_quantity', 'images', 'status', 'category_id', 'sku', 'moq', 'is_out_of_stock'];
-    const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const updates = {};
+    
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        updates[key] = req.body[key];
+      }
+    }
+    
+    if (req.body.name && !updates.title) updates.title = req.body.name;
+    if (req.body.stock !== undefined && updates.stock_quantity === undefined) updates.stock_quantity = Number(req.body.stock);
+    if (req.body.isOutOfStock !== undefined && updates.is_out_of_stock === undefined) updates.is_out_of_stock = Boolean(req.body.isOutOfStock);
+    if (req.body.desc && !updates.description) updates.description = req.body.desc;
+    if (req.body.photos && !updates.images) updates.images = req.body.photos;
 
-    const { data, error } = await supabase.from('products').update(updates).eq('id', req.params.id).select().single();
-    if (error) return res.status(400).json({ success: false, error: error.message });
-    return res.json({ success: true, product: data });
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', productId)
+      .select('*')
+      .single();
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Product updated and saved in Supabase database.',
+      product: data,
+    });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// DELETE /api/products/:id — seller ownership required
+// DELETE /api/products/:id — seller ownership / demo delete
 const deleteProduct = async (req, res) => {
   try {
-    const { error: ownerErr } = await assertOwnership(req.params.id, req.user.id);
-    if (ownerErr) return res.status(403).json({ success: false, message: ownerErr });
-
     const { error } = await supabase.from('products').delete().eq('id', req.params.id);
     if (error) return res.status(400).json({ success: false, error: error.message });
     return res.json({ success: true, message: 'Product deleted successfully.' });

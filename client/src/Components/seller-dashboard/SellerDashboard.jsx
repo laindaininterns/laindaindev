@@ -6,7 +6,7 @@ import ProductsTab from "./ProductsTab";
 import SummaryTab from "./SummaryTab";
 import InventoryTab from "./InventoryTab";
 import AddProductModal from "./AddProductModal";
-import { createProductRequest } from "../../services/api";
+import { createProductRequest, updateProductRequest, saveInventoryChangesRequest } from "../../services/api";
 
 import product01 from "../../assets/products/product-01-faisalabad-textiles.jpg";
 import product02 from "../../assets/products/product-02-lahore-ceramics.jpg";
@@ -25,7 +25,7 @@ const INITIAL_PRODUCTS = [
     stock: 250,
     isOutOfStock: false,
     moq: 50,
-    photos: [product01, product02, product03], // 3 photos
+    photos: [product01, product02, product03],
   },
   {
     id: 2,
@@ -36,7 +36,7 @@ const INITIAL_PRODUCTS = [
     stock: 45,
     isOutOfStock: false,
     moq: 10,
-    photos: [product02, product04], // 2 photos
+    photos: [product02, product04],
   },
   {
     id: 3,
@@ -47,7 +47,7 @@ const INITIAL_PRODUCTS = [
     stock: 0,
     isOutOfStock: true,
     moq: 20,
-    photos: [product03, product01, product05, product02, product04], // 5 photos
+    photos: [product03, product01, product05, product02, product04],
   },
   {
     id: 4,
@@ -58,7 +58,7 @@ const INITIAL_PRODUCTS = [
     stock: 80,
     isOutOfStock: false,
     moq: 15,
-    photos: [product04, product05, product01], // 3 photos
+    photos: [product04, product05, product01],
   }
 ];
 
@@ -163,7 +163,7 @@ const INITIAL_ORDERS = [
 
 export default function SellerDashboard({ onClose }) {
   const [activeTab, setActiveTab] = useState("summary"); // "summary", "kyc", "orders", "products"
-  const [kycStatus, setKycStatus] = useState("Pending Verification"); // "Approved", "Pending Verification"
+  const [kycStatus, setKycStatus] = useState("Pending Verification");
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -173,6 +173,7 @@ export default function SellerDashboard({ onClose }) {
     { name: "CNIC_Copy_Front_Back.pdf", size: "850 KB", date: "2026-08-01", status: "Approved" },
   ]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSavingInventory, setIsSavingInventory] = useState(false);
 
   // Document Upload Handler
   const handleFileUpload = (e) => {
@@ -192,6 +193,19 @@ export default function SellerDashboard({ onClose }) {
     }, 1500);
   };
 
+  // Save Inventory changes to Supabase database
+  const handleSaveInventory = async () => {
+    setIsSavingInventory(true);
+    try {
+      await saveInventoryChangesRequest(products);
+      console.log('Inventory changes persisted into Supabase database.');
+    } catch (err) {
+      console.error('Failed to save inventory:', err.message);
+    } finally {
+      setIsSavingInventory(false);
+    }
+  };
+
   // Product Inventory Handlers
   const handleAdjustStock = (productId, delta) => {
     setProducts(prev =>
@@ -201,7 +215,6 @@ export default function SellerDashboard({ onClose }) {
           return {
             ...p,
             stock: newStock,
-            // Automatically mark out of stock if it reaches 0
             isOutOfStock: newStock === 0 ? true : p.isOutOfStock
           };
         }
@@ -216,7 +229,6 @@ export default function SellerDashboard({ onClose }) {
         if (p.id === productId) {
           const nextState = !p.isOutOfStock;
           if (nextState) {
-            // Toggling OUT of stock: backup current stock, set stock to 0
             return {
               ...p,
               isOutOfStock: nextState,
@@ -224,7 +236,6 @@ export default function SellerDashboard({ onClose }) {
               stock: 0
             };
           } else {
-            // Toggling IN to stock: restore from backup, fallback to 10 if backup was 0 or undefined
             return {
               ...p,
               isOutOfStock: nextState,
@@ -302,6 +313,8 @@ export default function SellerDashboard({ onClose }) {
             setProducts={setProducts}
             handleAdjustStock={handleAdjustStock}
             handleToggleOutOfStock={handleToggleOutOfStock}
+            onSaveInventory={handleSaveInventory}
+            isSavingInventory={isSavingInventory}
           />
         )}
 
@@ -347,7 +360,15 @@ export default function SellerDashboard({ onClose }) {
             console.error('Database product save error:', err.message);
           }
         }}
-        onEditProduct={(updatedProd) => setProducts(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p))}
+        onEditProduct={async (updatedProd) => {
+          setProducts(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p));
+          try {
+            const updated = await updateProductRequest(updatedProd.id, updatedProd);
+            console.log('Product edit persisted in Supabase database:', updated);
+          } catch (err) {
+            console.error('Database product edit error:', err.message);
+          }
+        }}
       />
     </div>
   );

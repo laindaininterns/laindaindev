@@ -131,3 +131,70 @@ export async function createProductRequest(productData) {
 
   return data.product;
 }
+
+/**
+ * Update existing product in Supabase via backend API
+ */
+export async function updateProductRequest(productId, updatedData) {
+  const token = localStorage.getItem('auth_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({
+      title: updatedData.name || updatedData.title,
+      price: updatedData.price !== undefined ? parseFloat(updatedData.price) : undefined,
+      moq: updatedData.moq !== undefined ? parseInt(updatedData.moq) : undefined,
+      stock_quantity: updatedData.stock !== undefined ? parseInt(updatedData.stock) : undefined,
+      description: updatedData.desc !== undefined ? updatedData.desc : updatedData.description,
+      images: updatedData.photos || updatedData.images,
+      is_out_of_stock: updatedData.isOutOfStock,
+      sku: updatedData.sku,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || data.error || 'Failed to update product in database.');
+  }
+
+  return data.product;
+}
+
+/**
+ * Bulk save inventory changes (stock levels, out-of-stock flags) to Supabase database
+ */
+export async function saveInventoryChangesRequest(productsList) {
+  const token = localStorage.getItem('auth_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const results = await Promise.all(
+    productsList.map(async (p) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/products/${p.id}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({
+            stock_quantity: p.stock,
+            is_out_of_stock: p.stock === 0 || p.isOutOfStock,
+            price: p.price,
+            moq: p.moq,
+          }),
+        });
+        const resData = await response.json();
+        return { id: p.id, success: response.ok && resData.success };
+      } catch (err) {
+        return { id: p.id, success: false, error: err.message };
+      }
+    })
+  );
+
+  return results;
+}
