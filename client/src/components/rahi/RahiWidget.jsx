@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import useRahiVoice from './useRahiVoice';
 import rahiIdle from '../../assets/rahi/rahi-idle.png';
 import rahiListening from '../../assets/rahi/rahi-listening.png';
@@ -13,6 +13,7 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
     rahiError,
     isMuted,
     hasMicSupport,
+    isSessionActive,
     toggleListening,
     confirmNavigation,
     rejectNavigation,
@@ -47,9 +48,61 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Handle Confirm Navigation logic with robust category/product/admin matching
+  const handleConfirmNav = useCallback(() => {
+    confirmNavigation((nav) => {
+      if (!nav) return;
+      const targetStr = String(nav.target || nav.label || '').toLowerCase();
+      const typeStr = String(nav.type || '').toLowerCase();
+
+      if (targetStr.includes('admin')) {
+        if (typeof onNavigateAdmin === 'function') onNavigateAdmin();
+      } else if (typeStr === 'product' || /^\d+$/.test(String(nav.target)) || targetStr.includes('/product/')) {
+        const prodId = String(nav.target).replace(/\D/g, '') || nav.target;
+        if (typeof onNavigateProduct === 'function') onNavigateProduct(prodId);
+      } else {
+        // Category navigation resolution
+        let matchedCat = 'All Suppliers';
+        if (targetStr.includes('footwear') || targetStr.includes('shoe') || targetStr.includes('leather')) {
+          matchedCat = 'Footwear';
+        } else if (targetStr.includes('cloth') || targetStr.includes('apparel') || targetStr.includes('garment') || targetStr.includes('jacket')) {
+          matchedCat = 'Clothing & Apparel';
+        } else if (targetStr.includes('bag') || targetStr.includes('luggage')) {
+          matchedCat = 'Bags & Luggage';
+        } else if (targetStr.includes('home') || targetStr.includes('appliance') || targetStr.includes('hardware') || targetStr.includes('electr')) {
+          matchedCat = 'Home Appliances & Electronics';
+        } else if (targetStr.includes('paint') || targetStr.includes('chem')) {
+          matchedCat = 'Paints & Chemicals';
+        } else if (targetStr.includes('tile') || targetStr.includes('construct')) {
+          matchedCat = 'Tiles & Construction';
+        } else if (targetStr.includes('sanitary') || targetStr.includes('bath')) {
+          matchedCat = 'Sanitary & Bathroom Fittings';
+        } else if (targetStr.includes('bedding') || targetStr.includes('textile')) {
+          matchedCat = 'Bedding & Home Textiles';
+        } else if (targetStr.includes('cosmetic') || targetStr.includes('beauty')) {
+          matchedCat = 'Cosmetics & Personal Care';
+        } else if (targetStr.includes('agro') || targetStr.includes('fertilizer')) {
+          matchedCat = 'Agriculture & Fertilizers';
+        }
+
+        if (typeof onNavigateCategory === 'function') {
+          onNavigateCategory(matchedCat);
+        }
+      }
+    });
+  }, [confirmNavigation, onNavigateAdmin, onNavigateProduct, onNavigateCategory]);
+
+  // Listen for voice-confirmed navigation custom event
+  useEffect(() => {
+    const handleVoiceConfirmNav = () => {
+      handleConfirmNav();
+    };
+    window.addEventListener('rahiConfirmNav', handleVoiceConfirmNav);
+    return () => window.removeEventListener('rahiConfirmNav', handleVoiceConfirmNav);
+  }, [handleConfirmNav]);
+
   // Mouse & Touch Drag Handlers
   const handlePointerDown = (e) => {
-    // Only drag with left mouse click or touch
     if (e.button !== undefined && e.button !== 0) return;
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -98,21 +151,8 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
 
   const handleAvatarClick = (e) => {
     e.stopPropagation();
-    if (hasMovedRef.current) return; // Ignore drag end click
+    if (hasMovedRef.current) return;
     toggleListening();
-  };
-
-  const handleConfirmNav = () => {
-    confirmNavigation((nav) => {
-      if (!nav) return;
-      if (nav.type === 'category' && typeof onNavigateCategory === 'function') {
-        onNavigateCategory(nav.target);
-      } else if (nav.type === 'product' && typeof onNavigateProduct === 'function') {
-        onNavigateProduct(nav.target);
-      } else if (nav.target.includes('/admin') && typeof onNavigateAdmin === 'function') {
-        onNavigateAdmin();
-      }
-    });
   };
 
   // Determine avatar asset & visual effects based on state
@@ -148,9 +188,15 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
         Rahi Speaking...
       </div>
     );
+  } else if (isSessionActive) {
+    statusPill = (
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#85A6A3] text-black text-[11px] font-bold shadow-md">
+        <span className="h-2 w-2 rounded-full bg-black animate-pulse" />
+        Voice Active
+      </div>
+    );
   }
 
-  // Position bubble speech card above or below depending on vertical position
   const showCardAbove = pos.y > 220;
 
   return (
@@ -243,7 +289,7 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
         onMouseDown={handlePointerDown}
         onTouchStart={handlePointerDown}
         onClick={handleAvatarClick}
-        title="Rahi 3D Voice Assistant — Drag to reposition, Click to talk"
+        title={isSessionActive ? "Voice Mode Active — Click to stop" : "Click to start continuous Voice Assistant mode"}
         role="button"
         tabIndex={0}
         aria-label="Rahi 3D Voice Assistant"
@@ -262,6 +308,11 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
           <span className="absolute -inset-3 rounded-full bg-[#85A6A3] opacity-40 animate-pulse pointer-events-none" />
         )}
 
+        {/* Outer ring glow when continuous session is active */}
+        {isSessionActive && avatarState === 'idle' && (
+          <span className="absolute -inset-2 rounded-full border-2 border-[#85A6A3] opacity-80 animate-pulse pointer-events-none" />
+        )}
+
         {/* Transparent background 3D Rahi image */}
         <img
           src={imageSrc}
@@ -269,9 +320,9 @@ export default function RahiWidget({ onNavigateCategory, onNavigateProduct, onNa
           className="h-16 w-16 object-contain pointer-events-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
         />
 
-        {/* Small Drag handle hint indicator */}
+        {/* Drag / Talk Label */}
         <span className="absolute -bottom-1 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase">
-          Drag / Talk
+          {isSessionActive ? 'Stop' : 'Talk'}
         </span>
       </div>
     </div>

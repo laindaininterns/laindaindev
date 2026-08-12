@@ -85,8 +85,18 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Lain-Dain server listening on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use by another process.`);
+    console.error(`💡 Free the port or terminate the existing node process running on port ${PORT}.`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', err);
+  }
 });
 
 module.exports = app;
