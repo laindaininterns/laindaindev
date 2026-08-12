@@ -134,7 +134,7 @@ export default function OrdersTab({
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">LD Fees</th>
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Shipping</th>
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Returns</th>
-                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58] text-right">Order Status</th>
+                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58] text-center">Order Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E9E8E2]">
@@ -199,7 +199,7 @@ export default function OrdersTab({
                     </td>
 
                     {/* Select Status Dropdown Selector */}
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-center">
                       <select
                         value={order.status}
                         onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
