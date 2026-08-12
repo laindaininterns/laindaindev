@@ -91,6 +91,7 @@ const transcribeAudio = async (req, res) => {
 /**
  * POST /api/voice/speak
  * Text input -> Cleaned text -> Cloud TTS audio stream or browser fallback payload
+ * Strictly validates text length, strips markdown and HTML, and uses isolated TTS provider key.
  */
 const speakText = async (req, res) => {
   try {
