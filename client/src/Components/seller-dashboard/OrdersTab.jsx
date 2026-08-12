@@ -1,80 +1,227 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 
-export default function OrdersTab({ orders, handleUpdateOrderStatus }) {
+export default function OrdersTab({
+  orders = [],
+  handleUpdateOrderStatus,
+  onUpdateOrderProfitability,
+  onApplyDefaultRates,
+}) {
+  // Local state for flat PKR default cost/fees inputs
+  const [defaultCogs, setDefaultCogs] = useState(15000);
+  const [defaultFees, setDefaultFees] = useState(2500);
+  const [defaultShipping, setDefaultShipping] = useState(1200);
+
+  const handleApplyDefaults = () => {
+    if (onApplyDefaultRates) {
+      onApplyDefaultRates(defaultCogs, defaultFees, defaultShipping);
+    }
+  };
+
+  // Status Summary Count Calculations
+  const counts = useMemo(() => {
+    let pending = 0;
+    let approved = 0;
+    let shipped = 0;
+    let cancelled = 0;
+
+    orders.forEach((order) => {
+      if (order.status === "Pending Verification") pending++;
+      else if (order.status === "Approved") approved++;
+      else if (order.status === "Shipped") shipped++;
+      else if (order.status === "Cancelled") cancelled++;
+    });
+
+    return { pending, approved, shipped, cancelled };
+  }, [orders]);
+
   return (
     <div className="space-y-6">
+      {/* Header Info */}
       <div>
-        <h1 className="text-[24px] font-semibold text-black tracking-tight">Wholesale Orders</h1>
+        <h1 className="text-[24px] font-semibold text-black tracking-tight">Wholesale Orders & Profitability</h1>
         <p className="text-[13px] text-[#5B5B58] mt-0.5">
-          Track and dispatch bulk purchase requests from buyers across Pakistan.
+          Track bulk purchases, update order status, and adjust financial records to manage margins.
         </p>
       </div>
 
-      {/* Orders List */}
+      {/* 1. ORDER STATUS SUMMARY GRID */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[#EEF3F2]/50 border border-[#85A6A3]/20 p-4 rounded-2xl shadow-xs">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider block">Pending Verification</span>
+          <span className="text-2xl font-black text-amber-700 block mt-1">{counts.pending}</span>
+        </div>
+
+        <div className="bg-[#EEF3F2]/50 border border-[#85A6A3]/20 p-4 rounded-2xl shadow-xs">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider block">Approved Orders</span>
+          <span className="text-2xl font-black text-emerald-700 block mt-1">{counts.approved}</span>
+        </div>
+
+        <div className="bg-[#EEF3F2]/50 border border-[#85A6A3]/20 p-4 rounded-2xl shadow-xs">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider block">Shipped Orders</span>
+          <span className="text-2xl font-black text-blue-700 block mt-1">{counts.shipped}</span>
+        </div>
+
+        <div className="bg-[#EEF3F2]/50 border border-[#85A6A3]/20 p-4 rounded-2xl shadow-xs">
+          <span className="text-[11px] font-bold text-[#5B5B58] uppercase tracking-wider block">Cancelled Orders</span>
+          <span className="text-2xl font-black text-rose-700 block mt-1">{counts.cancelled}</span>
+        </div>
+      </div>
+
+      {/* 2. DEFAULT PROFITABILITY RULES CONTAINER (FLAT PKR) */}
+      <div className="bg-[#EEF3F2]/50 border border-[#85A6A3]/25 rounded-[20px] p-5">
+        <h2 className="text-[14px] font-bold uppercase tracking-wider text-[#85A6A3] mb-3">
+          Default Profitability Calculator Rules (Flat PKR)
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="text-[12px] text-[#5B5B58] font-medium block mb-1">
+              Default Cost of Goods (Rs.)
+            </label>
+            <input
+              type="number"
+              value={defaultCogs}
+              onChange={(e) => setDefaultCogs(Math.max(0, parseInt(e.target.value) || 0))}
+              className="w-full h-[38px] px-3 text-[13px] font-semibold border border-[#E9E8E2] rounded-[10px] bg-white focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[12px] text-[#5B5B58] font-medium block mb-1">
+              Default Marketplace Fee (Rs.)
+            </label>
+            <input
+              type="number"
+              value={defaultFees}
+              onChange={(e) => setDefaultFees(Math.max(0, parseInt(e.target.value) || 0))}
+              className="w-full h-[38px] px-3 text-[13px] font-semibold border border-[#E9E8E2] rounded-[10px] bg-white focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[12px] text-[#5B5B58] font-medium block mb-1">
+              Default Shipping Cost (Rs.)
+            </label>
+            <input
+              type="number"
+              value={defaultShipping}
+              onChange={(e) => setDefaultShipping(Math.max(0, parseInt(e.target.value) || 0))}
+              className="w-full h-[38px] px-3 text-[13px] font-semibold border border-[#E9E8E2] rounded-[10px] bg-white focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <button
+              onClick={handleApplyDefaults}
+              className="w-full h-[38px] rounded-[10px] bg-[#A3C1BF] hover:bg-[#85A6A3] text-black text-[13px] font-bold transition-all active:scale-[0.97]"
+            >
+              Apply Flat Cost to All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. ORDERS LIST DATASHEET WITH DROPDOWN STATUS CHANGES */}
       <div className="bg-white rounded-[24px] border border-[#E9E8E2] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-[#F9F9F6] border-b border-[#E9E8E2]">
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Order ID</th>
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Buyer Name</th>
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Items</th>
                 <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Total Value</th>
-                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Status</th>
-                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58] text-right">Actions</th>
+                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Cost (COGS)</th>
+                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">LD Fees</th>
+                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Shipping</th>
+                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58]">Returns</th>
+                <th className="p-4 text-[12px] font-semibold uppercase tracking-wider text-[#5B5B58] text-center">Order Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E9E8E2]">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-[#EEF3F2]/20 transition-colors">
-                  <td className="p-4 text-[13px] font-semibold text-black">{order.id}</td>
-                  <td className="p-4 text-[13px] font-medium text-black">{order.buyer}</td>
-                  <td className="p-4 text-[13px] text-[#5B5B58] max-w-[200px] truncate">{order.items}</td>
-                  <td className="p-4 text-[13px] font-semibold text-black">Rs. {order.total.toLocaleString()}</td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                      order.status === "Shipped"
-                        ? "bg-green-50 text-green-700 border border-green-200"
-                        : order.status === "Approved"
-                        ? "bg-[#A3C1BF]/20 text-[#85A6A3] border border-[#85A6A3]/30"
-                        : "bg-amber-50 text-amber-700 border border-amber-200"
-                    }`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {order.status === "Pending Verification" && (
-                        <button
-                          onClick={() => handleUpdateOrderStatus(order.id, "Approved")}
-                          className="h-8 px-3 rounded-[8px] bg-[#A3C1BF] text-black text-[12px] font-medium hover:bg-[#85A6A3] transition-all active:scale-[0.97]"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      {order.status === "Approved" && (
-                        <button
-                          onClick={() => handleUpdateOrderStatus(order.id, "Shipped")}
-                          className="h-8 px-3 rounded-[8px] bg-black text-white text-[12px] font-medium hover:bg-neutral-800 transition-all active:scale-[0.97]"
-                        >
-                          Ship Order
-                        </button>
-                      )}
-                      {order.status !== "Shipped" && (
-                        <button
-                          onClick={() => handleUpdateOrderStatus(order.id, "Cancelled")}
-                          className="h-8 px-2 rounded-[8px] border border-red-200 text-red-600 hover:bg-red-50 text-[12px] font-medium transition-all"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                      {order.status === "Shipped" && (
-                        <span className="text-[12px] text-[#5B5B58] italic">Completed</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {orders.map((order) => {
+                const cogs = order.cogs ?? 0;
+                const fees = order.fees ?? 0;
+                const shipping = order.shipping ?? 0;
+                const returns = order.returns ?? 0;
+
+                const handleFieldChange = (field, val) => {
+                  const numVal = Math.max(0, parseInt(val) || 0);
+                  if (onUpdateOrderProfitability) {
+                    onUpdateOrderProfitability(order.id, { [field]: numVal });
+                  }
+                };
+
+                return (
+                  <tr key={order.id} className="hover:bg-[#EEF3F2]/20 transition-colors">
+                    <td className="p-4 text-[13px] font-semibold text-black">{order.id}</td>
+                    <td className="p-4 text-[13px] font-medium text-black">{order.buyer}</td>
+                    <td className="p-4 text-[13px] text-[#5B5B58] max-w-[150px] truncate">{order.items}</td>
+                    <td className="p-4 text-[13px] font-semibold text-black">Rs. {order.total.toLocaleString()}</td>
+
+                    {/* Cost Input */}
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        value={cogs}
+                        onChange={(e) => handleFieldChange("cogs", e.target.value)}
+                        className="w-20 h-8 px-2 text-[12px] font-semibold border border-[#E9E8E2] rounded-[6px] focus:outline-none"
+                      />
+                    </td>
+
+                    {/* Fees Input */}
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        value={fees}
+                        onChange={(e) => handleFieldChange("fees", e.target.value)}
+                        className="w-16 h-8 px-2 text-[12px] font-semibold border border-[#E9E8E2] rounded-[6px] focus:outline-none"
+                      />
+                    </td>
+
+                    {/* Shipping Input */}
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        value={shipping}
+                        onChange={(e) => handleFieldChange("shipping", e.target.value)}
+                        className="w-16 h-8 px-2 text-[12px] font-semibold border border-[#E9E8E2] rounded-[6px] focus:outline-none"
+                      />
+                    </td>
+
+                    {/* Returns Input */}
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        value={returns}
+                        onChange={(e) => handleFieldChange("returns", e.target.value)}
+                        className="w-16 h-8 px-2 text-[12px] font-semibold border border-[#E9E8E2] rounded-[6px] focus:outline-none"
+                      />
+                    </td>
+
+                    {/* Select Status Dropdown Selector */}
+                    <td className="p-4 text-center">
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                        className={`px-3 py-1.5 rounded-lg text-[12px] font-bold border focus:outline-none transition-colors ${
+                          order.status === "Shipped"
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : order.status === "Approved"
+                            ? "bg-emerald-50 text-[#85A6A3] border border-[#85A6A3]/30"
+                            : order.status === "Cancelled"
+                            ? "bg-rose-50 text-rose-700 border-rose-250"
+                            : "bg-amber-50 text-amber-700 border border-amber-250"
+                        }`}
+                      >
+                        <option value="Pending Verification">Pending Verification</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

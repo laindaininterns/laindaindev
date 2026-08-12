@@ -80,9 +80,19 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
         {/* Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-4">
           {/* Big Product Image Box */}
-          <div className={`h-[180px] rounded-[18px] bg-gradient-to-br ${product.imageBg} flex items-center justify-center text-[64px] border border-[#E9E8E2] shadow-inner select-none relative`}>
-            <span>{icon}</span>
-            <div className="absolute bottom-3 right-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded-full text-[12px] font-medium text-white">
+          <div className="relative h-[220px] p-3 select-none overflow-hidden bg-white border border-[#E9E8E2] rounded-[20px]">
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover rounded-[14px]"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[48px]">
+                📦
+              </div>
+            )}
+            <div className="absolute bottom-4 right-4 bg-black/75 backdrop-blur-md px-3 py-1 rounded-full text-[12px] font-medium text-white z-10">
               MOQ: {product.moq} units
             </div>
           </div>

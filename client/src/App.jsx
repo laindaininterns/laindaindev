@@ -5,13 +5,6 @@ import CategoryBar from "./components/CategoryBar";
 import ProductCard from "./components/ProductCard";
 import Toast from "./components/Toast";
 import NotFoundPage from "./components/NotFoundPage";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminSummaryPage from "./components/admin/AdminSummaryPage";
-import AdminApprovalsPage from "./components/admin/AdminApprovalsPage";
-import AdminSellersPage from "./components/admin/AdminSellersPage";
-import AdminBuyersPage from "./components/admin/AdminBuyersPage";
-import AdminProductsPage from "./components/admin/AdminProductsPage";
-import SellerDashboard from "./components/seller/SellerDashboard";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -21,13 +14,9 @@ const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
 const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
+const SellerDashboard = lazy(() => import("./components/seller-dashboard/SellerDashboard"));
 
 export default function App() {
-  // Navigation & View state
-  const [currentView, setCurrentView] = useState("marketplace"); // 'marketplace', 'admin', or 'seller'
-  const [adminTab, setAdminTab] = useState("summary");
-  const [pendingCount, setPendingCount] = useState(3);
-
   // App state
   const [activeCategory, setActiveCategory] = useState("All Suppliers");
   const [currentUser, setCurrentUser] = useState(null);
@@ -35,70 +24,19 @@ export default function App() {
   const [authInitialScreen, setAuthInitialScreen] = useState("login");
 
   // Modals & Overlays state
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null); // ProductDetailModal
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [isSellerDashboardOpen, setIsSellerDashboardOpen] = useState(false);
 
   // Cart State (map by product id + color)
   const [cart, setCart] = useState({});
 
   // Toast Notification state
   const [toast, setToast] = useState({ show: false, message: "", tone: "success" });
-
-  // Route Guard & Session Persistence on Mount
-  useEffect(() => {
-    const savedToken = localStorage.getItem("auth_token");
-    const savedSession = localStorage.getItem("user_session");
-    const pathname = window.location.pathname;
-
-    let parsedUser = null;
-    if (savedSession) {
-      try {
-        parsedUser = JSON.parse(savedSession);
-        setCurrentUser(parsedUser);
-      } catch (err) {
-        console.warn("Failed to parse saved session:", err);
-      }
-    }
-
-    const isAdminRoute = pathname.startsWith("/admin");
-    const isSellerRoute = pathname.startsWith("/seller");
-
-    if (isAdminRoute) {
-      if (savedToken && parsedUser?.role === "ADMIN") {
-        setCurrentView("admin");
-        setShowAuthModal(false);
-        const targetTab = pathname.split("/admin/")[1];
-        if (targetTab && ["summary", "approvals", "sellers", "buyers", "products"].includes(targetTab)) {
-          setAdminTab(targetTab);
-        }
-      } else {
-        setCurrentView("marketplace");
-        setShowAuthModal(true);
-        setAuthInitialScreen("login");
-        triggerToast("Access denied. Admin authentication required.", "error");
-      }
-    } else if (isSellerRoute) {
-      if (savedToken && parsedUser?.role === "SELLER") {
-        setCurrentView("seller");
-        setShowAuthModal(false);
-      } else {
-        setCurrentView("marketplace");
-        setShowAuthModal(true);
-        setAuthInitialScreen("login");
-        triggerToast("Access denied. Seller authentication required.", "error");
-      }
-    } else if (savedToken && parsedUser?.role === "ADMIN") {
-      setShowAuthModal(false);
-    } else if (savedToken && parsedUser?.role === "SELLER") {
-      setShowAuthModal(false);
-    } else if (savedToken && parsedUser) {
-      setShowAuthModal(false);
-    }
-  }, []);
 
   useEffect(() => {
     function handleScroll() {
@@ -109,18 +47,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (currentView === "admin") {
-      document.title = "LainDain Admin Dashboard | Management";
-    } else if (currentView === "seller") {
-      document.title = "LainDain Seller Portal | Inventory & Orders";
-    } else if (selectedProduct) {
+    if (selectedProduct) {
       document.title = `${selectedProduct.name} | LainDain Wholesale`;
     } else if (activeCategory && activeCategory !== "All Suppliers") {
       document.title = `${activeCategory} Suppliers | LainDain (Land10)`;
     } else {
       document.title = "LainDain (Land10) — B2B Wholesale Marketplace";
     }
-  }, [currentView, selectedProduct, activeCategory]);
+  }, [selectedProduct, activeCategory]);
 
   function triggerToast(message, tone = "success") {
     setToast({ show: true, message, tone });
@@ -193,50 +127,27 @@ export default function App() {
   const cartCount = cartItems.length;
   const cartSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  // Auth Handlers with Role-Based Redirect & Session Storage
+  // Auth Handlers
   function handleLoginSuccess(user) {
     setCurrentUser(user);
     setShowAuthModal(false);
-    localStorage.setItem("user_session", JSON.stringify(user));
-
-    if (user.role === "ADMIN") {
-      setCurrentView("admin");
-      setAdminTab("summary");
-      triggerToast(`Welcome Admin, ${user.name}! Redirected to Admin Dashboard.`);
-    } else if (user.role === "SELLER") {
-      setCurrentView("seller");
-      triggerToast(`Welcome Seller, ${user.name}! Redirected to Seller Portal.`);
-    } else {
-      setCurrentView("marketplace");
-      triggerToast(`Welcome back, ${user.name}!`);
+    triggerToast(`Welcome back, ${user.name}!`);
+    if (user.role === "SELLER") {
+      setIsSellerDashboardOpen(true);
     }
   }
 
   function handleRegisterSuccess(user) {
     setCurrentUser(user);
     setShowAuthModal(false);
-    localStorage.setItem("user_session", JSON.stringify(user));
-
-    if (user.role === "ADMIN") {
-      setCurrentView("admin");
-      setAdminTab("summary");
-      triggerToast(`Admin account created! Logged in as ${user.name}`);
-    } else if (user.role === "SELLER") {
-      setCurrentView("seller");
-      triggerToast(`Seller account created! Redirected to Seller Portal.`);
-    } else {
-      setCurrentView("marketplace");
-      triggerToast(`Account created! Logged in as ${user.name}`);
+    triggerToast(`Account created! Logged in as ${user.name}`);
+    if (user.role === "SELLER") {
+      setIsSellerDashboardOpen(true);
     }
   }
 
   function handleLogout() {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_session");
     setCurrentUser(null);
-    setCurrentView("marketplace");
-    setShowAuthModal(true);
-    setAuthInitialScreen("login");
     triggerToast("Logged out successfully.");
   }
 
@@ -246,74 +157,20 @@ export default function App() {
     triggerToast(`Order ${orderRef} confirmed!`);
   }
 
-  const isNotFound = typeof window !== "undefined" &&
-    window.location.pathname !== "/" &&
-    window.location.pathname !== "/index.html" &&
-    !window.location.pathname.startsWith("/admin") &&
-    !window.location.pathname.startsWith("/seller");
-
+  const isNotFound = typeof window !== "undefined" && window.location.pathname !== "/" && window.location.pathname !== "/index.html";
   if (isNotFound) {
     return <NotFoundPage />;
   }
 
-  // Render Seller View if user is SELLER or Seller View active
-  if (currentView === "seller") {
+  if (isSellerDashboardOpen) {
     return (
-      <div className="relative">
-        <SellerDashboard
-          currentUser={currentUser}
-          onClose={() => setCurrentView("marketplace")}
-          onLogout={handleLogout}
-          triggerToast={triggerToast}
-        />
+      <Suspense fallback={null}>
+        <SellerDashboard onClose={() => setIsSellerDashboardOpen(false)} />
         <Toast toast={toast} />
-      </div>
+      </Suspense>
     );
   }
 
-  // Render Admin View if user is ADMIN or Admin view active
-  if (currentView === "admin") {
-    return (
-      <div className="relative">
-        <div className="bg-black text-white px-4 py-1.5 text-xs flex justify-between items-center z-[100] relative">
-          <span>🛡️ Admin Portal Active — Authenticated as {currentUser?.name || "Admin"}</span>
-          <button
-            onClick={() => setCurrentView("marketplace")}
-            className="text-[#A3C1BF] hover:underline font-medium"
-          >
-            ← Browse Wholesale Marketplace
-          </button>
-        </div>
-
-        <AdminLayout
-          activeTab={adminTab}
-          onSelectTab={setAdminTab}
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          pendingCount={pendingCount}
-        >
-          {adminTab === "summary" && (
-            <AdminSummaryPage pendingCount={pendingCount} onSelectTab={setAdminTab} />
-          )}
-          {adminTab === "approvals" && (
-            <AdminApprovalsPage
-              onRefreshCount={setPendingCount}
-              triggerToast={triggerToast}
-            />
-          )}
-          {adminTab === "sellers" && (
-            <AdminSellersPage onSelectTab={setAdminTab} />
-          )}
-          {adminTab === "buyers" && <AdminBuyersPage />}
-          {adminTab === "products" && <AdminProductsPage />}
-        </AdminLayout>
-
-        <Toast toast={toast} />
-      </div>
-    );
-  }
-
-  // Render Marketplace View
   return (
     <div className="min-h-screen bg-[#F9F9F6] text-black font-sans antialiased selection:bg-[#A3C1BF] selection:text-black">
       {/* 1. Sticky Navigation Header */}
@@ -328,32 +185,8 @@ export default function App() {
         }}
         onLogout={handleLogout}
         scrolled={scrolled}
+        onOpenSellerDashboard={() => setIsSellerDashboardOpen(true)}
       />
-
-      {/* Admin / Seller Quick Switch Bar if logged in */}
-      {currentUser?.role === "ADMIN" && (
-        <div className="bg-[#EEF3F2] border-b border-[#A3C1BF]/40 py-2 px-4 text-center text-xs font-medium text-black">
-          🛡️ Admin session active.{" "}
-          <button
-            onClick={() => setCurrentView("admin")}
-            className="text-[#85A6A3] font-semibold underline ml-1"
-          >
-            Open Admin Dashboard →
-          </button>
-        </div>
-      )}
-
-      {currentUser?.role === "SELLER" && (
-        <div className="bg-[#EEF3F2] border-b border-[#A3C1BF]/40 py-2 px-4 text-center text-xs font-medium text-black">
-          🏬 Seller session active.{" "}
-          <button
-            onClick={() => setCurrentView("seller")}
-            className="text-[#85A6A3] font-semibold underline ml-1"
-          >
-            Open Seller Portal →
-          </button>
-        </div>
-      )}
 
       {/* 2. Sticky Category Filter Pills Strip */}
       <CategoryBar
@@ -464,12 +297,14 @@ export default function App() {
 
       {/* 5. Modals & Overlays */}
       <Suspense fallback={null}>
+        {/* Mid-screen Product Info Popup */}
         <ProductDetailModal
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
         />
 
+        {/* Wholesale Cart Drawer */}
         <CartDrawer
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
@@ -483,6 +318,7 @@ export default function App() {
           }}
         />
 
+        {/* Checkout Modal */}
         <CheckoutModal
           isOpen={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}
@@ -491,6 +327,7 @@ export default function App() {
           onCompleteOrder={handleCompleteOrder}
         />
 
+        {/* Search Overlay */}
         <SearchOverlay
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
@@ -507,6 +344,7 @@ export default function App() {
           }}
         />
 
+        {/* Auth Modal Container */}
         <AuthModal
           isOpen={showAuthModal}
           initialScreen={authInitialScreen}
@@ -515,6 +353,7 @@ export default function App() {
           onRegisterSuccess={handleRegisterSuccess}
         />
 
+        {/* Laila B2B AI Assistant Widget */}
         <ChatWidget
           onNavigateCategory={(cat) => {
             if (CATEGORIES.includes(cat)) {
@@ -536,6 +375,7 @@ export default function App() {
       {/* Global Toast */}
       <Toast toast={toast} />
 
+      {/* Vercel Web Analytics & Speed Insights */}
       <Analytics />
       <SpeedInsights />
     </div>

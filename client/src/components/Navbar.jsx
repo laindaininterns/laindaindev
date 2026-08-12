@@ -9,6 +9,7 @@ export default function Navbar({
   onOpenAuth,
   onLogout,
   scrolled,
+  onOpenSellerDashboard,
 }) {
   return (
     <header
@@ -48,6 +49,12 @@ export default function Navbar({
           {/* User Auth Buttons / Profile status */}
           {currentUser ? (
             <div className="flex items-center gap-2">
+              <button
+                onClick={onOpenSellerDashboard}
+                className="h-[40px] px-3.5 rounded-[16px] text-[14px] font-medium text-black bg-[#EEF3F2] hover:bg-[#A3C1BF] transition-colors"
+              >
+                Portal ⚙️
+              </button>
               <span className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#EEF3F2] text-[13px] font-medium text-black border border-[#E9E8E2]">
                 👤 {currentUser.name}
               </span>
@@ -60,6 +67,12 @@ export default function Navbar({
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              <button
+                onClick={onOpenSellerDashboard}
+                className="hidden sm:inline-flex h-[40px] items-center justify-center rounded-[16px] border border-[#E9E8E2] hover:bg-black/5 px-4 text-[14px] font-medium text-black transition-all active:scale-[0.97]"
+              >
+                Seller Portal ⚙️
+              </button>
               <button
                 onClick={() => onOpenAuth("register_seller")}
                 className="hidden sm:inline-flex h-[40px] items-center justify-center rounded-[16px] px-4 text-[14px] font-medium text-black transition-all active:scale-[0.97]"

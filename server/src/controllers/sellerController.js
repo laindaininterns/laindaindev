@@ -176,7 +176,7 @@ const getSellerProducts = async (req, res) => {
 const createSellerProduct = async (req, res) => {
   try {
     const profile = await getSellerProfile(req.user.id, req.user.profile_id);
-    const { title, name, description, desc, price, stock_quantity, stock, moq, category_id, cat, sku, images, photos } = req.body;
+    const { title, name, description, desc, price, stock_quantity, stock, moq, category_id, cat, sku, images, photos, isOutOfStock, is_out_of_stock } = req.body;
     const productTitle = title || name;
 
     if (!productTitle || price === undefined) {
@@ -184,6 +184,9 @@ const createSellerProduct = async (req, res) => {
     }
 
     const qty = stock_quantity !== undefined ? Number(stock_quantity) : (stock !== undefined ? Number(stock) : 0);
+    const outOfStockBool = is_out_of_stock !== undefined ? Boolean(is_out_of_stock) : (isOutOfStock !== undefined ? Boolean(isOutOfStock) : qty === 0);
+    const productSku = sku || `TX-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const productMoq = moq ? Number(moq) : 10;
 
     const { data: newProduct, error } = await supabase
       .from('products')
@@ -192,11 +195,14 @@ const createSellerProduct = async (req, res) => {
           seller_id: profile.id,
           category_id: category_id || null,
           title: productTitle,
+          sku: productSku,
           description: description || desc || '',
           price: Number(price),
+          moq: productMoq,
           stock_quantity: qty,
           images: images || photos || [],
-          status: qty > 0 ? 'ACTIVE' : 'OUT_OF_STOCK',
+          is_out_of_stock: outOfStockBool,
+          status: qty > 0 && !outOfStockBool ? 'APPROVED' : 'OUT_OF_STOCK',
         },
       ])
       .select('*')
@@ -208,13 +214,13 @@ const createSellerProduct = async (req, res) => {
         seller_id: profile.id,
         name: productTitle,
         title: productTitle,
-        sku: sku || `SKU-${Math.floor(Math.random() * 9000 + 1000)}`,
+        sku: productSku,
         cat: cat || 'Clothing & Apparel',
         price: Number(price),
         stock: qty,
         stock_quantity: qty,
-        isOutOfStock: qty === 0,
-        moq: moq ? Number(moq) : 10,
+        isOutOfStock: outOfStockBool,
+        moq: productMoq,
         desc: description || desc || '',
         photos: photos || images || [],
         created_at: new Date().toISOString(),

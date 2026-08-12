@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const sellerController = require('../controllers/sellerController');
+const sellerOrderController = require('../controllers/sellerOrderController');
 const { verifyToken } = require('../middleware/auth');
 const { verifySeller } = require('../middleware/sellerAuth');
 
@@ -44,16 +45,30 @@ router.patch('/products/:id/stock', sellerController.updateSellerStock);
 
 /**
  * @route   GET /api/seller/orders
- * @desc    Fetch purchase orders belonging to authenticated seller
+ * @desc    Fetch purchase orders / datasheet rows belonging to authenticated seller
  * @access  Private (Seller)
  */
-router.get('/orders', sellerController.getSellerOrders);
+router.get('/orders', sellerOrderController.getSellerOrders);
 
 /**
  * @route   PATCH /api/seller/orders/:id/status
- * @desc    Update order fulfillment status (Pending -> Approved -> Shipped)
+ * @desc    Update order fulfillment status (Pending Verification -> Approved -> Shipped -> Cancelled)
  * @access  Private (Seller)
  */
-router.patch('/orders/:id/status', sellerController.updateSellerOrderStatus);
+router.patch('/orders/:id/status', sellerOrderController.updateSellerOrderStatus);
+
+/**
+ * @route   PATCH /api/seller/orders/:id/profitability
+ * @desc    Update order profitability fields (cogs, fees, shipping, returns)
+ * @access  Private (Seller)
+ */
+router.patch('/orders/:id/profitability', sellerOrderController.updateOrderProfitability);
+
+/**
+ * @route   POST /api/seller/orders/apply-defaults
+ * @desc    Apply flat cost rules (defaultCogs, defaultFees, defaultShipping) to all orders
+ * @access  Private (Seller)
+ */
+router.post('/orders/apply-defaults', sellerOrderController.applyDefaultRates);
 
 module.exports = router;

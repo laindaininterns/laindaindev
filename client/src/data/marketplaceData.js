@@ -1,3 +1,16 @@
+import product01 from "../assets/products/product-01-faisalabad-textiles.jpg";
+import product02 from "../assets/products/product-02-lahore-ceramics.jpg";
+import product03 from "../assets/products/product-03-karachi-steel.jpg";
+import product04 from "../assets/products/product-04-gujranwala-leather.jpg";
+import product05 from "../assets/products/product-05-sialkot-bags.jpg";
+import product06 from "../assets/products/product-06-punjab-agrochem.jpg";
+import product07 from "../assets/products/product-07-multan-paints.jpg";
+import product08 from "../assets/products/product-08-hyderabad-textiles.jpg";
+import product09 from "../assets/products/product-09-islamabad-beauty.jpg";
+import product10 from "../assets/products/product-10-rawalpindi-sanitary.jpg";
+import product11 from "../assets/products/product-11-karachi-cotton.jpg";
+import product12 from "../assets/products/product-12-lahore-footwear.jpg";
+
 // Design System Tokens (as specified in design.md & laindainapproveddesign.html)
 export const TOKENS = {
   sage: "#A3C1BF",
@@ -83,6 +96,7 @@ export const PRODUCTS = [
     rating: "4.9 ⭐ (142 orders)",
     imageBg: "from-[#E6EFEF] to-[#CDE2E0]",
     hasColors: true,
+    image: product01,
   },
   {
     id: 2,
@@ -95,6 +109,7 @@ export const PRODUCTS = [
     rating: "4.8 ⭐ (98 orders)",
     imageBg: "from-[#F0ECE1] to-[#D9D2C3]",
     hasColors: false,
+    image: product02,
   },
   {
     id: 3,
@@ -107,6 +122,7 @@ export const PRODUCTS = [
     rating: "5.0 ⭐ (74 orders)",
     imageBg: "from-[#EAEAEA] to-[#CDCDCD]",
     hasColors: false,
+    image: product03,
   },
   {
     id: 4,
@@ -119,6 +135,7 @@ export const PRODUCTS = [
     rating: "4.7 ⭐ (215 orders)",
     imageBg: "from-[#F3E5D8] to-[#D5BAA2]",
     hasColors: true,
+    image: product04,
   },
   {
     id: 5,
@@ -131,6 +148,7 @@ export const PRODUCTS = [
     rating: "4.6 ⭐ (62 orders)",
     imageBg: "from-[#E5E9E0] to-[#C3CCA7]",
     hasColors: true,
+    image: product05,
   },
   {
     id: 6,
@@ -143,6 +161,7 @@ export const PRODUCTS = [
     rating: "4.9 ⭐ (310 orders)",
     imageBg: "from-[#E8F0E6] to-[#BED4B9]",
     hasColors: false,
+    image: product06,
   },
   {
     id: 7,
@@ -155,6 +174,7 @@ export const PRODUCTS = [
     rating: "4.8 ⭐ (112 orders)",
     imageBg: "from-[#EAF2F8] to-[#BDD5E7]",
     hasColors: true,
+    image: product07,
   },
   {
     id: 8,
@@ -167,6 +187,7 @@ export const PRODUCTS = [
     rating: "4.5 ⭐ (85 orders)",
     imageBg: "from-[#F9EFF3] to-[#E3C6D3]",
     hasColors: true,
+    image: product08,
   },
   {
     id: 9,
@@ -179,6 +200,7 @@ export const PRODUCTS = [
     rating: "4.9 ⭐ (180 orders)",
     imageBg: "from-[#FDF2F4] to-[#F1C2CB]",
     hasColors: false,
+    image: product09,
   },
   {
     id: 10,
@@ -191,6 +213,7 @@ export const PRODUCTS = [
     rating: "4.8 ⭐ (94 orders)",
     imageBg: "from-[#ECEFF1] to-[#B0BEC5]",
     hasColors: false,
+    image: product10,
   },
   {
     id: 11,
@@ -203,6 +226,7 @@ export const PRODUCTS = [
     rating: "5.0 ⭐ (420 orders)",
     imageBg: "from-[#F3E9F8] to-[#D5BCED]",
     hasColors: true,
+    image: product11,
   },
   {
     id: 12,
@@ -215,6 +239,7 @@ export const PRODUCTS = [
     rating: "4.4 ⭐ (53 orders)",
     imageBg: "from-[#FAF3E0] to-[#E6CD97]",
     hasColors: true,
+    image: product12,
   },
 ];
 
