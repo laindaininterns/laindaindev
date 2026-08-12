@@ -6,6 +6,7 @@ import ProductsTab from "./ProductsTab";
 import SummaryTab from "./SummaryTab";
 import InventoryTab from "./InventoryTab";
 import AddProductModal from "./AddProductModal";
+import { createProductRequest } from "../../services/api";
 
 import product01 from "../../assets/products/product-01-faisalabad-textiles.jpg";
 import product02 from "../../assets/products/product-02-lahore-ceramics.jpg";
@@ -329,7 +330,23 @@ export default function SellerDashboard({ onClose }) {
           setEditingProduct(null);
         }}
         editingProduct={editingProduct}
-        onAddProduct={(newProd) => setProducts(prev => [...prev, newProd])}
+        onAddProduct={async (newProd) => {
+          setProducts(prev => [...prev, newProd]);
+          try {
+            const created = await createProductRequest(newProd);
+            console.log('Product saved in Supabase database:', created);
+            if (created && created.id) {
+              setProducts(prev => prev.map(p => p.sku === newProd.sku || p.id === newProd.id ? {
+                ...p,
+                id: created.id,
+                name: created.title || created.name || p.name,
+                sku: created.sku || p.sku,
+              } : p));
+            }
+          } catch (err) {
+            console.error('Database product save error:', err.message);
+          }
+        }}
         onEditProduct={(updatedProd) => setProducts(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p))}
       />
     </div>

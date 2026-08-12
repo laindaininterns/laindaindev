@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laindaindev.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 /**
  * Register a Buyer account in Supabase via backend API
@@ -34,7 +34,6 @@ export async function registerBuyerRequest(formData) {
  * Register a Seller account in Supabase via backend API
  */
 export async function registerSellerRequest(formData) {
-  // Use default or provided password
   const password = formData.password || 'SellerPass123!';
 
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -86,10 +85,6 @@ export async function loginUserRequest(email, password) {
     localStorage.setItem('auth_token', data.token);
   }
 
-  // Extract real display name from profile object:
-  // - BUYER: profile.billing_address (or full_name)
-  // - SELLER: profile.business_name
-  // - Fallback: email username before @
   const displayName =
     data.profile?.billing_address ||
     data.profile?.business_name ||
@@ -97,4 +92,42 @@ export async function loginUserRequest(email, password) {
     (data.user?.email ? data.user.email.split('@')[0] : email.split('@')[0]);
 
   return { name: displayName, email: data.user?.email || email, role: data.user?.role, ...data };
+}
+
+/**
+ * Create a new product in Supabase via backend API
+ */
+export async function createProductRequest(productData) {
+  const token = localStorage.getItem('auth_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/products`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      title: productData.name || productData.title,
+      name: productData.name || productData.title,
+      sku: productData.sku,
+      cat: productData.cat,
+      price: parseFloat(productData.price),
+      moq: parseInt(productData.moq) || 10,
+      stock_quantity: parseInt(productData.stock) || 0,
+      stock: parseInt(productData.stock) || 0,
+      description: productData.desc || productData.description || '',
+      desc: productData.desc || productData.description || '',
+      photos: productData.photos || productData.images || [],
+      images: productData.photos || productData.images || [],
+      isOutOfStock: productData.isOutOfStock || false,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || data.error || 'Failed to save product in database.');
+  }
+
+  return data.product;
 }
