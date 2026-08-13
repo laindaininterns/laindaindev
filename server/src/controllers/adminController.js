@@ -256,18 +256,9 @@ const getAllSellers = async (req, res) => {
         users (
           id,
           email
-        ),
-        order_items (
-          id,
-          quantity,
-          price_at_purchase,
-          seller_status,
-          order_id,
-          orders (
-            status
-          )
         )
-      `);
+      `)
+      .order('created_at', { ascending: false });
 
     if (error) {
       return res.status(400).json({
@@ -277,12 +268,22 @@ const getAllSellers = async (req, res) => {
       });
     }
 
-    const formattedSellers = (sellers || []).map((s) => {
-      const items = s.order_items || [];
-      const completedItems = items.filter((i) => i.orders && i.orders.status !== 'CANCELLED');
-      const totalOrdersCount = new Set(completedItems.map((i) => i.order_id)).size;
-      const totalRevenue = completedItems.reduce((sum, i) => sum + i.quantity * parseFloat(i.price_at_purchase || 0), 0);
+    // Query order_items for seller metrics aggregation
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('seller_id, quantity, price_at_purchase, order_id');
 
+    const sellerMap = {};
+    (orderItems || []).forEach((item) => {
+      if (!sellerMap[item.seller_id]) {
+        sellerMap[item.seller_id] = { orders: new Set(), revenue: 0 };
+      }
+      sellerMap[item.seller_id].orders.add(item.order_id);
+      sellerMap[item.seller_id].revenue += item.quantity * parseFloat(item.price_at_purchase || 0);
+    });
+
+    const formattedSellers = (sellers || []).map((s) => {
+      const stats = sellerMap[s.id] || { orders: new Set(), revenue: 0 };
       return {
         id: s.id,
         user_id: s.user_id,
@@ -290,8 +291,8 @@ const getAllSellers = async (req, res) => {
         email: s.users ? s.users.email : 'N/A',
         category: s.main_category || 'General Wholesale',
         region: s.city ? `${s.city}, Pakistan` : (s.business_address || 'Pakistan'),
-        orders: totalOrdersCount,
-        revenue: totalRevenue,
+        orders: stats.orders.size,
+        revenue: parseFloat(stats.revenue.toFixed(2)),
         status: s.current_status,
         approved_at: s.approved_at,
         created_at: s.created_at,
@@ -320,7 +321,7 @@ const getAllSellers = async (req, res) => {
 const getDashboardSummary = async (req, res) => {
   try {
     // 1. Total Sales Revenue from Orders
-    const { data: ordersData, error: ordersErr } = await supabase
+    const { data: ordersData } = await supabase
       .from('orders')
       .select('id, total_amount, status');
 
@@ -328,20 +329,48 @@ const getDashboardSummary = async (req, res) => {
       .filter((o) => o.status !== 'CANCELLED')
       .reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
 
-    // 2. Active & Pending Sellers Count
-    const { data: sellersData, error: sellersErr } = await supabase
+    // 2. Active & Pending Sellers Count & Details
+    const { data: sellersData } = await supabase
       .from('seller_profiles')
-      .select('id, current_status, business_name, main_category');
+      .select('id, business_name, main_category, current_status');
 
     const activeSellersCount = (sellersData || []).filter((s) => s.current_status === 'APPROVED').length;
     const pendingCount = (sellersData || []).filter((s) => s.current_status === 'PENDING').length;
 
     // 3. Active Buyers Count
-    const { count: buyersCount, error: buyersErr } = await supabase
+    const { count: buyersCount } = await supabase
       .from('buyer_profiles')
       .select('id', { count: 'exact', head: true });
 
-    // 4. Trending Products from Products table
+    // 4. Calculate Top Sellers with Revenue & Order items
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('seller_id, quantity, price_at_purchase, order_id');
+
+    const sellerMap = {};
+    (orderItems || []).forEach((item) => {
+      if (!sellerMap[item.seller_id]) {
+        sellerMap[item.seller_id] = { orders: new Set(), revenue: 0 };
+      }
+      sellerMap[item.seller_id].orders.add(item.order_id);
+      sellerMap[item.seller_id].revenue += item.quantity * parseFloat(item.price_at_purchase || 0);
+    });
+
+    const topSellers = (sellersData || [])
+      .map((s) => {
+        const stats = sellerMap[s.id] || { orders: new Set(), revenue: 0 };
+        return {
+          id: s.id,
+          business_name: s.business_name,
+          category: s.main_category || 'General Wholesale',
+          orders: stats.orders.size,
+          revenue: parseFloat(stats.revenue.toFixed(2)),
+          status: s.current_status,
+        };
+      })
+      .sort((a, b) => b.revenue - a.revenue);
+
+    // 5. Trending Products from Products table
     const { data: productsData } = await supabase
       .from('products')
       .select(`
@@ -379,6 +408,7 @@ const getDashboardSummary = async (req, res) => {
         pending_approvals: pendingCount,
         active_buyers: buyersCount || 0,
       },
+      top_sellers: topSellers,
       trending_products: trendingProducts,
     });
   } catch (error) {
@@ -462,6 +492,7 @@ module.exports = {
   getDashboardSummary,
   getAdminProducts,
 };
+
 
 
 

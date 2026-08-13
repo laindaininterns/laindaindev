@@ -20,13 +20,10 @@ export default function AdminSummaryPage({ pendingCount, onSelectTab }) {
     setLoading(true);
     try {
       const summaryData = await fetchAdminSummary();
-      if (summaryData && summaryData.metrics) {
-        setMetrics(summaryData.metrics);
-        setTrendingProducts(summaryData.trending_products || []);
-      }
-      const sellersData = await fetchAllSellers();
-      if (sellersData) {
-        setTopSellers(sellersData);
+      if (summaryData) {
+        if (summaryData.metrics) setMetrics(summaryData.metrics);
+        if (summaryData.trending_products) setTrendingProducts(summaryData.trending_products);
+        if (summaryData.top_sellers) setTopSellers(summaryData.top_sellers);
       }
     } catch (err) {
       console.warn('Failed to load live summary data:', err.message);
@@ -34,6 +31,7 @@ export default function AdminSummaryPage({ pendingCount, onSelectTab }) {
       setLoading(false);
     }
   }
+
 
   const formattedSales = typeof metrics.total_sales === 'number'
     ? (metrics.total_sales >= 1000000
