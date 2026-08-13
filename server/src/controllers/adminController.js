@@ -239,39 +239,28 @@ const getBuyersDirectory = async (req, res) => {
  */
 const getAllSellers = async (req, res) => {
   try {
-    const { data: sellers, error } = await supabase
-      .from('seller_profiles')
-      .select(`
-        id,
-        user_id,
-        business_name,
-        business_address,
-        city,
-        main_category,
-        tax_id,
-        contact_number,
-        current_status,
-        approved_at,
-        created_at,
-        users (
-          id,
-          email
-        )
-      `)
-      .order('created_at', { ascending: false });
+    const [
+      { data: sellers, error: sellerErr },
+      { data: orderItems },
+      { data: users },
+    ] = await Promise.all([
+      supabase.from('seller_profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('order_items').select('seller_id, quantity, price_at_purchase, order_id'),
+      supabase.from('users').select('id, email'),
+    ]);
 
-    if (error) {
+    if (sellerErr) {
       return res.status(400).json({
         success: false,
         message: 'Failed to fetch sellers.',
-        error: error.message,
+        error: sellerErr.message,
       });
     }
 
-    // Query order_items for seller metrics aggregation
-    const { data: orderItems } = await supabase
-      .from('order_items')
-      .select('seller_id, quantity, price_at_purchase, order_id');
+    const userMap = {};
+    (users || []).forEach((u) => {
+      userMap[u.id] = u.email;
+    });
 
     const sellerMap = {};
     (orderItems || []).forEach((item) => {
@@ -288,7 +277,7 @@ const getAllSellers = async (req, res) => {
         id: s.id,
         user_id: s.user_id,
         business_name: s.business_name,
-        email: s.users ? s.users.email : 'N/A',
+        email: userMap[s.user_id] || 'N/A',
         category: s.main_category || 'General Wholesale',
         region: s.city ? `${s.city}, Pakistan` : (s.business_address || 'Pakistan'),
         orders: stats.orders.size,
@@ -313,6 +302,7 @@ const getAllSellers = async (req, res) => {
     });
   }
 };
+
 
 /**
  * GET /api/admin/summary
