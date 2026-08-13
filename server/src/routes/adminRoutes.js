@@ -36,4 +36,12 @@ router.get('/orders', adminLogisticsController.getAdminOrders);
  */
 router.patch('/orders/:id/status', adminLogisticsController.updateAdminOrderStatus);
 
+/**
+ * @route   GET /api/admin/buyers
+ * @desc    Fetch all active buyers directory with store names & transaction totals
+ * @access  Private (Admin)
+ */
+router.get('/buyers', adminController.getBuyersDirectory);
+
 module.exports = router;
+

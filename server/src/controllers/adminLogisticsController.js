@@ -37,27 +37,25 @@ const getAdminOrders = async (req, res) => {
 const updateAdminOrderStatus = async (req, res) => {
   try {
     const orderId = req.params.id;
-    const { status } = req.body;
+    const { status, admin_notes, tracking_number, courier_name } = req.body;
 
-    if (!status) {
-      return res.status(400).json({
-        success: false,
-        message: 'status field is required.',
-      });
-    }
-
-    const updatedOrder = await AdminLogisticsService.updateOrderGlobalStatusAdmin(orderId, status);
+    const updatedOrder = await AdminLogisticsService.updateOrderGlobalStatusAdmin(orderId, {
+      status,
+      admin_notes,
+      tracking_number,
+      courier_name,
+    });
 
     return res.status(200).json({
       success: true,
-      message: `Global status for Order ${orderId} updated to ${updatedOrder.status}.`,
+      message: `Logistics and status for Order ${orderId} updated successfully.`,
       order: updatedOrder,
     });
   } catch (error) {
     const statusCode = error.message.includes('not found') ? 404 : 400;
     return res.status(statusCode).json({
       success: false,
-      message: error.message || 'Failed to update global order status.',
+      message: error.message || 'Failed to update order logistics status.',
     });
   }
 };

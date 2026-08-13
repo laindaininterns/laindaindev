@@ -29,11 +29,16 @@ class AdminLogisticsService {
         total_amount,
         status,
         shipping_address,
+        admin_notes,
+        tracking_number,
+        courier_name,
         created_at,
         updated_at,
         buyer_profiles (
           id,
           full_name,
+          company_name,
+          store_name,
           phone_number,
           users (
             email
@@ -46,6 +51,7 @@ class AdminLogisticsService {
           quantity,
           price_at_purchase,
           seller_status,
+          admin_override_status,
           created_at,
           products (
             id,
@@ -83,6 +89,9 @@ class AdminLogisticsService {
       total_amount: parseFloat(order.total_amount),
       global_status: order.status,
       shipping_address: order.shipping_address,
+      admin_notes: order.admin_notes || null,
+      tracking_number: order.tracking_number || null,
+      courier_name: order.courier_name || null,
       items_count: order.order_items ? order.order_items.length : 0,
       order_items: (order.order_items || []).map(item => ({
         order_item_id: item.id,
@@ -94,6 +103,7 @@ class AdminLogisticsService {
         quantity: item.quantity,
         price_at_purchase: parseFloat(item.price_at_purchase),
         seller_status: item.seller_status || 'PENDING',
+        admin_override_status: item.admin_override_status || null,
       })),
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -109,22 +119,32 @@ class AdminLogisticsService {
   }
 
   /**
-   * Admin global override of order delivery status
+   * Admin global override of order delivery status & logistics tracking
    * @param {string} orderId 
-   * @param {string} globalStatus - ('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED')
+   * @param {Object} options - { globalStatus, admin_notes, tracking_number, courier_name }
    * @returns {Promise<Object>} Updated order record
    */
-  static async updateOrderGlobalStatusAdmin(orderId, globalStatus) {
-    if (!orderId || !globalStatus) {
-      throw new Error('Order ID and globalStatus are required.');
+  static async updateOrderGlobalStatusAdmin(orderId, options = {}) {
+    if (!orderId) {
+      throw new Error('Order ID is required.');
     }
 
-    const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
-    const normalizedStatus = globalStatus.toUpperCase();
+    const { status: globalStatus, admin_notes, tracking_number, courier_name } = typeof options === 'string' ? { status: options } : options;
 
-    if (!validStatuses.includes(normalizedStatus)) {
-      throw new Error(`Invalid status. Allowed values: ${validStatuses.join(', ')}.`);
+    const updateFields = { updated_at: new Date().toISOString() };
+
+    if (globalStatus) {
+      const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+      const normalizedStatus = globalStatus.toUpperCase();
+      if (!validStatuses.includes(normalizedStatus)) {
+        throw new Error(`Invalid status. Allowed values: ${validStatuses.join(', ')}.`);
+      }
+      updateFields.status = normalizedStatus;
     }
+
+    if (admin_notes !== undefined) updateFields.admin_notes = admin_notes;
+    if (tracking_number !== undefined) updateFields.tracking_number = tracking_number;
+    if (courier_name !== undefined) updateFields.courier_name = courier_name;
 
     const { data: order, error: fetchErr } = await supabase
       .from('orders')
@@ -138,7 +158,7 @@ class AdminLogisticsService {
 
     const { data: updatedOrder, error: updateErr } = await supabase
       .from('orders')
-      .update({ status: normalizedStatus })
+      .update(updateFields)
       .eq('id', orderId)
       .select()
       .single();
@@ -150,7 +170,8 @@ class AdminLogisticsService {
     // Trigger transactional Resend email alerts to buyer upon status change
     const recipientEmail = order.guest_email || (order.buyer_profiles && order.buyer_profiles.users ? order.buyer_profiles.users.email : null);
 
-    if (recipientEmail) {
+    if (recipientEmail && updateFields.status) {
+      const normalizedStatus = updateFields.status;
       if (['SHIPPED', 'PROCESSING'].includes(normalizedStatus)) {
         NotificationService.sendShippingUpdateNotification(recipientEmail, orderId, normalizedStatus).catch(err => {
           console.error('[Notification Non-blocking Error]', err.message);
@@ -164,6 +185,7 @@ class AdminLogisticsService {
 
     return updatedOrder;
   }
+
 }
 
 module.exports = AdminLogisticsService;
