@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const adminLogisticsController = require('../controllers/adminLogisticsController');
 const { verifyToken } = require('../middleware/auth');
 const { verifyAdmin } = require('../middleware/adminAuth');
 
@@ -20,5 +21,19 @@ router.get('/sellers/pending', adminController.getPendingSellers);
  * @access  Private (Admin)
  */
 router.patch('/sellers/:id/status', adminController.updateSellerStatus);
+
+/**
+ * @route   GET /api/admin/orders
+ * @desc    Fetch all marketplace orders across all buyers and sellers
+ * @access  Private (Admin)
+ */
+router.get('/orders', adminLogisticsController.getAdminOrders);
+
+/**
+ * @route   PATCH /api/admin/orders/:id/status
+ * @desc    Global status override by Admin (PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED)
+ * @access  Private (Admin)
+ */
+router.patch('/orders/:id/status', adminLogisticsController.updateAdminOrderStatus);
 
 module.exports = router;

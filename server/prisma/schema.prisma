@@ -1,0 +1,173 @@
+// Prisma Schema Definition for Lain-Dain Enterprise E-Commerce Marketplace
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  BUYER
+  SELLER
+}
+
+enum SellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProductStatus {
+  DRAFT
+  APPROVED
+  ACTIVE
+  OUT_OF_STOCK
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderItemSellerStatus {
+  PENDING
+  ACCEPTED_BY_SELLER
+  READY_FOR_PICKUP
+  CANCELLED
+}
+
+model User {
+  id            String         @id @default(uuid()) @db.Uuid
+  email         String         @unique
+  passwordHash  String         @map("password_hash")
+  role          Role           @default(BUYER)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  buyerProfile  BuyerProfile?
+  sellerProfile SellerProfile?
+
+  @@map("users")
+}
+
+model BuyerProfile {
+  id              String      @id @default(uuid()) @db.Uuid
+  userId          String      @unique @map("user_id") @db.Uuid
+  phoneNumber     String?     @map("phone_number")
+  shippingAddress String?     @map("shipping_address")
+  billingAddress  String?     @map("billing_address")
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cartItems       CartItem[]
+  orders          Order[]
+
+  @@map("buyer_profiles")
+}
+
+model SellerProfile {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @unique @map("user_id") @db.Uuid
+  businessName   String       @map("business_name")
+  businessAddress String?     @map("business_address")
+  taxId          String?      @map("tax_id")
+  currentStatus  SellerStatus @default(PENDING) @map("current_status")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products       Product[]
+  orderItems     OrderItem[]
+
+  @@map("seller_profiles")
+}
+
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String        @id @default(uuid()) @db.Uuid
+  sellerId      String        @map("seller_id") @db.Uuid
+  categoryId    String?       @map("category_id") @db.Uuid
+  title         String
+  description   String?
+  price         Decimal       @db.Decimal(12, 2)
+  stockQuantity Int           @default(0) @map("stock_quantity")
+  images        String[]      @default([])
+  status        ProductStatus @default(APPROVED)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  seller        SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  @@map("products")
+}
+
+model CartItem {
+  id             String        @id @default(uuid()) @db.Uuid
+  buyerProfileId String?       @map("buyer_profile_id") @db.Uuid
+  guestId        String?       @map("guest_id")
+  productId      String        @map("product_id") @db.Uuid
+  quantity       Int           @default(1)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  buyerProfile   BuyerProfile? @relation(fields: [buyerProfileId], references: [id], onDelete: Cascade)
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+}
+
+model Order {
+  id              String        @id @default(uuid()) @db.Uuid
+  buyerProfileId  String?       @map("buyer_profile_id") @db.Uuid
+  guestId         String?       @map("guest_id")
+  guestEmail      String?       @map("guest_email")
+  guestPhone      String?       @map("guest_phone")
+  totalAmount     Decimal       @map("total_amount") @db.Decimal(12, 2)
+  status          OrderStatus   @default(PENDING)
+  shippingAddress String?       @map("shipping_address")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  buyerProfile    BuyerProfile? @relation(fields: [buyerProfileId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String                @id @default(uuid()) @db.Uuid
+  orderId          String                @map("order_id") @db.Uuid
+  productId        String                @map("product_id") @db.Uuid
+  sellerId         String                @map("seller_id") @db.Uuid
+  quantity         Int
+  priceAtPurchase  Decimal               @map("price_at_purchase") @db.Decimal(12, 2)
+  sellerStatus     OrderItemSellerStatus @default(PENDING) @map("seller_status")
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz
+
+  order            Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  seller           SellerProfile         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}

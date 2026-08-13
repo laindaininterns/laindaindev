@@ -10,6 +10,8 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const sellerRoutes = require('./routes/sellerRoutes');
+const buyerRoutes = require('./routes/buyerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
 
@@ -55,6 +57,8 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/seller', sellerRoutes);
+app.use('/api/buyer', buyerRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 

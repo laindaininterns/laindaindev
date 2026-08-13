@@ -1,10 +1,15 @@
 const supabase = require('../config/supabase');
+const BuyerProductService = require('../services/buyerProductService');
 
 // GET /api/products/categories — public
 const getCategories = async (req, res) => {
-  const { data, error } = await supabase.from('categories').select('*').order('name');
-  if (error) return res.status(400).json({ success: false, error: error.message });
-  return res.json({ success: true, categories: data });
+  try {
+    const { data, error } = await supabase.from('categories').select('*').order('name');
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.json({ success: true, categories: data });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 // Resolve seller_id from authenticated user, enforce APPROVED status
@@ -21,50 +26,75 @@ const resolveApprovedSeller = async (userId) => {
 
 // POST /api/products — authenticated SELLER (APPROVED only)
 const createProduct = async (req, res) => {
-  if (req.user.role !== 'SELLER')
-    return res.status(403).json({ success: false, message: 'Only sellers can create products.' });
+  try {
+    if (req.user.role !== 'SELLER')
+      return res.status(403).json({ success: false, message: 'Only sellers can create products.' });
 
-  const { sellerId, error: sellerErr } = await resolveApprovedSeller(req.user.id);
-  if (sellerErr) return res.status(403).json({ success: false, message: sellerErr });
+    const { sellerId, error: sellerErr } = await resolveApprovedSeller(req.user.id);
+    if (sellerErr) return res.status(403).json({ success: false, message: sellerErr });
 
-  const { title, description, price, stock_quantity, images, status, category_id } = req.body;
-  if (!title || price == null) return res.status(400).json({ success: false, message: 'title and price are required.' });
+    const { title, description, price, stock_quantity, images, status, category_id } = req.body;
+    if (!title || price == null) return res.status(400).json({ success: false, message: 'title and price are required.' });
 
-  const { data, error } = await supabase
-    .from('products')
-    .insert({ seller_id: sellerId, category_id, title, description, price, stock_quantity, images, status })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('products')
+      .insert({ seller_id: sellerId, category_id, title, description, price, stock_quantity, images, status: status || 'APPROVED' })
+      .select()
+      .single();
 
-  if (error) return res.status(400).json({ success: false, error: error.message });
-  return res.status(201).json({ success: true, product: data });
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.status(201).json({ success: true, product: data });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
 
-// GET /api/products — public, optional ?category_id=
+/**
+ * GET /api/products — public Marketplace Feed
+ * Supports:
+ * - Filtering products strictly by 'APPROVED' or 'ACTIVE' status
+ * - Filtering by `category` (category ID or slug, or `category_id`)
+ * - Basic text `search` query matching title or description
+ * - Pagination (`page`, `limit`)
+ */
 const listProducts = async (req, res) => {
-  let query = supabase
-    .from('products')
-    .select('*, categories(id, name, slug), seller_profiles(id, business_name)')
-    .eq('status', 'ACTIVE')
-    .order('created_at', { ascending: false });
+  try {
+    const category = req.query.category || req.query.category_id;
+    const search = req.query.search || req.query.q;
+    const page = req.query.page;
+    const limit = req.query.limit;
 
-  if (req.query.category_id) query = query.eq('category_id', req.query.category_id);
+    const result = await BuyerProductService.getApprovedProducts({ category, search, page, limit });
 
-  const { data, error } = await query;
-  if (error) return res.status(400).json({ success: false, error: error.message });
-  return res.json({ success: true, count: data.length, products: data });
+    return res.status(200).json({
+      success: true,
+      count: result.products.length,
+      total_count: result.count,
+      page: result.page,
+      limit: result.limit,
+      total_pages: result.totalPages,
+      products: result.products,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
 };
 
-// GET /api/products/:id — public single product
+/**
+ * GET /api/products/:id — public single product details & full specifications
+ */
 const getProduct = async (req, res) => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, categories(id, name, slug), seller_profiles(id, business_name)')
-    .eq('id', req.params.id)
-    .single();
+  try {
+    const product = await BuyerProductService.getProductById(req.params.id);
 
-  if (error || !data) return res.status(404).json({ success: false, message: 'Product not found.' });
-  return res.json({ success: true, product: data });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found.' });
+    }
+
+    return res.status(200).json({ success: true, product });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error fetching product specifications.', error: error.message });
+  }
 };
 
 // Verify seller owns the product
@@ -79,25 +109,33 @@ const assertOwnership = async (productId, userId) => {
 
 // PATCH /api/products/:id — seller ownership required
 const updateProduct = async (req, res) => {
-  const { error: ownerErr } = await assertOwnership(req.params.id, req.user.id);
-  if (ownerErr) return res.status(403).json({ success: false, message: ownerErr });
+  try {
+    const { error: ownerErr } = await assertOwnership(req.params.id, req.user.id);
+    if (ownerErr) return res.status(403).json({ success: false, message: ownerErr });
 
-  const allowed = ['title', 'description', 'price', 'stock_quantity', 'images', 'status', 'category_id'];
-  const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
+    const allowed = ['title', 'description', 'price', 'stock_quantity', 'images', 'status', 'category_id'];
+    const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
 
-  const { data, error } = await supabase.from('products').update(updates).eq('id', req.params.id).select().single();
-  if (error) return res.status(400).json({ success: false, error: error.message });
-  return res.json({ success: true, product: data });
+    const { data, error } = await supabase.from('products').update(updates).eq('id', req.params.id).select().single();
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.json({ success: true, product: data });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 // DELETE /api/products/:id — seller ownership required
 const deleteProduct = async (req, res) => {
-  const { error: ownerErr } = await assertOwnership(req.params.id, req.user.id);
-  if (ownerErr) return res.status(403).json({ success: false, message: ownerErr });
+  try {
+    const { error: ownerErr } = await assertOwnership(req.params.id, req.user.id);
+    if (ownerErr) return res.status(403).json({ success: false, message: ownerErr });
 
-  const { error } = await supabase.from('products').delete().eq('id', req.params.id);
-  if (error) return res.status(400).json({ success: false, error: error.message });
-  return res.json({ success: true, message: 'Product deleted successfully.' });
+    const { error } = await supabase.from('products').delete().eq('id', req.params.id);
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.json({ success: true, message: 'Product deleted successfully.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 module.exports = { getCategories, createProduct, listProducts, getProduct, updateProduct, deleteProduct };

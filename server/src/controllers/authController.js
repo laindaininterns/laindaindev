@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 const { JWT_SECRET } = require('../middleware/auth');
 const { sendSellerWelcomeEmail, sendVerificationCode } = require('../services/emailService');
+const AccountMergeService = require('../services/accountMergeService');
+const BuyerProfileService = require('../services/buyerProfileService');
 
 /**
  * Generate a 6-digit numeric OTP code for email verification
@@ -140,6 +142,22 @@ const register = async (req, res) => {
 
     // Trigger 6-digit OTP verification code dispatch right after saving profile
     await sendVerificationCode(user.email, verificationCode);
+
+    // Merge guest cart & guest orders if applicable
+    if (normalizedRole === 'BUYER' && profileId) {
+      const incomingGuestId = req.headers['x-guest-id'] || req.headers['x-guest-token'] || (req.body && req.body.guest_id);
+      const phone = profileData.phone_number || profileData.contact_number || null;
+      try {
+        await AccountMergeService.mergeGuestDataToAccount({
+          guestId: incomingGuestId,
+          buyerProfileId: profileId,
+          email: user.email,
+          phone,
+        });
+      } catch (mergeErr) {
+        console.error('Registration account merge error:', mergeErr.message);
+      }
+    }
 
     // Generate JWT token including user id, role, email, and profile_id
     const token = jwt.sign(
@@ -314,11 +332,14 @@ const login = async (req, res) => {
         profileData = adminProfile;
       }
     } else if (user.role === 'BUYER') {
-      const { data: buyerProfile } = await supabase
+      let { data: buyerProfile } = await supabase
         .from('buyer_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
+      if (!buyerProfile) {
+        buyerProfile = await BuyerProfileService.createProfile(user.id);
+      }
       if (buyerProfile) {
         profileId = buyerProfile.id;
         profileData = buyerProfile;
@@ -332,6 +353,22 @@ const login = async (req, res) => {
       if (sellerProfile) {
         profileId = sellerProfile.id;
         profileData = sellerProfile;
+      }
+    }
+
+    // Merge guest cart & guest orders upon login if buyer profile is active
+    if (profileId && (user.role === 'BUYER' || profileData)) {
+      const incomingGuestId = req.headers['x-guest-id'] || req.headers['x-guest-token'] || (req.body && req.body.guest_id);
+      const phone = profileData ? (profileData.phone_number || profileData.contact_number) : null;
+      try {
+        await AccountMergeService.mergeGuestDataToAccount({
+          guestId: incomingGuestId,
+          buyerProfileId: profileId,
+          email: user.email,
+          phone,
+        });
+      } catch (mergeErr) {
+        console.error('Login account merge error:', mergeErr.message);
       }
     }
 
