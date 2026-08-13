@@ -46,8 +46,12 @@ export default function CartDrawer({
               const icon = CAT_ICONS[item.cat] || "📦";
               return (
                 <div key={`${item.id}-${item.selectedColor || "default"}`} className="pt-3 first:pt-0 flex items-center gap-3">
-                  <div className="h-[52px] w-[52px] flex-shrink-0 rounded-[12px] bg-[#EEF3F2] flex items-center justify-center text-[22px] border border-[#E9E8E2]">
-                    {icon}
+                  <div className="h-[52px] w-[52px] flex-shrink-0 rounded-[12px] bg-white overflow-hidden p-0.5 border border-[#E9E8E2] flex items-center justify-center select-none">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-[10px]" />
+                    ) : (
+                      <span className="text-[22px]">{icon}</span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-[15px] font-medium text-black line-clamp-1">{item.name}</h4>

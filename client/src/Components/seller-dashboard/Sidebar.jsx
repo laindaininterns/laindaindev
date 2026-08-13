@@ -46,6 +46,21 @@ export default function Sidebar({ activeTab, setActiveTab, kycStatus, setKycStat
       {/* Nav Links */}
       <nav className="flex-1 p-4 space-y-1">
         <button
+          onClick={() => setActiveTab("summary")}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all ${
+            activeTab === "summary"
+              ? "bg-[#A3C1BF] text-black font-semibold"
+              : "text-[#5B5B58] hover:bg-black/5 hover:text-black"
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+          </svg>
+          <span>Summary & Insights</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("kyc")}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all ${
             activeTab === "kyc"
@@ -84,7 +99,21 @@ export default function Sidebar({ activeTab, setActiveTab, kycStatus, setKycStat
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.125 1.125 0 001.592 0l7.336-7.336a1.125 1.125 0 000-1.592L12.75 3.659a2.25 2.25 0 00-1.591-.659zm-3.068 5.625a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"/>
           </svg>
-          <span>Products & Inventory</span>
+          <span>Products Management</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("inventory")}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all ${
+            activeTab === "inventory"
+              ? "bg-[#A3C1BF] text-black font-semibold"
+              : "text-[#5B5B58] hover:bg-black/5 hover:text-black"
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+          </svg>
+          <span>Inventory Management</span>
         </button>
       </nav>
 

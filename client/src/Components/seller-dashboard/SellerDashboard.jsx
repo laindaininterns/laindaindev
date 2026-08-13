@@ -1,172 +1,190 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import KycTab from "./KycTab";
 import OrdersTab from "./OrdersTab";
 import ProductsTab from "./ProductsTab";
+import SummaryTab from "./SummaryTab";
+import InventoryTab from "./InventoryTab";
 import AddProductModal from "./AddProductModal";
-
-import product01 from "../../assets/products/product-01-faisalabad-textiles.jpg";
-import product02 from "../../assets/products/product-02-lahore-ceramics.jpg";
-import product03 from "../../assets/products/product-03-karachi-steel.jpg";
-import product04 from "../../assets/products/product-04-gujranwala-leather.jpg";
-import product05 from "../../assets/products/product-05-sialkot-bags.jpg";
-
-// Mock initial data for products matching the LainDain catalog style
-const INITIAL_PRODUCTS = [
-  {
-    id: 1,
-    name: "Cotton Fabric Rolls (100% Combed)",
-    sku: "TX-COT-01",
-    cat: "Clothing & Apparel",
-    price: 850,
-    stock: 250,
-    isOutOfStock: false,
-    moq: 50,
-    photos: [product01, product02, product03], // 3 photos
-  },
-  {
-    id: 2,
-    name: "Glazed Ceramic Vases",
-    sku: "CR-GLZ-02",
-    cat: "Home Decor",
-    price: 1200,
-    stock: 45,
-    isOutOfStock: false,
-    moq: 10,
-    photos: [product02, product04], // 2 photos
-  },
-  {
-    id: 3,
-    name: "Embroidered Kurta Dupatta Set",
-    sku: "TX-EMB-03",
-    cat: "Clothing & Apparel",
-    price: 2450,
-    stock: 0,
-    isOutOfStock: true,
-    moq: 20,
-    photos: [product03, product01, product05, product02, product04], // 5 photos
-  },
-  {
-    id: 4,
-    name: "Leather Messenger Bags",
-    sku: "BG-LTH-04",
-    cat: "Bags & Luggage",
-    price: 3200,
-    stock: 80,
-    isOutOfStock: false,
-    moq: 15,
-    photos: [product04, product05, product01], // 3 photos
-  }
-];
-
-const INITIAL_ORDERS = [
-  {
-    id: "ORD-9982",
-    buyer: "Karachi Retail Hub",
-    date: "2026-08-09",
-    items: "Cotton Fabric Rolls (x50)",
-    total: 42500,
-    status: "Pending Verification",
-  },
-  {
-    id: "ORD-9975",
-    buyer: "Lahore Boutique Association",
-    date: "2026-08-08",
-    items: "Leather Messenger Bags (x15), Glazed Ceramic Vases (x10)",
-    total: 60000,
-    status: "Approved",
-  },
-  {
-    id: "ORD-9951",
-    buyer: "Islamabad Lifestyle Store",
-    date: "2026-08-05",
-    items: "Cotton Fabric Rolls (x100)",
-    total: 85000,
-    status: "Shipped",
-  }
-];
+import {
+  createProductRequest,
+  updateProductRequest,
+  saveInventoryChangesRequest,
+  fetchSellerProductsRequest,
+  fetchSellerOrdersRequest,
+  updateOrderStatusRequest,
+  updateOrderProfitabilityRequest,
+  applyDefaultRatesRequest,
+} from "../../services/api";
 
 export default function SellerDashboard({ onClose }) {
-  const [activeTab, setActiveTab] = useState("kyc"); // "kyc", "orders", "products"
-  const [kycStatus, setKycStatus] = useState("Pending Verification"); // "Approved", "Pending Verification"
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  const [activeTab, setActiveTab] = useState("summary"); // "summary", "kyc", "orders", "products"
+  const [kycStatus, setKycStatus] = useState("Approved");
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [uploadedDocs, setUploadedDocs] = useState([
-    { name: "NTN_Certificate_2026.pdf", size: "1.2 MB", date: "2026-08-01", status: "Approved" },
-    { name: "CNIC_Copy_Front_Back.pdf", size: "850 KB", date: "2026-08-01", status: "Approved" },
-  ]);
+  const [uploadedDocs, setUploadedDocs] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSavingInventory, setIsSavingInventory] = useState(false);
+
+  // Load live products and orders from Supabase database on mount
+  useEffect(() => {
+    async function loadLiveData() {
+      try {
+        const [dbProducts, dbOrders] = await Promise.all([
+          fetchSellerProductsRequest(),
+          fetchSellerOrdersRequest(),
+        ]);
+        if (Array.isArray(dbProducts)) {
+          setProducts(dbProducts);
+        }
+        if (Array.isArray(dbOrders)) {
+          setOrders(dbOrders);
+        }
+      } catch (err) {
+        console.error("Failed to load seller data from Supabase database:", err.message);
+      }
+    }
+    loadLiveData();
+  }, []);
 
   // Document Upload Handler
   const handleFileUpload = (e) => {
     e.preventDefault();
     setIsUploading(true);
     setTimeout(() => {
-      setUploadedDocs(prev => [
+      setUploadedDocs((prev) => [
         ...prev,
         {
           name: "Business_License_Registration.pdf",
           size: "2.4 MB",
-          date: new Date().toISOString().split('T')[0],
-          status: "Pending Verification"
-        }
+          date: new Date().toISOString().split("T")[0],
+          status: "Pending Verification",
+        },
       ]);
       setIsUploading(false);
     }, 1500);
   };
 
-  // Product Inventory Handlers
-  const handleAdjustStock = (productId, delta) => {
-    setProducts(prev =>
-      prev.map(p => {
+  // Save Inventory changes to Supabase database
+  const handleSaveInventory = async () => {
+    setIsSavingInventory(true);
+    try {
+      await saveInventoryChangesRequest(products);
+      console.log("Inventory changes persisted into Supabase database.");
+    } catch (err) {
+      console.error("Failed to save inventory:", err.message);
+    } finally {
+      setIsSavingInventory(false);
+    }
+  };
+
+  // Product Inventory Stock Adjustments (Live Sync to Supabase)
+  const handleAdjustStock = async (productId, delta) => {
+    let finalStock = 0;
+    let finalIsOut = false;
+
+    setProducts((prev) =>
+      prev.map((p) => {
         if (p.id === productId) {
-          const newStock = Math.max(0, p.stock + delta);
+          finalStock = Math.max(0, p.stock + delta);
+          finalIsOut = finalStock === 0 ? true : p.isOutOfStock;
           return {
             ...p,
-            stock: newStock,
-            // Automatically mark out of stock if it reaches 0
-            isOutOfStock: newStock === 0 ? true : p.isOutOfStock
+            stock: finalStock,
+            isOutOfStock: finalIsOut,
           };
         }
         return p;
       })
     );
+
+    try {
+      await updateProductRequest(productId, {
+        stock: finalStock,
+        stock_quantity: finalStock,
+        isOutOfStock: finalIsOut,
+        is_out_of_stock: finalIsOut,
+      });
+    } catch (err) {
+      console.error(`Failed to sync stock adjustment for ${productId}:`, err.message);
+    }
   };
 
-  const handleToggleOutOfStock = (productId) => {
-    setProducts(prev =>
-      prev.map(p => {
+  const handleToggleOutOfStock = async (productId) => {
+    let nextState = false;
+    let finalStock = 0;
+
+    setProducts((prev) =>
+      prev.map((p) => {
         if (p.id === productId) {
-          const nextState = !p.isOutOfStock;
-          if (nextState) {
-            // Toggling OUT of stock: backup current stock, set stock to 0
-            return {
-              ...p,
-              isOutOfStock: nextState,
-              _prevStock: p.stock,
-              stock: 0
-            };
-          } else {
-            // Toggling IN to stock: restore from backup, fallback to 10 if backup was 0 or undefined
-            return {
-              ...p,
-              isOutOfStock: nextState,
-              stock: (p._prevStock !== undefined && p._prevStock > 0) ? p._prevStock : 10
-            };
-          }
+          nextState = !p.isOutOfStock;
+          finalStock = nextState ? 0 : p._prevStock !== undefined && p._prevStock > 0 ? p._prevStock : 10;
+          return {
+            ...p,
+            isOutOfStock: nextState,
+            _prevStock: p.stock,
+            stock: finalStock,
+          };
         }
         return p;
       })
     );
+
+    try {
+      await updateProductRequest(productId, {
+        isOutOfStock: nextState,
+        is_out_of_stock: nextState,
+        stock: finalStock,
+        stock_quantity: finalStock,
+      });
+    } catch (err) {
+      console.error(`Failed to sync out-of-stock toggle for ${productId}:`, err.message);
+    }
   };
 
-  // Order Status transition helper
-  const handleUpdateOrderStatus = (orderId, nextStatus) => {
-    setOrders(prev =>
-      prev.map(o => (o.id === orderId ? { ...o, status: nextStatus } : o))
+  // Order Status transition helper (Live Sync to Supabase)
+  const handleUpdateOrderStatus = async (orderId, nextStatus) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus } : o))
     );
+
+    try {
+      await updateOrderStatusRequest(orderId, nextStatus);
+    } catch (err) {
+      console.error(`Failed to update order status for ${orderId}:`, err.message);
+    }
+  };
+
+  // Profitability modifications (Live Sync to Supabase)
+  const handleUpdateOrderProfitability = async (orderId, updatedFields) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, ...updatedFields } : o))
+    );
+
+    try {
+      await updateOrderProfitabilityRequest(orderId, updatedFields);
+    } catch (err) {
+      console.error(`Failed to update profitability for ${orderId}:`, err.message);
+    }
+  };
+
+  const handleApplyDefaultRates = async (cogsRs, feesRs, shippingRs) => {
+    setOrders((prev) =>
+      prev.map((o) => ({
+        ...o,
+        cogs: cogsRs,
+        fees: feesRs,
+        shipping: shippingRs,
+      }))
+    );
+
+    try {
+      await applyDefaultRatesRequest(cogsRs, feesRs, shippingRs);
+    } catch (err) {
+      console.error("Failed to apply flat cost rules to database:", err.message);
+    }
   };
 
   return (
@@ -180,6 +198,10 @@ export default function SellerDashboard({ onClose }) {
       />
 
       <main className="flex-1 p-6 md:p-8 max-w-[1200px] overflow-y-auto">
+        {activeTab === "summary" && (
+          <SummaryTab products={products} orders={orders} />
+        )}
+
         {activeTab === "kyc" && (
           <KycTab
             kycStatus={kycStatus}
@@ -194,6 +216,19 @@ export default function SellerDashboard({ onClose }) {
           <OrdersTab
             orders={orders}
             handleUpdateOrderStatus={handleUpdateOrderStatus}
+            onUpdateOrderProfitability={handleUpdateOrderProfitability}
+            onApplyDefaultRates={handleApplyDefaultRates}
+          />
+        )}
+
+        {activeTab === "inventory" && (
+          <InventoryTab
+            products={products}
+            setProducts={setProducts}
+            handleAdjustStock={handleAdjustStock}
+            handleToggleOutOfStock={handleToggleOutOfStock}
+            onSaveInventory={handleSaveInventory}
+            isSavingInventory={isSavingInventory}
           />
         )}
 
@@ -222,8 +257,40 @@ export default function SellerDashboard({ onClose }) {
           setEditingProduct(null);
         }}
         editingProduct={editingProduct}
-        onAddProduct={(newProd) => setProducts(prev => [...prev, newProd])}
-        onEditProduct={(updatedProd) => setProducts(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p))}
+        onAddProduct={async (newProd) => {
+          setProducts((prev) => [...prev, newProd]);
+          try {
+            const created = await createProductRequest(newProd);
+            console.log("Product saved in Supabase database:", created);
+            if (created && created.id) {
+              setProducts((prev) =>
+                prev.map((p) =>
+                  p.sku === newProd.sku || p.id === newProd.id
+                    ? {
+                        ...p,
+                        id: created.id,
+                        name: created.title || created.name || p.name,
+                        sku: created.sku || p.sku,
+                      }
+                    : p
+                )
+              );
+            }
+          } catch (err) {
+            console.error("Database product save error:", err.message);
+          }
+        }}
+        onEditProduct={async (updatedProd) => {
+          setProducts((prev) =>
+            prev.map((p) => (p.id === updatedProd.id ? updatedProd : p))
+          );
+          try {
+            const updated = await updateProductRequest(updatedProd.id, updatedProd);
+            console.log("Product edit persisted in Supabase database:", updated);
+          } catch (err) {
+            console.error("Database product edit error:", err.message);
+          }
+        }}
       />
     </div>
   );

@@ -1,19 +1,20 @@
 import React from "react";
-import { CAT_ICONS, TOKENS } from "../data/marketplaceData";
+import { TOKENS } from "../data/marketplaceData";
 
 export default function ProductCard({ product, onSelectProduct }) {
-  const icon = CAT_ICONS[product.cat] || "📦";
-
   return (
     <div
       onClick={() => onSelectProduct(product)}
-      className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-[#E9E8E2] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
+      className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-black/20 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Compact Product Visual Box */}
-      <div className={`relative h-[230px] bg-gradient-to-br ${product.imageBg} flex items-center justify-center p-3 select-none`}>
-        <div role="img" aria-label={product.name} className="text-[42px] transition-transform duration-200 group-hover:scale-105">
-          {icon}
-        </div>
+      <div className="relative h-[230px] p-3 select-none overflow-hidden bg-white">
+        <img
+          src={product.image}
+          alt={product.name}
+          loading="lazy"
+          className="w-full h-full object-cover rounded-[16px] transition-transform duration-200 group-hover:scale-105"
+        />
       </div>
 
       {/* Card Details Content */}

@@ -6,79 +6,8 @@ import ProductsTab from "./ProductsTab";
 import AddProductModal from "./AddProductModal";
 import { fetchSellerKyc, fetchSellerProducts, fetchSellerOrders } from "../../services/api";
 
-const INITIAL_PRODUCTS = [
-  {
-    id: "1",
-    name: "Cotton Fabric Rolls (100% Combed)",
-    sku: "TX-COT-01",
-    cat: "Clothing & Apparel",
-    price: 850,
-    stock: 250,
-    isOutOfStock: false,
-    moq: 50,
-    photos: [],
-  },
-  {
-    id: "2",
-    name: "Glazed Ceramic Vases",
-    sku: "CR-GLZ-02",
-    cat: "Home Decor",
-    price: 1200,
-    stock: 45,
-    isOutOfStock: false,
-    moq: 10,
-    photos: [],
-  },
-  {
-    id: "3",
-    name: "Embroidered Kurta Dupatta Set",
-    sku: "TX-EMB-03",
-    cat: "Clothing & Apparel",
-    price: 2450,
-    stock: 0,
-    isOutOfStock: true,
-    moq: 20,
-    photos: [],
-  },
-  {
-    id: "4",
-    name: "Leather Messenger Bags",
-    sku: "BG-LTH-04",
-    cat: "Bags & Luggage",
-    price: 3200,
-    stock: 80,
-    isOutOfStock: false,
-    moq: 15,
-    photos: [],
-  }
-];
-
-const INITIAL_ORDERS = [
-  {
-    id: "ORD-9982",
-    buyer: "Karachi Retail Hub",
-    date: "2026-08-09",
-    items: "Cotton Fabric Rolls (x50)",
-    total: 42500,
-    status: "Pending Verification",
-  },
-  {
-    id: "ORD-9975",
-    buyer: "Lahore Boutique Association",
-    date: "2026-08-08",
-    items: "Leather Messenger Bags (x15), Glazed Ceramic Vases (x10)",
-    total: 60000,
-    status: "Approved",
-  },
-  {
-    id: "ORD-9951",
-    buyer: "Islamabad Lifestyle Store",
-    date: "2026-08-05",
-    items: "Cotton Fabric Rolls (x100)",
-    total: 85000,
-    status: "Shipped",
-  }
-];
+const INITIAL_PRODUCTS = [];
+const INITIAL_ORDERS = [];
 
 export default function SellerDashboard({ currentUser, onClose, onLogout, triggerToast }) {
   const [activeTab, setActiveTab] = useState("kyc"); // "kyc", "orders", "products"
