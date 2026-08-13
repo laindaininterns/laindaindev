@@ -361,3 +361,87 @@ export async function updateSellerOrderStatusRequest(orderId, status) {
     throw error;
   }
 }
+
+/**
+ * Admin: Fetch Buyers Directory
+ */
+export async function fetchBuyersDirectory() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/admin/buyers`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch buyers directory');
+    }
+
+    const data = await response.json();
+    return data.buyers || [];
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchBuyersDirectory failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Admin: Fetch All Marketplace Orders
+ */
+export async function fetchAdminOrders(statusFilter) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const url = statusFilter ? `${API_BASE_URL}/admin/orders?status=${statusFilter}` : `${API_BASE_URL}/admin/orders`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch admin orders');
+    }
+
+    const data = await response.json();
+    return data.orders || [];
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchAdminOrders failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Admin: Update Global Order Status & Logistics Tracking
+ */
+export async function updateAdminOrderLogistics(orderId, logisticsData) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(logisticsData),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to update order logistics');
+    }
+
+    const data = await response.json();
+    return data.order;
+  } catch (error) {
+    console.warn('[API Fail-safe] updateAdminOrderLogistics failed:', error.message);
+    throw error;
+  }
+}
+
