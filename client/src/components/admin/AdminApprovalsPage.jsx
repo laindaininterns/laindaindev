@@ -3,7 +3,7 @@ import { fetchPendingSellers, updateSellerStatus } from '../../services/api';
 
 export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
   const [sellers, setSellers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [actionId, setActionId] = useState(null);
 
@@ -12,6 +12,7 @@ export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
   }, []);
 
   async function loadPendingSellers(forceRefresh = false) {
+    if (forceRefresh) setLoading(true);
     try {
       const data = await fetchPendingSellers(forceRefresh);
       setSellers(data || []);
@@ -25,6 +26,7 @@ export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
       setLoading(false);
     }
   }
+
 
 
 
@@ -71,9 +73,10 @@ export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[16px] font-semibold text-black">Pending Seller Verification Requests</h2>
           <button
-            onClick={loadPendingSellers}
+            onClick={() => loadPendingSellers(true)}
             className="text-xs text-[#85A6A3] hover:underline font-medium flex items-center gap-1"
           >
+
             🔄 Refresh List
           </button>
         </div>
