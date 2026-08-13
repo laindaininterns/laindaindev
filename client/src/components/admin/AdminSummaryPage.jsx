@@ -16,10 +16,9 @@ export default function AdminSummaryPage({ pendingCount, onSelectTab }) {
     loadSummaryData();
   }, []);
 
-  async function loadSummaryData() {
-    setLoading(true);
+  async function loadSummaryData(forceRefresh = false) {
     try {
-      const summaryData = await fetchAdminSummary();
+      const summaryData = await fetchAdminSummary(forceRefresh);
       if (summaryData) {
         if (summaryData.metrics) setMetrics(summaryData.metrics);
         if (summaryData.trending_products) setTrendingProducts(summaryData.trending_products);
@@ -31,6 +30,7 @@ export default function AdminSummaryPage({ pendingCount, onSelectTab }) {
       setLoading(false);
     }
   }
+
 
 
   const formattedSales = typeof metrics.total_sales === 'number'

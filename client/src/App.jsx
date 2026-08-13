@@ -22,11 +22,13 @@ const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
 
+import { fetchAdminSummary, fetchAllSellers, fetchAdminProductsCatalog, fetchBuyersDirectory, fetchPendingSellers } from "./services/api";
+
 export default function App() {
   // Navigation & View state
   const [currentView, setCurrentView] = useState("marketplace"); // 'marketplace', 'admin', or 'seller'
   const [adminTab, setAdminTab] = useState("summary");
-  const [pendingCount, setPendingCount] = useState(3);
+  const [pendingCount, setPendingCount] = useState(0);
 
   // App state
   const [activeCategory, setActiveCategory] = useState("All Suppliers");
@@ -45,8 +47,26 @@ export default function App() {
   // Cart State (map by product id + color)
   const [cart, setCart] = useState({});
 
-  // Toast Notification state
+  // Toast notification state
   const [toast, setToast] = useState({ show: false, message: "", tone: "success" });
+
+  // Pre-fetch all admin dashboard tab data in parallel when entering Admin view for 0ms instant switching
+  useEffect(() => {
+    if (currentView === "admin") {
+      Promise.all([
+        fetchAdminSummary(),
+        fetchAllSellers(),
+        fetchAdminProductsCatalog(),
+        fetchBuyersDirectory(),
+        fetchPendingSellers(),
+      ])
+        .then(([summaryData, sellersData, productsData, buyersData, pendingData]) => {
+          if (pendingData) setPendingCount(pendingData.length);
+        })
+        .catch((err) => console.warn("Admin pre-fetch error:", err));
+    }
+  }, [currentView]);
+
 
   // Route Guard & Session Persistence on Mount
   useEffect(() => {

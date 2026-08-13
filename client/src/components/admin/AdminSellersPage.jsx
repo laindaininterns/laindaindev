@@ -9,10 +9,9 @@ export default function AdminSellersPage({ onSelectTab }) {
     loadSellers();
   }, []);
 
-  async function loadSellers() {
-    setLoading(true);
+  async function loadSellers(forceRefresh = false) {
     try {
-      const data = await fetchAllSellers();
+      const data = await fetchAllSellers(forceRefresh);
       setSellersList(data || []);
     } catch (err) {
       console.warn('Failed to load live sellers:', err.message);
@@ -20,6 +19,7 @@ export default function AdminSellersPage({ onSelectTab }) {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="space-y-6">

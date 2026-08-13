@@ -117,7 +117,10 @@ export async function loginUserRequest(email, password) {
 /**
  * Admin: Fetch pending seller profiles
  */
-export async function fetchPendingSellers() {
+export async function fetchPendingSellers(forceRefresh = false) {
+  if (!forceRefresh && apiCache.pendingSellers.data && (Date.now() - apiCache.pendingSellers.timestamp) < CACHE_TTL_MS) {
+    return apiCache.pendingSellers.data;
+  }
   try {
     const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE_URL}/admin/sellers/pending`, {
@@ -134,9 +137,12 @@ export async function fetchPendingSellers() {
     }
 
     const data = await response.json();
-    return data.sellers || [];
+    const result = data.sellers || [];
+    apiCache.pendingSellers = { data: result, timestamp: Date.now() };
+    return result;
   } catch (error) {
     console.warn('[API Fail-safe] fetchPendingSellers failed:', error.message);
+    if (apiCache.pendingSellers.data) return apiCache.pendingSellers.data;
     throw error;
   }
 }
@@ -162,12 +168,14 @@ export async function updateSellerStatus(sellerId, status) {
     }
 
     const data = await response.json();
+    clearAdminApiCache();
     return data.seller;
   } catch (error) {
     console.warn(`[API Fail-safe] updateSellerStatus (${status}) failed:`, error.message);
     throw error;
   }
 }
+
 
 /**
  * Seller: Fetch KYC status & documents
@@ -362,10 +370,30 @@ export async function updateSellerOrderStatusRequest(orderId, status) {
   }
 }
 
+// In-memory cache for ultra-fast instant admin dashboard tab switching
+const apiCache = {
+  adminSummary: { data: null, timestamp: 0 },
+  allSellers: { data: null, timestamp: 0 },
+  pendingSellers: { data: null, timestamp: 0 },
+  buyersDirectory: { data: null, timestamp: 0 },
+  adminProductsCatalog: { data: null, timestamp: 0 },
+};
+
+const CACHE_TTL_MS = 60000; // 60 seconds
+
+export function clearAdminApiCache() {
+  Object.keys(apiCache).forEach((k) => {
+    apiCache[k] = { data: null, timestamp: 0 };
+  });
+}
+
 /**
  * Admin: Fetch Buyers Directory
  */
-export async function fetchBuyersDirectory() {
+export async function fetchBuyersDirectory(forceRefresh = false) {
+  if (!forceRefresh && apiCache.buyersDirectory.data && (Date.now() - apiCache.buyersDirectory.timestamp) < CACHE_TTL_MS) {
+    return apiCache.buyersDirectory.data;
+  }
   try {
     const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE_URL}/admin/buyers`, {
@@ -382,9 +410,12 @@ export async function fetchBuyersDirectory() {
     }
 
     const data = await response.json();
-    return data.buyers || [];
+    const result = data.buyers || [];
+    apiCache.buyersDirectory = { data: result, timestamp: Date.now() };
+    return result;
   } catch (error) {
     console.warn('[API Fail-safe] fetchBuyersDirectory failed:', error.message);
+    if (apiCache.buyersDirectory.data) return apiCache.buyersDirectory.data;
     throw error;
   }
 }
@@ -438,6 +469,7 @@ export async function updateAdminOrderLogistics(orderId, logisticsData) {
     }
 
     const data = await response.json();
+    clearAdminApiCache();
     return data.order;
   } catch (error) {
     console.warn('[API Fail-safe] updateAdminOrderLogistics failed:', error.message);
@@ -448,7 +480,10 @@ export async function updateAdminOrderLogistics(orderId, logisticsData) {
 /**
  * Admin: Fetch All Sellers Directory (Verified, Pending, Rejected)
  */
-export async function fetchAllSellers() {
+export async function fetchAllSellers(forceRefresh = false) {
+  if (!forceRefresh && apiCache.allSellers.data && (Date.now() - apiCache.allSellers.timestamp) < CACHE_TTL_MS) {
+    return apiCache.allSellers.data;
+  }
   try {
     const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE_URL}/admin/sellers/all`, {
@@ -465,9 +500,12 @@ export async function fetchAllSellers() {
     }
 
     const data = await response.json();
-    return data.sellers || [];
+    const result = data.sellers || [];
+    apiCache.allSellers = { data: result, timestamp: Date.now() };
+    return result;
   } catch (error) {
     console.warn('[API Fail-safe] fetchAllSellers failed:', error.message);
+    if (apiCache.allSellers.data) return apiCache.allSellers.data;
     throw error;
   }
 }
@@ -475,7 +513,10 @@ export async function fetchAllSellers() {
 /**
  * Admin: Fetch Live Dashboard Summary Metrics
  */
-export async function fetchAdminSummary() {
+export async function fetchAdminSummary(forceRefresh = false) {
+  if (!forceRefresh && apiCache.adminSummary.data && (Date.now() - apiCache.adminSummary.timestamp) < CACHE_TTL_MS) {
+    return apiCache.adminSummary.data;
+  }
   try {
     const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE_URL}/admin/summary`, {
@@ -492,9 +533,11 @@ export async function fetchAdminSummary() {
     }
 
     const data = await response.json();
+    apiCache.adminSummary = { data, timestamp: Date.now() };
     return data;
   } catch (error) {
     console.warn('[API Fail-safe] fetchAdminSummary failed:', error.message);
+    if (apiCache.adminSummary.data) return apiCache.adminSummary.data;
     throw error;
   }
 }
@@ -502,7 +545,10 @@ export async function fetchAdminSummary() {
 /**
  * Admin: Fetch Wholesale Catalog Products
  */
-export async function fetchAdminProductsCatalog() {
+export async function fetchAdminProductsCatalog(forceRefresh = false) {
+  if (!forceRefresh && apiCache.adminProductsCatalog.data && (Date.now() - apiCache.adminProductsCatalog.timestamp) < CACHE_TTL_MS) {
+    return apiCache.adminProductsCatalog.data;
+  }
   try {
     const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE_URL}/admin/products`, {
@@ -519,11 +565,15 @@ export async function fetchAdminProductsCatalog() {
     }
 
     const data = await response.json();
-    return data.products || [];
+    const result = data.products || [];
+    apiCache.adminProductsCatalog = { data: result, timestamp: Date.now() };
+    return result;
   } catch (error) {
     console.warn('[API Fail-safe] fetchAdminProductsCatalog failed:', error.message);
+    if (apiCache.adminProductsCatalog.data) return apiCache.adminProductsCatalog.data;
     throw error;
   }
 }
+
 
 

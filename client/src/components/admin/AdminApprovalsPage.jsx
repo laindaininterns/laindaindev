@@ -11,11 +11,9 @@ export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
     loadPendingSellers();
   }, []);
 
-  async function loadPendingSellers() {
-    setLoading(true);
-    setError('');
+  async function loadPendingSellers(forceRefresh = false) {
     try {
-      const data = await fetchPendingSellers();
+      const data = await fetchPendingSellers(forceRefresh);
       setSellers(data || []);
       if (onRefreshCount) onRefreshCount((data || []).length);
     } catch (err) {
@@ -27,6 +25,7 @@ export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
       setLoading(false);
     }
   }
+
 
 
   async function handleStatusUpdate(seller, newStatus) {

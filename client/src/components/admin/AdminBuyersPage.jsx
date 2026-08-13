@@ -9,10 +9,9 @@ export default function AdminBuyersPage() {
     loadBuyers();
   }, []);
 
-  async function loadBuyers() {
-    setLoading(true);
+  async function loadBuyers(forceRefresh = false) {
     try {
-      const data = await fetchBuyersDirectory();
+      const data = await fetchBuyersDirectory(forceRefresh);
       if (data && data.length > 0) {
         setBuyersList(data);
       } else {
@@ -25,6 +24,7 @@ export default function AdminBuyersPage() {
       setLoading(false);
     }
   }
+
 
   function useFallback() {
     setBuyersList([

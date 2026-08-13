@@ -11,10 +11,9 @@ export default function AdminProductsPage() {
     loadProducts();
   }, []);
 
-  async function loadProducts() {
-    setLoading(true);
+  async function loadProducts(forceRefresh = false) {
     try {
-      const data = await fetchAdminProductsCatalog();
+      const data = await fetchAdminProductsCatalog(forceRefresh);
       setProductsList(data || []);
     } catch (err) {
       console.warn('Failed to load catalog products:', err.message);
@@ -22,6 +21,7 @@ export default function AdminProductsPage() {
       setLoading(false);
     }
   }
+
 
   const filtered = productsList.filter((p) => {
     const matchesCat = categoryFilter === 'All' || p.cat === categoryFilter;
