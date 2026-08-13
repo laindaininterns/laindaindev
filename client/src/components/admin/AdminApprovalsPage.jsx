@@ -16,43 +16,18 @@ export default function AdminApprovalsPage({ onRefreshCount, triggerToast }) {
     setError('');
     try {
       const data = await fetchPendingSellers();
-      setSellers(data);
-      if (onRefreshCount) onRefreshCount(data.length);
+      setSellers(data || []);
+      if (onRefreshCount) onRefreshCount((data || []).length);
     } catch (err) {
       console.warn('Failed to load live pending sellers:', err.message);
-      // Fallback mock items if API endpoint unreachable or mock env
-      const mockPending = [
-        {
-          id: 'mock-1',
-          business_name: 'Sindh Green Agro',
-          business_address: 'Sindh (Hyderabad)',
-          tax_id: 'NTN & Chamber Certificate',
-          current_status: 'PENDING',
-          users: { email: 'sindh.green.agro@fertilizer.pk' },
-        },
-        {
-          id: 'mock-2',
-          business_name: 'Multan Bedding Mills',
-          business_address: 'Punjab (Multan)',
-          tax_id: 'Export License, NTN',
-          current_status: 'PENDING',
-          users: { email: 'multan.bedding@wholesale.pk' },
-        },
-        {
-          id: 'mock-3',
-          business_name: 'Karachi Plastic Industries',
-          business_address: 'Sindh (Karachi)',
-          tax_id: 'Sales Tax Registration, NTN',
-          current_status: 'PENDING',
-          users: { email: 'khi.plastic@wholesale.pk' },
-        },
-      ];
-      setSellers(mockPending);
-      if (onRefreshCount) onRefreshCount(mockPending.length);
+      setError(err.message);
+      setSellers([]);
+      if (onRefreshCount) onRefreshCount(0);
     } finally {
       setLoading(false);
     }
   }
+
 
   async function handleStatusUpdate(seller, newStatus) {
     setActionId(seller.id);

@@ -445,3 +445,85 @@ export async function updateAdminOrderLogistics(orderId, logisticsData) {
   }
 }
 
+/**
+ * Admin: Fetch All Sellers Directory (Verified, Pending, Rejected)
+ */
+export async function fetchAllSellers() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/admin/sellers/all`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch all sellers directory');
+    }
+
+    const data = await response.json();
+    return data.sellers || [];
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchAllSellers failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Admin: Fetch Live Dashboard Summary Metrics
+ */
+export async function fetchAdminSummary() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/admin/summary`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch admin summary metrics');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchAdminSummary failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Admin: Fetch Wholesale Catalog Products
+ */
+export async function fetchAdminProductsCatalog() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE_URL}/admin/products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to fetch admin products catalog');
+    }
+
+    const data = await response.json();
+    return data.products || [];
+  } catch (error) {
+    console.warn('[API Fail-safe] fetchAdminProductsCatalog failed:', error.message);
+    throw error;
+  }
+}
+
+

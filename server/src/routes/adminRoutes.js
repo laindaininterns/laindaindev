@@ -43,5 +43,35 @@ router.patch('/orders/:id/status', adminLogisticsController.updateAdminOrderStat
  */
 router.get('/buyers', adminController.getBuyersDirectory);
 
+/**
+ * @route   GET /api/admin/sellers/all
+ * @desc    Fetch all registered sellers directory with completed order counts and revenue
+ * @access  Private (Admin)
+ */
+router.get('/sellers/all', adminController.getAllSellers);
+
+/**
+ * @route   GET /api/admin/summary
+ * @desc    Fetch live dynamic aggregate metrics for Admin Summary dashboard
+ * @access  Private (Admin)
+ */
+/**
+ * @route   GET /api/admin/summary
+ * @desc    Fetch live dynamic aggregate metrics for Admin Summary dashboard
+ * @access  Private (Admin)
+ */
+router.get('/summary', adminController.getDashboardSummary);
+
+/**
+ * @route   GET /api/admin/products
+ * @desc    Fetch all wholesale catalog products across sellers
+ * @access  Private (Admin)
+ */
+router.get('/products', adminController.getAdminProducts);
+
 module.exports = router;
+
+
+
+
 
