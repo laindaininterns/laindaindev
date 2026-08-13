@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import posthog, { isPostHogEnabled } from '../../posthog';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laindaindev.onrender.com/api';
+import { API_BASE_URL } from '../../services/api';
 
 const INITIAL_WELCOME = {
   id: 'welcome-1',
@@ -56,6 +57,11 @@ export function useChatbot() {
       if (!text || isLoading) return;
 
       setError(null);
+      if (isPostHogEnabled) {
+        posthog.capture('chat_message_sent', {
+          message_length: text.length,
+        });
+      }
       const userMsgId = `user-${Date.now()}`;
       const userMessage = {
         id: userMsgId,

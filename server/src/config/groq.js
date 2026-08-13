@@ -1,7 +1,9 @@
 const { Groq } = require('groq-sdk');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), override: true });
+require('dotenv').config({ override: true });
 
-const apiKey = process.env.GROQ_API_KEY;
+const apiKey = process.env.GROQ_API_KEY_RAHI || process.env.GROQ_API_KEY || process.env.GROQ_API_KEY_STT;
 
 if (!apiKey) {
   console.warn('Warning: GROQ_API_KEY is missing in environment variables. Chatbot feature will return fallback responses.');

@@ -3,6 +3,7 @@ import { TOKENS } from '../../data/marketplaceData';
 import ChatMessage from './ChatMessage';
 import ChatTypingIndicator from './ChatTypingIndicator';
 import ChatQuickReplies from './ChatQuickReplies';
+import useChatVoice from './useChatVoice';
 
 export default function ChatPanel({
   isOpen,
@@ -18,12 +19,34 @@ export default function ChatPanel({
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  const {
+    isListening,
+    isTranscribing,
+    isSpeaking,
+    isVoiceOutputEnabled,
+    micError,
+    hasMicSupport,
+    startListening,
+    stopListening,
+    speakReply,
+    toggleVoiceOutput,
+  } = useChatVoice();
+
   // Auto-scroll to bottom when messages update or loading state changes
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading, isOpen]);
+
+  // Speak assistant's latest message if voice output is enabled
+  useEffect(() => {
+    if (!isOpen || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === 'assistant' && lastMsg.text) {
+      speakReply(lastMsg.text, lastMsg.language || 'en');
+    }
+  }, [messages, isOpen, speakReply]);
 
   // Focus input field when panel opens
   useEffect(() => {
@@ -52,6 +75,21 @@ export default function ChatPanel({
     setInputText('');
   }
 
+  const handleMicClick = () => {
+    if (isListening) {
+      stopListening((transcribedText) => {
+        if (transcribedText) setInputText(transcribedText);
+      });
+    } else {
+      startListening((transcribedText) => {
+        if (transcribedText) {
+          setInputText(transcribedText);
+          onSendMessage(transcribedText);
+        }
+      });
+    }
+  };
+
   // Get last message quick replies if available
   const lastMessage = messages[messages.length - 1];
   const activeQuickReplies =
@@ -67,6 +105,14 @@ export default function ChatPanel({
       className="fixed z-[520] bottom-24 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-[380px] h-[540px] max-h-[80vh] sm:max-h-[560px] flex flex-col rounded-[22px] bg-white shadow-[0_16px_40px_rgba(0,0,0,0.18)] border overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
       style={{ borderColor: TOKENS.border }}
     >
+      {/* Accessibility Status Region */}
+      <div className="sr-only" aria-live="polite">
+        {isListening && 'Listening for your voice input...'}
+        {isTranscribing && 'Transcribing your spoken audio...'}
+        {isSpeaking && 'Laila is speaking reply...'}
+        {micError && `Voice error: ${micError}`}
+      </div>
+
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3.5 border-b flex-shrink-0"
@@ -91,6 +137,33 @@ export default function ChatPanel({
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Speaker Voice Output Toggle */}
+          <button
+            type="button"
+            onClick={toggleVoiceOutput}
+            title={isVoiceOutputEnabled ? 'Mute Laila Spoken Voice' : 'Enable Laila Spoken Voice'}
+            aria-label={isVoiceOutputEnabled ? 'Mute Laila Voice' : 'Enable Laila Voice'}
+            className="flex h-7 w-7 items-center justify-center rounded-full transition-colors"
+            style={{
+              backgroundColor: isVoiceOutputEnabled ? TOKENS.sage : 'transparent',
+              color: isVoiceOutputEnabled ? TOKENS.black : '#5B5B58',
+            }}
+          >
+            {isVoiceOutputEnabled ? (
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+            )}
+          </button>
+
+          {/* Clear History */}
           <button
             type="button"
             onClick={onClearHistory}
@@ -155,28 +228,67 @@ export default function ChatPanel({
             value={inputText}
             maxLength={500}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Ask Laila about wholesale products, MOQ..."
-            className="w-full h-[42px] pl-3.5 pr-11 rounded-[14px] bg-white text-[13px] text-black outline-none border transition-all placeholder:text-[#8C8C88]"
+            placeholder={isListening ? 'Listening...' : 'Ask Laila about wholesale products, MOQ...'}
+            className="w-full h-[42px] pl-3.5 pr-20 rounded-[14px] bg-white text-[13px] text-black outline-none border transition-all placeholder:text-[#8C8C88]"
             style={{ borderColor: TOKENS.border }}
           />
-          <button
-            type="submit"
-            disabled={!inputText.trim() || isLoading}
-            aria-label="Send message"
-            className="absolute right-1.5 h-8 w-8 flex items-center justify-center rounded-[10px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: inputText.trim() && !isLoading ? TOKENS.sage : TOKENS.border,
-              color: TOKENS.black,
-            }}
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
+
+          <div className="absolute right-1.5 flex items-center gap-1">
+            {/* Microphone Button */}
+            <button
+              type="button"
+              onClick={handleMicClick}
+              disabled={!hasMicSupport || isTranscribing}
+              title={
+                !hasMicSupport
+                  ? 'Microphone unavailable or permission denied'
+                  : isListening
+                  ? 'Stop listening'
+                  : 'Speak message to Laila'
+              }
+              aria-label={isListening ? 'Stop listening' : 'Start mic input'}
+              className={`h-8 w-8 flex items-center justify-center rounded-[10px] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                isListening ? 'animate-pulse bg-red-500 text-white' : ''
+              }`}
+              style={{
+                backgroundColor: isListening ? '#E53E3E' : isTranscribing ? TOKENS.border : 'transparent',
+                color: isListening ? '#FFFFFF' : TOKENS.black,
+              }}
+            >
+              {isTranscribing ? (
+                <svg className="h-4 w-4 animate-spin text-black" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+              )}
+            </button>
+
+            {/* Send Button */}
+            <button
+              type="submit"
+              disabled={!inputText.trim() || isLoading}
+              aria-label="Send message"
+              className="h-8 w-8 flex items-center justify-center rounded-[10px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: inputText.trim() && !isLoading ? TOKENS.sage : TOKENS.border,
+                color: TOKENS.black,
+              }}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="flex justify-between items-center px-1 mt-1.5 text-[10px] text-[#5B5B58]">
-          <span>Grounded in verified wholesale suppliers</span>
+          <span>{micError ? <span className="text-red-500 font-medium">{micError}</span> : 'Grounded in verified wholesale suppliers'}</span>
           <span>{inputText.length}/500</span>
         </div>
       </form>

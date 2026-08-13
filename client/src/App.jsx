@@ -8,6 +8,9 @@ import Toast from "./components/Toast";
 import NotFoundPage from "./components/NotFoundPage";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
+import posthog, { isPostHogEnabled } from "./posthog";
+
+import { Agentation } from 'agentation';
 
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
@@ -16,8 +19,10 @@ const SearchOverlay = lazy(() => import("./components/SearchOverlay"));
 const AuthModal = lazy(() => import("./components/auth/AuthModal"));
 const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
 const SellerDashboard = lazy(() => import("./components/seller-dashboard/SellerDashboard"));
+const RahiWidget = lazy(() => import("./components/rahi/RahiWidget"));
 
 import { fetchAdminSummary, fetchAllSellers, fetchAdminProductsCatalog, fetchBuyersDirectory, fetchPendingSellers } from "./services/api";
+
 
 export default function App() {
   // Navigation & View state
@@ -30,6 +35,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(true); // Pops up initially
   const [authInitialScreen, setAuthInitialScreen] = useState("login");
+  const [viewMode, setViewMode] = useState(() => {
+    return typeof window !== "undefined" && window.location.pathname.startsWith("/admin") ? "admin" : "marketplace";
+  });
 
   // Modals & Overlays state
   const [selectedProduct, setSelectedProduct] = useState(null); // ProductDetailModal
@@ -145,6 +153,15 @@ export default function App() {
   // Handle Adding to Cart from Product Detail Modal
   function handleAddToCart(itemWithQty) {
     const key = `${itemWithQty.id}-${itemWithQty.selectedColor || "default"}`;
+    if (isPostHogEnabled) {
+      posthog.capture("product_added_to_cart", {
+        product_id: itemWithQty.id,
+        category: itemWithQty.cat,
+        quantity: itemWithQty.qty,
+        unit_price: itemWithQty.price,
+        has_color_option: Boolean(itemWithQty.selectedColor),
+      });
+    }
     setCart((prev) => {
       const existing = prev[key];
       const newQty = existing ? existing.qty + itemWithQty.qty : itemWithQty.qty;
@@ -159,10 +176,19 @@ export default function App() {
   // Handle Cart Quantity Increment/Decrement
   function handleUpdateCartQty(item, delta) {
     const key = `${item.id}-${item.selectedColor || "default"}`;
+    const step = item.moq || 5;
+    const updatedQuantity = item.qty + delta * step;
+    if (isPostHogEnabled) {
+      posthog.capture("cart_quantity_updated", {
+        product_id: item.id,
+        category: item.cat,
+        quantity: Math.max(updatedQuantity, 0),
+        change_direction: delta > 0 ? "increase" : "decrease",
+      });
+    }
     setCart((prev) => {
       const existing = prev[key];
       if (!existing) return prev;
-      const step = item.moq || 5;
       const newQty = existing.qty + delta * step;
       if (newQty < (item.moq || 1)) {
         const nextCart = { ...prev };
@@ -179,6 +205,14 @@ export default function App() {
   // Handle Cart Item Removal
   function handleRemoveCartItem(item) {
     const key = `${item.id}-${item.selectedColor || "default"}`;
+    if (isPostHogEnabled) {
+      posthog.capture("cart_item_removed", {
+        product_id: item.id,
+        category: item.cat,
+        quantity: item.qty,
+        unit_price: item.price,
+      });
+    }
     setCart((prev) => {
       const nextCart = { ...prev };
       delete nextCart[key];
@@ -225,7 +259,21 @@ export default function App() {
   const cartSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   // Auth Handlers
+  function identifyUser(user) {
+    const distinctId = user.user?.id || user.profile?.id || user.id;
+    const role = user.role || user.user?.role || user.profile?.role;
+
+    if (!distinctId || !isPostHogEnabled) return;
+
+    posthog.identify(distinctId, {
+      ...(user.email && { email: user.email }),
+      ...(user.name && { name: user.name }),
+      ...(role && { role }),
+    });
+  }
+
   function handleLoginSuccess(user) {
+    identifyUser(user);
     setCurrentUser(user);
     setShowAuthModal(false);
     triggerToast(`Welcome back, ${user.name}!`);
@@ -235,6 +283,13 @@ export default function App() {
   }
 
   function handleRegisterSuccess(user) {
+    identifyUser(user);
+    const registrationRole = user.role || user.user?.role || user.profile?.role;
+    if (registrationRole?.toLowerCase() === "buyer" && isPostHogEnabled) {
+      posthog.capture("buyer_registration_completed", {
+        registration_role: registrationRole,
+      });
+    }
     setCurrentUser(user);
     setShowAuthModal(false);
     triggerToast(`Account created! Logged in as ${user.name}`);
@@ -244,17 +299,29 @@ export default function App() {
   }
 
   function handleLogout() {
+    if (isPostHogEnabled) posthog.reset();
     setCurrentUser(null);
     triggerToast("Logged out successfully.");
   }
 
   function handleCompleteOrder(orderRef) {
+    if (isPostHogEnabled) {
+      posthog.capture("order_placed", {
+        cart_item_count: cartItems.length,
+        cart_subtotal: cartSubtotal,
+      });
+    }
     setCart({});
     setIsCheckoutOpen(false);
     triggerToast(`Order ${orderRef} confirmed!`);
   }
 
-  const isNotFound = typeof window !== "undefined" && window.location.pathname !== "/" && window.location.pathname !== "/index.html";
+  const isNotFound =
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/" &&
+    window.location.pathname !== "/index.html" &&
+    !window.location.pathname.startsWith("/admin");
+
   if (isNotFound) {
     return <NotFoundPage />;
   }
@@ -264,6 +331,9 @@ export default function App() {
       <Suspense fallback={null}>
         <SellerDashboard onClose={() => setIsSellerDashboardOpen(false)} />
         <Toast toast={toast} />
+      </Suspense>
+    );
+  }
       </Suspense>
     );
   }
@@ -280,6 +350,7 @@ export default function App() {
           setAuthInitialScreen(screen);
           setShowAuthModal(true);
         }}
+        onOpenAdmin={() => setViewMode("admin")}
         onLogout={handleLogout}
         scrolled={scrolled}
         onOpenSellerDashboard={() => setIsSellerDashboardOpen(true)}
@@ -410,6 +481,12 @@ export default function App() {
           onUpdateQty={handleUpdateCartQty}
           onRemoveItem={handleRemoveCartItem}
           onProceedToCheckout={() => {
+            if (isPostHogEnabled) {
+              posthog.capture("checkout_started", {
+                cart_item_count: cartItems.length,
+                cart_subtotal: cartSubtotal,
+              });
+            }
             setIsCartOpen(false);
             setIsCheckoutOpen(true);
           }}
@@ -467,10 +544,31 @@ export default function App() {
             }
           }}
         />
+
+        {/* Rahi 3D Interactive Voice Assistant */}
+        <RahiWidget
+          onNavigateCategory={(cat) => {
+            if (CATEGORIES.includes(cat)) {
+              setActiveCategory(cat);
+            } else {
+              setActiveCategory("All Suppliers");
+            }
+            window.scrollTo({ top: 300, behavior: "smooth" });
+          }}
+          onNavigateProduct={(prodId) => {
+            const found = PRODUCTS.find((p) => String(p.id) === String(prodId));
+            if (found) {
+              setSelectedProduct(found);
+            }
+          }}
+          onNavigateAdmin={() => setViewMode("admin")}
+        />
       </Suspense>
 
       {/* Global Toast */}
       <Toast toast={toast} />
+
+      <Agentation />
 
       {/* Vercel Web Analytics & Speed Insights */}
       <Analytics />
