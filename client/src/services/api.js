@@ -259,6 +259,10 @@ export async function createProductRequest(productData) {
   return data.product;
 }
 
+export const createSellerProductRequest = createProductRequest;
+export const fetchSellerProducts = fetchSellerProductsRequest;
+
+
 
 /**
  * Update existing product in Supabase via backend API
