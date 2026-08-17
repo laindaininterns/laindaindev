@@ -121,21 +121,11 @@ const speakText = async (req, res) => {
     }
 
     const ttsApiKey = process.env.TTS_API_KEY;
-    const ttsProvider = (process.env.TTS_PROVIDER || 'browser').toLowerCase();
+    const ttsProvider = (process.env.TTS_PROVIDER || 'gtts').toLowerCase();
 
-    // If no cloud key configured or browser provider selected, return fallback instructions
-    if (!ttsApiKey || ttsProvider === 'browser') {
-      return res.status(200).json({
-        success: true,
-        fallback: true,
-        text: cleanedText,
-        language: language.startsWith('ur') ? 'ur' : 'en',
-      });
-    }
-
-    // Optional Cloud TTS integration (Azure/ElevenLabs) if API key is provided
-    try {
-      if (ttsProvider === 'elevenlabs') {
+    // 1. If ElevenLabs is explicitly configured with an API key
+    if (ttsApiKey && ttsProvider === 'elevenlabs') {
+      try {
         const voiceId = language.startsWith('ur')
           ? process.env.TTS_VOICE_ID_UR || 'eleven_multilingual_v2'
           : process.env.TTS_VOICE_ID_EN || 'eleven_monolingual_v1';
@@ -158,12 +148,37 @@ const speakText = async (req, res) => {
           res.set('Content-Type', 'audio/mpeg');
           return res.send(Buffer.from(arrayBuffer));
         }
+      } catch (cloudErr) {
+        console.warn('ElevenLabs Cloud TTS provider failed, attempting gTTS fallback:', cloudErr.message);
       }
-    } catch (cloudErr) {
-      console.warn('Cloud TTS provider failed, returning browser fallback:', cloudErr.message);
     }
 
-    // Default fallback to browser speech synthesis if cloud call fails or not configured
+    // 2. High-quality free gTTS voice synthesis stream
+    try {
+      const targetLang = language.startsWith('ur') ? 'ur' : 'en';
+      const encodedText = encodeURIComponent(cleanedText.substring(0, 300));
+      const gttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${targetLang}&client=tw-ob`;
+
+      const response = await fetch(gttsUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      });
+
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        if (buffer.length > 500) {
+          res.set('Content-Type', 'audio/mpeg');
+          res.set('Content-Length', buffer.length.toString());
+          return res.send(buffer);
+        }
+      }
+    } catch (gttsErr) {
+      console.warn('Server-side gTTS stream failed, falling back to client-side TTS:', gttsErr.message);
+    }
+
+    // 3. Fallback to client-side browser speech synthesis if cloud call fails or not configured
     return res.status(200).json({
       success: true,
       fallback: true,

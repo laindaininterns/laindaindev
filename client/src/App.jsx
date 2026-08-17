@@ -12,6 +12,7 @@ import posthog, { isPostHogEnabled } from "./posthog";
 
 import { Agentation } from 'agentation';
 
+// Lazy Loaded Modal & Widget Components
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
 const CheckoutModal = lazy(() => import("./components/CheckoutModal"));
@@ -21,8 +22,21 @@ const ChatWidget = lazy(() => import("./components/chatbot/ChatWidget"));
 const SellerDashboard = lazy(() => import("./components/seller-dashboard/SellerDashboard"));
 const RahiWidget = lazy(() => import("./components/rahi/RahiWidget"));
 
-import { fetchAdminSummary, fetchAllSellers, fetchAdminProductsCatalog, fetchBuyersDirectory, fetchPendingSellers } from "./services/api";
+// Admin Dashboard Components & API Services
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminSummaryPage from "./components/admin/AdminSummaryPage";
+import AdminApprovalsPage from "./components/admin/AdminApprovalsPage";
+import AdminSellersPage from "./components/admin/AdminSellersPage";
+import AdminBuyersPage from "./components/admin/AdminBuyersPage";
+import AdminProductsPage from "./components/admin/AdminProductsPage";
 
+import {
+  fetchAdminSummary,
+  fetchAllSellers,
+  fetchAdminProductsCatalog,
+  fetchBuyersDirectory,
+  fetchPendingSellers,
+} from "./services/api";
 
 export default function App() {
   // Navigation & View state
@@ -35,9 +49,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(true); // Pops up initially
   const [authInitialScreen, setAuthInitialScreen] = useState("login");
-  const [viewMode, setViewMode] = useState(() => {
-    return typeof window !== "undefined" && window.location.pathname.startsWith("/admin") ? "admin" : "marketplace";
-  });
 
   // Modals & Overlays state
   const [selectedProduct, setSelectedProduct] = useState(null); // ProductDetailModal
@@ -64,14 +75,12 @@ export default function App() {
         fetchBuyersDirectory(),
         fetchPendingSellers(),
       ])
-        .then(([summaryData, sellersData, productsData, buyersData, pendingData]) => {
+        .then(([, , , , pendingData]) => {
           if (pendingData) setPendingCount(pendingData.length);
         })
         .catch((err) => console.warn("Admin pre-fetch error:", err));
     }
   }, [currentView]);
-
-
 
   // Route Guard & Session Persistence on Mount
   useEffect(() => {
@@ -116,17 +125,11 @@ export default function App() {
         setAuthInitialScreen("login");
         triggerToast("Access denied. Seller authentication required.", "error");
       }
-    } else if (savedToken && parsedUser?.role === "ADMIN") {
-      setShowAuthModal(false);
-    } else if (savedToken && parsedUser?.role === "SELLER") {
-      setShowAuthModal(false);
     } else if (savedToken && parsedUser) {
       setShowAuthModal(false);
     }
   }, []);
 
-=======
->>>>>>> mohsin/backend-seller
   useEffect(() => {
     function handleScroll() {
       setScrolled(window.scrollY > 20);
@@ -136,14 +139,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (selectedProduct) {
+    if (currentView === "admin") {
+      document.title = "LainDain Admin Dashboard | Management";
+    } else if (selectedProduct) {
       document.title = `${selectedProduct.name} | LainDain Wholesale`;
     } else if (activeCategory && activeCategory !== "All Suppliers") {
       document.title = `${activeCategory} Suppliers | LainDain (Land10)`;
     } else {
       document.title = "LainDain (Land10) — B2B Wholesale Marketplace";
     }
-  }, [selectedProduct, activeCategory]);
+  }, [currentView, selectedProduct, activeCategory]);
 
   function triggerToast(message, tone = "success") {
     setToast({ show: true, message, tone });
@@ -221,17 +226,26 @@ export default function App() {
     triggerToast(`Removed ${item.name} from cart`, "info");
   }
 
-  const [productsList, setProductsList] = useState([]);
+  // Products Dataset State (Initializes with default PRODUCTS so site is NEVER blank)
+  const [productsList, setProductsList] = useState(PRODUCTS);
 
   useEffect(() => {
     async function loadLiveMarketplaceProducts() {
       try {
         const live = await fetchSellerProductsRequest();
-        if (Array.isArray(live)) {
-          setProductsList(live);
+        if (Array.isArray(live) && live.length > 0) {
+          const liveNames = new Set(live.map((p) => (p.name || p.title || "").toLowerCase()));
+          const liveIds = new Set(live.map((p) => String(p.id)));
+          const defaultRemaining = PRODUCTS.filter(
+            (p) => !liveIds.has(String(p.id)) && !liveNames.has((p.name || "").toLowerCase())
+          );
+          setProductsList([...live, ...defaultRemaining]);
+        } else {
+          setProductsList(PRODUCTS);
         }
       } catch (err) {
-        console.error('Failed to load marketplace products from database:', err.message);
+        console.error("Failed to load marketplace products from database:", err.message);
+        setProductsList(PRODUCTS);
       }
     }
     loadLiveMarketplaceProducts();
@@ -274,33 +288,58 @@ export default function App() {
 
   function handleLoginSuccess(user) {
     identifyUser(user);
-    setCurrentUser(user);
+    const userRole = user.role || user.user?.role || user.profile?.role || "BUYER";
+    const userObj = { ...user, role: userRole };
+    setCurrentUser(userObj);
     setShowAuthModal(false);
-    triggerToast(`Welcome back, ${user.name}!`);
-    if (user.role === "SELLER") {
+    localStorage.setItem("user_session", JSON.stringify(userObj));
+    if (userRole === "ADMIN") {
+      setCurrentView("admin");
+      setAdminTab("summary");
+      triggerToast(`Welcome Admin, ${userObj.name}!`);
+    } else if (userRole === "SELLER") {
+      setCurrentView("seller");
       setIsSellerDashboardOpen(true);
+      triggerToast(`Welcome Seller, ${userObj.name}!`);
+    } else {
+      setCurrentView("marketplace");
+      triggerToast(`Welcome back, ${userObj.name}!`);
     }
   }
 
   function handleRegisterSuccess(user) {
     identifyUser(user);
-    const registrationRole = user.role || user.user?.role || user.profile?.role;
+    const registrationRole = user.role || user.user?.role || user.profile?.role || "BUYER";
+    const userObj = { ...user, role: registrationRole };
     if (registrationRole?.toLowerCase() === "buyer" && isPostHogEnabled) {
       posthog.capture("buyer_registration_completed", {
         registration_role: registrationRole,
       });
     }
-    setCurrentUser(user);
+    setCurrentUser(userObj);
     setShowAuthModal(false);
-    triggerToast(`Account created! Logged in as ${user.name}`);
-    if (user.role === "SELLER") {
+    localStorage.setItem("user_session", JSON.stringify(userObj));
+    if (registrationRole === "ADMIN") {
+      setCurrentView("admin");
+      setAdminTab("summary");
+      triggerToast(`Admin account created! Logged in as ${userObj.name}`);
+    } else if (registrationRole === "SELLER") {
+      setCurrentView("seller");
       setIsSellerDashboardOpen(true);
+      triggerToast(`Seller account created! Logged in as ${userObj.name}`);
+    } else {
+      setCurrentView("marketplace");
+      triggerToast(`Account created! Logged in as ${userObj.name}`);
     }
   }
 
   function handleLogout() {
     if (isPostHogEnabled) posthog.reset();
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_session");
     setCurrentUser(null);
+    setCurrentView("marketplace");
+    setIsSellerDashboardOpen(false);
     triggerToast("Logged out successfully.");
   }
 
@@ -320,24 +359,75 @@ export default function App() {
     typeof window !== "undefined" &&
     window.location.pathname !== "/" &&
     window.location.pathname !== "/index.html" &&
-    !window.location.pathname.startsWith("/admin");
+    !window.location.pathname.startsWith("/admin") &&
+    !window.location.pathname.startsWith("/seller");
 
   if (isNotFound) {
     return <NotFoundPage />;
   }
 
-  if (isSellerDashboardOpen) {
+  // Render Admin View
+  if (currentView === "admin") {
+    return (
+      <div className="relative min-h-screen bg-[#F9F9F6]">
+        {/* Top switch bar */}
+        <div className="bg-black text-white px-4 py-1.5 text-xs flex justify-between items-center z-[100] relative">
+          <span>🛡️ Admin Portal Active — Authenticated as {currentUser?.name || "Admin"}</span>
+          <button
+            onClick={() => setCurrentView("marketplace")}
+            className="text-[#A3C1BF] hover:underline font-medium cursor-pointer"
+          >
+            ← Browse Wholesale Marketplace
+          </button>
+        </div>
+
+        <AdminLayout
+          activeTab={adminTab}
+          onSelectTab={setAdminTab}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          pendingCount={pendingCount}
+        >
+          {adminTab === "summary" && (
+            <AdminSummaryPage pendingCount={pendingCount} onSelectTab={setAdminTab} />
+          )}
+          {adminTab === "approvals" && (
+            <AdminApprovalsPage
+              onRefreshCount={setPendingCount}
+              triggerToast={triggerToast}
+            />
+          )}
+          {adminTab === "sellers" && (
+            <AdminSellersPage onSelectTab={setAdminTab} />
+          )}
+          {adminTab === "buyers" && <AdminBuyersPage />}
+          {adminTab === "products" && <AdminProductsPage />}
+        </AdminLayout>
+
+        <Toast toast={toast} />
+      </div>
+    );
+  }
+
+  // Render Seller Dashboard View
+  if (currentView === "seller" || isSellerDashboardOpen) {
     return (
       <Suspense fallback={null}>
-        <SellerDashboard onClose={() => setIsSellerDashboardOpen(false)} />
+        <SellerDashboard
+          onClose={() => {
+            setIsSellerDashboardOpen(false);
+            setCurrentView("marketplace");
+          }}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          triggerToast={triggerToast}
+        />
         <Toast toast={toast} />
       </Suspense>
     );
   }
-      </Suspense>
-    );
-  }
 
+  // Render Marketplace View
   return (
     <div className="min-h-screen bg-[#F9F9F6] text-black font-sans antialiased selection:bg-[#A3C1BF] selection:text-black">
       {/* 1. Sticky Navigation Header */}
@@ -350,11 +440,27 @@ export default function App() {
           setAuthInitialScreen(screen);
           setShowAuthModal(true);
         }}
-        onOpenAdmin={() => setViewMode("admin")}
+        onOpenAdmin={() => setCurrentView("admin")}
         onLogout={handleLogout}
         scrolled={scrolled}
-        onOpenSellerDashboard={() => setIsSellerDashboardOpen(true)}
+        onOpenSellerDashboard={() => {
+          setCurrentView("seller");
+          setIsSellerDashboardOpen(true);
+        }}
       />
+
+      {/* Admin Quick Switch Pill if Admin user browsing marketplace */}
+      {currentUser?.role === "ADMIN" && (
+        <div className="bg-[#EEF3F2] border-b border-[#A3C1BF]/40 py-2 px-4 text-center text-xs font-medium text-black flex items-center justify-center gap-2">
+          <span>🛡️ Admin session active.</span>
+          <button
+            onClick={() => setCurrentView("admin")}
+            className="text-[#85A6A3] font-semibold underline cursor-pointer"
+          >
+            Open Admin Dashboard →
+          </button>
+        </div>
+      )}
 
       {/* 2. Sticky Category Filter Pills Strip */}
       <CategoryBar
@@ -561,7 +667,7 @@ export default function App() {
               setSelectedProduct(found);
             }
           }}
-          onNavigateAdmin={() => setViewMode("admin")}
+          onNavigateAdmin={() => setCurrentView("admin")}
         />
       </Suspense>
 

@@ -53,6 +53,20 @@ export const CAT_ICONS = {
   "Sanitary & Bathroom Fittings": "🚿",
 };
 
+// Category High-Res Fallback Images Mapping
+export const CAT_IMAGES = {
+  "Clothing & Apparel": product01,
+  "Tiles & Construction": product02,
+  "Home Appliances & Electronics": product03,
+  "Footwear": product04,
+  "Bags & Luggage": product05,
+  "Agriculture & Fertilizers": product06,
+  "Paints & Chemicals": product07,
+  "Bedding & Home Textiles": product08,
+  "Cosmetics & Personal Care": product09,
+  "Sanitary & Bathroom Fittings": product10,
+};
+
 // Available Color Options for Wholesale Product Selection
 export const COLOR_OPTIONS = {
   "Clothing & Apparel": [
@@ -243,7 +257,6 @@ export const PRODUCTS = [
     image: product12,
   },
 ];
->>>>>>> 9fc1b91542b950699fe99977346888498bde74b0
 
 // Validation Helper Functions
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -279,9 +292,24 @@ export function mockLoginRequest(email, password) {
       if (password === "wrongpass") {
         reject(new Error("Incorrect email or password. Please try again."));
       } else {
-        resolve({ name: email.split("@")[0], email });
+        const lower = email.toLowerCase();
+        let role = "BUYER";
+        let name = email.split("@")[0];
+        if (lower.includes("admin")) {
+          role = "ADMIN";
+          name = "System Admin";
+        } else if (lower.includes("seller")) {
+          role = "SELLER";
+          name = "Faisalabad Textiles";
+        }
+        resolve({
+          id: `usr-${Date.now()}`,
+          name,
+          email,
+          role,
+        });
       }
-    }, 700);
+    }, 400);
   });
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAdminSummary, fetchAllSellers } from '../../services/api';
+import { fetchAdminSummary } from '../../services/api';
 
 export default function AdminSummaryPage({ pendingCount, onSelectTab }) {
   const [metrics, setMetrics] = useState({
