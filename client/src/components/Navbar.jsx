@@ -69,12 +69,6 @@ export default function Navbar({
           ) : (
             <div className="flex items-center gap-2">
               <button
-                onClick={onOpenSellerDashboard}
-                className="hidden sm:inline-flex h-[40px] items-center justify-center rounded-[16px] border border-[#E9E8E2] hover:bg-black/5 px-4 text-[14px] font-medium text-black transition-all active:scale-[0.97]"
-              >
-                Seller Portal ⚙️
-              </button>
-              <button
                 onClick={() => onOpenAuth("register_seller")}
                 className="hidden sm:inline-flex h-[40px] items-center justify-center rounded-[16px] px-4 text-[14px] font-medium text-black transition-all active:scale-[0.97]"
                 style={{ background: TOKENS.sage }}

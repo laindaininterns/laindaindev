@@ -1,4 +1,7 @@
+import React from "react";
 import posthog, { isPostHogEnabled } from "../posthog";
+import { CAT_IMAGES, TOKENS } from "../data/marketplaceData";
+import defaultFallbackImage from "../assets/products/product-01-faisalabad-textiles.jpg";
 
 export default function ProductCard({ product, onSelectProduct }) {
   function handleProductSelect() {
@@ -12,16 +15,22 @@ export default function ProductCard({ product, onSelectProduct }) {
     onSelectProduct(product);
   }
 
+  const imageSrc =
+    product.image ||
+    product.photos?.[0] ||
+    product.images?.[0] ||
+    CAT_IMAGES[product.cat] ||
+    defaultFallbackImage;
+
   return (
     <div
       onClick={handleProductSelect}
-
-      className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-black/20 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
+      className="group bg-white rounded-[20px] overflow-hidden flex flex-col transition-all duration-200 border border-[#E9E8E2] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer"
     >
-      {/* Compact Product Visual Box */}
+      {/* Compact Product Visual Box - Unified bg-white matching the card */}
       <div className="relative h-[230px] p-3 select-none overflow-hidden bg-white">
         <img
-          src={product.image}
+          src={imageSrc}
           alt={product.name}
           loading="lazy"
           className="w-full h-full object-cover rounded-[16px] transition-transform duration-200 group-hover:scale-105"
@@ -29,7 +38,7 @@ export default function ProductCard({ product, onSelectProduct }) {
       </div>
 
       {/* Card Details Content */}
-      <div className="p-3.5 flex flex-col gap-2 flex-1">
+      <div className="p-3.5 flex flex-col gap-2 flex-1 bg-white">
         <div>
           <h3 className="text-[14px] font-semibold text-black leading-snug line-clamp-1 group-hover:text-[#5B5B58] transition-colors">
             {product.name}
@@ -41,7 +50,7 @@ export default function ProductCard({ product, onSelectProduct }) {
             </span>
             {/* Rating */}
             <span className="text-[11px] font-semibold text-[#85A6A3]">
-              {product.rating}
+              {product.rating || "4.8 ⭐ (100+ orders)"}
             </span>
           </div>
         </div>
@@ -63,3 +72,4 @@ export default function ProductCard({ product, onSelectProduct }) {
     </div>
   );
 }
+

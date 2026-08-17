@@ -164,56 +164,54 @@ export async function updateSellerStatus(sellerId, status) {
  */
 export async function fetchSellerProductsRequest() {
   const token = localStorage.getItem('auth_token');
-  const headers = {};
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/seller/products`, { headers });
-    const data = await response.json();
-
-    if (response.ok && data.success) {
-      if (!data.products || data.products.length === 0) {
-        return [];
+    try {
+      const response = await fetch(`${API_BASE_URL}/seller/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          return data.products.map((p) => ({
+            id: p.id,
+            name: p.title || p.name,
+            sku: p.sku || `TX-${String(p.id).substring(0, 4).toUpperCase()}`,
+            cat: p.categories?.name || p.cat || 'Clothing & Apparel',
+            price: parseFloat(p.price),
+            stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
+            isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock === 0),
+            moq: p.moq || 10,
+            desc: p.description || p.desc || '',
+            photos: p.images && p.images.length > 0 ? p.images : (p.photos || []),
+            image: p.image || (p.images && p.images[0]) || (p.photos && p.photos[0]),
+          }));
+        }
       }
-      return data.products.map((p) => ({
-        id: p.id,
-        name: p.title || p.name,
-        sku: p.sku || `TX-${p.id.substring(0, 4).toUpperCase()}`,
-        cat: p.categories?.name || p.cat || 'Clothing & Apparel',
-        price: parseFloat(p.price),
-        stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
-        isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock === 0),
-        moq: p.moq || 10,
-        desc: p.description || p.desc || '',
-        photos: p.images && p.images.length > 0 ? p.images : (p.photos || []),
-      }));
+    } catch (err) {
+      console.warn('Seller API endpoint error, falling back to public feed:', err.message);
     }
-  } catch (err) {
-    console.warn('Seller API endpoint error, falling back to public feed:', err.message);
   }
 
   // Fallback to public products endpoint
   try {
     const res2 = await fetch(`${API_BASE_URL}/products`);
-    const data2 = await res2.json();
-    if (res2.ok && data2.success) {
-      if (!data2.products || data2.products.length === 0) {
-        return [];
+    if (res2.ok) {
+      const data2 = await res2.json();
+      if (data2.success && Array.isArray(data2.products) && data2.products.length > 0) {
+        return data2.products.map((p) => ({
+          id: p.id,
+          name: p.title || p.name,
+          sku: p.sku || `TX-${String(p.id).substring(0, 4).toUpperCase()}`,
+          cat: p.categories?.name || p.cat || 'Clothing & Apparel',
+          price: parseFloat(p.price),
+          stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
+          isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock === 0),
+          moq: p.moq || 10,
+          desc: p.description || p.desc || '',
+          photos: p.images && p.images.length > 0 ? p.images : (p.photos || []),
+          image: p.image || (p.images && p.images[0]) || (p.photos && p.photos[0]),
+        }));
       }
-      return data2.products.map((p) => ({
-        id: p.id,
-        name: p.title || p.name,
-        sku: p.sku || `TX-${p.id.substring(0, 4).toUpperCase()}`,
-        cat: p.categories?.name || p.cat || 'Clothing & Apparel',
-        price: parseFloat(p.price),
-        stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
-        isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock === 0),
-        moq: p.moq || 10,
-        desc: p.description || p.desc || '',
-        photos: p.images && p.images.length > 0 ? p.images : (p.photos || []),
-      }));
     }
   } catch (e) {}
 

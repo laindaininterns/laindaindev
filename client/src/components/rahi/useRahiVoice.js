@@ -203,6 +203,50 @@ export default function useRahiVoice() {
 
     setAvatarState('speaking');
 
+    const speakViaBrowserTTS = () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
+
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = language.startsWith('ur') ? 'ur-PK' : 'en-US';
+          utterance.rate = 0.95;
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
+
+          const voices = window.speechSynthesis.getVoices();
+          if (voices && voices.length > 0) {
+            const preferredVoice = voices.find(
+              (v) =>
+                (language.startsWith('ur') ? v.lang.includes('ur') || v.lang.includes('hi') : v.lang.includes('en')) &&
+                (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('David') || v.name.includes('Zira'))
+            ) || voices.find((v) => v.lang.startsWith('en'));
+
+            if (preferredVoice) {
+              utterance.voice = preferredVoice;
+            }
+          }
+
+          utterance.onend = onSpeechFinished;
+          utterance.onerror = (e) => {
+            console.warn('Browser SpeechSynthesis error:', e);
+            onSpeechFinished();
+          };
+
+          setTimeout(() => {
+            window.speechSynthesis.resume();
+            window.speechSynthesis.speak(utterance);
+          }, 40);
+        } catch (e) {
+          console.warn('SpeechSynthesis Exception:', e);
+          onSpeechFinished();
+        }
+      } else {
+        onSpeechFinished();
+      }
+    };
+
     try {
       const response = await fetch(`${API_BASE_URL}/voice/speak`, {
         method: 'POST',
@@ -212,30 +256,35 @@ export default function useRahiVoice() {
 
       const contentType = response.headers.get('content-type') || '';
 
-      if (contentType.includes('audio/mpeg')) {
+      if (response.ok && contentType.includes('audio/mpeg')) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
+        audio.volume = 1.0;
         currentAudioRef.current = audio;
 
-        audio.onended = onSpeechFinished;
-        audio.onerror = onSpeechFinished;
-        await audio.play();
-      } else {
-        const data = await response.json();
-        if (data.fallback && typeof window !== 'undefined' && window.speechSynthesis) {
-          const utterance = new SpeechSynthesisUtterance(data.text || text);
-          utterance.lang = language.startsWith('ur') ? 'ur-PK' : 'en-US';
-          utterance.onend = onSpeechFinished;
-          utterance.onerror = onSpeechFinished;
-          window.speechSynthesis.speak(utterance);
-        } else {
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
           onSpeechFinished();
+        };
+        audio.onerror = (err) => {
+          console.warn('Audio playback error, falling back to browser SpeechSynthesis:', err);
+          URL.revokeObjectURL(url);
+          speakViaBrowserTTS();
+        };
+
+        try {
+          await audio.play();
+        } catch (playErr) {
+          console.warn('Autoplay restriction prevented audio.play(), falling back to browser SpeechSynthesis:', playErr.message);
+          speakViaBrowserTTS();
         }
+      } else {
+        speakViaBrowserTTS();
       }
     } catch (err) {
-      console.error('Error playing Rahi TTS audio:', err);
-      onSpeechFinished();
+      console.warn('Error fetching server TTS audio, using browser Web Speech API:', err.message);
+      speakViaBrowserTTS();
     }
   }, [isMuted, startListening]);
 

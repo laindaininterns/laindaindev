@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CAT_ICONS, COLOR_OPTIONS, TOKENS } from "../data/marketplaceData";
+import { CAT_ICONS, CAT_IMAGES, COLOR_OPTIONS, TOKENS } from "../data/marketplaceData";
 
 export default function ProductDetailModal({ product, onClose, onAddToCart }) {
   const [quantity, setQuantity] = useState(product?.moq || 10);
@@ -16,6 +16,13 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
 
   if (!product) return null;
 
+  const modalImageSrc =
+    product.image ||
+    product.photos?.[0] ||
+    product.images?.[0] ||
+    CAT_IMAGES[product.cat] ||
+    CAT_IMAGES['Clothing & Apparel'];
+
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -30,8 +37,6 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
     }
   };
 
-  const icon = CAT_ICONS[product.cat] || "📦";
-
   function handleDecrease() {
     setQuantity((prev) => Math.max(product.moq || 1, prev - 5));
   }
@@ -40,38 +45,48 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
     setQuantity((prev) => prev + 5);
   }
 
+  function handleAddToCartClick() {
+    if (onAddToCart) {
+      onAddToCart(product, quantity, selectedColor);
+    }
+    onClose();
+  }
+
   function handleAdd() {
-    onAddToCart({
-      ...product,
-      selectedColor: selectedColor || null,
-      qty: quantity,
-    });
+    if (onAddToCart) {
+      onAddToCart({
+        ...product,
+        selectedColor: selectedColor || null,
+        qty: quantity,
+      });
+    }
     onClose();
   }
 
   return (
     <div
-      className="fixed inset-0 z-[440] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md transition-opacity duration-200"
+      className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md transition-opacity duration-200"
       onClick={onClose}
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-      />
+      <script type="application/ld+json">
+        {JSON.stringify(productSchema)}
+      </script>
+
       <div
-        className="w-full max-w-[520px] max-h-[90vh] bg-white rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden flex flex-col transition-all duration-200 border border-[#E9E8E2]"
+        className="w-full max-w-[500px] max-h-[90vh] bg-white rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.14)] overflow-hidden flex flex-col border border-[#E9E8E2] transition-all duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-[#E9E8E2] bg-[#F9F9F6]">
-          <div>
-            <h3 className="text-[18px] font-semibold text-black leading-snug">{product.name}</h3>
-            <span className="text-[12px] text-[#5B5B58] mt-0.5 block">{product.cat}</span>
+        <div className="flex items-center justify-between px-6 pt-5 pb-3 bg-[#F9F9F6] border-b border-[#E9E8E2]">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-medium px-2.5 py-0.5 rounded-full bg-[#EEF3F2] text-[#3A4D39]">
+              {product.cat}
+            </span>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close product details"
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] hover:bg-black/5 text-black font-semibold"
+            aria-label="Close modal"
+            className="flex h-9 w-9 items-center justify-center rounded-[10px] hover:bg-black/5 text-black transition-colors"
           >
             ✕
           </button>
@@ -80,19 +95,13 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
         {/* Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-4">
           {/* Big Product Image Box */}
-          <div className="relative h-[220px] p-3 select-none overflow-hidden bg-white border border-[#E9E8E2] rounded-[20px]">
-            {product.image ? (
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover rounded-[14px]"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[48px]">
-                📦
-              </div>
-            )}
-            <div className="absolute bottom-4 right-4 bg-black/75 backdrop-blur-md px-3 py-1 rounded-full text-[12px] font-medium text-white z-10">
+          <div className="h-[180px] rounded-[18px] bg-white flex items-center justify-center border border-[#E9E8E2] select-none relative overflow-hidden p-2">
+            <img
+              src={modalImageSrc}
+              alt={product.name}
+              className="w-full h-full object-cover rounded-[14px]"
+            />
+            <div className="absolute bottom-3 right-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded-full text-[12px] font-medium text-white z-10">
               MOQ: {product.moq} units
             </div>
           </div>
