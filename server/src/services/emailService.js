@@ -1,9 +1,12 @@
 const { Resend } = require('resend');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 require('dotenv').config();
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'LainDain <no-reply@laindain.org>';
+const FROM_EMAIL = process.env.EMAIL_FROM || process.env.FROM_EMAIL || 'LainDain Support <support@laindain.org>';
 
 /**
  * Global Mail Dispatcher

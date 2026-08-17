@@ -10,8 +10,6 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import posthog, { isPostHogEnabled } from "./posthog";
 
-import { Agentation } from 'agentation';
-
 // Lazy Loaded Modal & Widget Components
 const ProductDetailModal = lazy(() => import("./components/ProductDetailModal"));
 const CartDrawer = lazy(() => import("./components/CartDrawer"));
@@ -673,8 +671,6 @@ export default function App() {
 
       {/* Global Toast */}
       <Toast toast={toast} />
-
-      <Agentation />
 
       {/* Vercel Web Analytics & Speed Insights */}
       <Analytics />
