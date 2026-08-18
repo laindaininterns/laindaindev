@@ -11,8 +11,16 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }) {
       setQuantity(product.moq || 10);
       const colors = COLOR_OPTIONS[product.cat] || [];
       setSelectedColor(colors[0]?.name || "");
+
+      function handleKeyDown(e) {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [product]);
+  }, [product, onClose]);
 
   if (!product) return null;
 

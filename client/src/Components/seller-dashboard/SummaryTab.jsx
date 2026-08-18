@@ -90,12 +90,14 @@ export default function SummaryTab({ products = [], orders = [] }) {
     };
   }, [filteredSummaryOrders]);
 
-  // Best Selling Products matching simulated catalog sales
+  // Best Selling Products matching catalog sales
   const bestSellers = useMemo(() => {
-    const baseProducts = products.length > 0 ? products : [];
+    if (!products || products.length === 0) return [];
+    if (!orders || orders.length === 0) return [];
+
     const factor = salesRange === "7d" ? 1 : salesRange === "1m" ? 3 : 8;
 
-    return baseProducts.map((p, idx) => {
+    return products.map((p, idx) => {
       const qtySold = Math.max(1, Math.floor((12 - idx * 2.5) * factor));
       const revenue = qtySold * p.price;
       return {
@@ -104,7 +106,7 @@ export default function SummaryTab({ products = [], orders = [] }) {
         revenue,
       };
     }).sort((a, b) => b.revenue - a.revenue);
-  }, [products, salesRange]);
+  }, [products, orders, salesRange]);
 
   // Filtered orders for the Performance Chart
   const chartOrders = useMemo(() => {
@@ -329,6 +331,13 @@ export default function SummaryTab({ products = [], orders = [] }) {
                     <td className="py-3 text-right font-bold text-emerald-800">{formatPKR(item.revenue)}</td>
                   </tr>
                 ))}
+                {bestSellers.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="py-8 text-center text-xs text-[#5B5B58]">
+                      No sales data recorded for this timeframe.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

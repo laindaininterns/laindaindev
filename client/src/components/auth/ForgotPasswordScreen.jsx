@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { TOKENS, validateEmail, mockForgotRequest } from "../../data/marketplaceData";
+import { requestPasswordReset } from "../../services/api";
 
 export default function ForgotPasswordScreen({ onSwitchScreen }) {
   const [email, setEmail] = useState("");
@@ -18,7 +19,16 @@ export default function ForgotPasswordScreen({ onSwitchScreen }) {
     setFormError("");
 
     try {
-      await mockForgotRequest(email);
+      try {
+        await requestPasswordReset(email);
+      } catch (apiErr) {
+        console.warn("API forgot-password failed or offline, using fallback:", apiErr.message);
+        if (apiErr.message.includes("Failed to fetch") || apiErr.message.includes("NetworkError")) {
+          await mockForgotRequest(email);
+        } else {
+          throw apiErr;
+        }
+      }
       setSent(true);
     } catch (ex) {
       setFormError(ex.message);

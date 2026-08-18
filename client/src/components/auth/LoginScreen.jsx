@@ -14,6 +14,23 @@ function Hint({ message }) {
 
 function AlertBox({ message }) {
   if (!message) return null;
+  const isPending = message.toLowerCase().includes("pending admin approval") || message.toLowerCase().includes("pending admin review");
+
+  if (isPending) {
+    return (
+      <div
+        role="alert"
+        className="mb-4 flex items-start gap-2.5 rounded-[12px] px-3.5 py-3 text-[13px] leading-relaxed bg-amber-50 border border-amber-200 text-amber-900"
+      >
+        <span className="text-[16px] flex-shrink-0 mt-0.5">⏳</span>
+        <div>
+          <p className="font-semibold text-amber-950">Seller Application Pending Approval</p>
+          <p className="text-[12px] mt-0.5 text-amber-800 leading-normal">{message}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       role="alert"
@@ -29,7 +46,7 @@ function AlertBox({ message }) {
         <line x1="12" y1="8" x2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
-      <div>{message}</div>
+      <span>{message}</span>
     </div>
   );
 }

@@ -34,7 +34,10 @@ import {
   fetchAdminProductsCatalog,
   fetchBuyersDirectory,
   fetchPendingSellers,
+  fetchMarketplaceProductsRequest,
 } from "./services/api";
+
+import ResetPasswordScreen from "./components/auth/ResetPasswordScreen";
 
 export default function App() {
   // Navigation & View state
@@ -97,9 +100,13 @@ export default function App() {
     }
 
     const isAdminRoute = pathname.startsWith("/admin");
-    const isSellerRoute = pathname.startsWith("/seller");
+    const isSellerRoute = pathname.startsWith("/seller") || pathname.startsWith("/seller-portal");
+    const isResetPasswordRoute = pathname.startsWith("/reset-password");
 
-    if (isAdminRoute) {
+    if (isResetPasswordRoute) {
+      setCurrentView("reset_password");
+      setShowAuthModal(false);
+    } else if (isAdminRoute) {
       if (savedToken && parsedUser?.role === "ADMIN") {
         setCurrentView("admin");
         setShowAuthModal(false);
@@ -109,9 +116,14 @@ export default function App() {
         }
       } else {
         setCurrentView("marketplace");
-        setShowAuthModal(true);
-        setAuthInitialScreen("login");
-        triggerToast("Access denied. Admin authentication required.", "error");
+        window.history.replaceState({}, "", "/");
+        if (savedToken && parsedUser) {
+          triggerToast("403 Forbidden: Admin access only.", "error");
+        } else {
+          setShowAuthModal(true);
+          setAuthInitialScreen("login");
+          triggerToast("Access denied. Admin authentication required.", "error");
+        }
       }
     } else if (isSellerRoute) {
       if (savedToken && parsedUser?.role === "SELLER") {
@@ -119,9 +131,14 @@ export default function App() {
         setShowAuthModal(false);
       } else {
         setCurrentView("marketplace");
-        setShowAuthModal(true);
-        setAuthInitialScreen("login");
-        triggerToast("Access denied. Seller authentication required.", "error");
+        window.history.replaceState({}, "", "/");
+        if (savedToken && parsedUser) {
+          triggerToast("403 Forbidden: Seller access only.", "error");
+        } else {
+          setShowAuthModal(true);
+          setAuthInitialScreen("login");
+          triggerToast("Access denied. Seller authentication required.", "error");
+        }
       }
     } else if (savedToken && parsedUser) {
       setShowAuthModal(false);
@@ -230,7 +247,7 @@ export default function App() {
   useEffect(() => {
     async function loadLiveMarketplaceProducts() {
       try {
-        const live = await fetchSellerProductsRequest();
+        const live = await fetchMarketplaceProductsRequest({ limit: 100 });
         if (Array.isArray(live) && live.length > 0) {
           const liveNames = new Set(live.map((p) => (p.name || p.title || "").toLowerCase()));
           const liveIds = new Set(live.map((p) => String(p.id)));
@@ -253,15 +270,20 @@ export default function App() {
   const filteredProducts =
     activeCategory === "All Suppliers"
       ? productsList
-      : productsList.filter((p) => p.cat === activeCategory);
+      : productsList.filter((p) => p.cat === activeCategory || p.category === activeCategory);
 
   // Compute Search Results
   const searchResults = searchQuery.trim()
     ? productsList.filter(
         (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.cat.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.desc.toLowerCase().includes(searchQuery.toLowerCase())
+          (p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.cat && p.cat.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.supplier && p.supplier.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.desc && p.desc.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : [];
 
@@ -296,9 +318,14 @@ export default function App() {
       setAdminTab("summary");
       triggerToast(`Welcome Admin, ${userObj.name}!`);
     } else if (userRole === "SELLER") {
-      setCurrentView("seller");
-      setIsSellerDashboardOpen(true);
-      triggerToast(`Welcome Seller, ${userObj.name}!`);
+      if (user.pendingApproval || user.profile?.current_status !== "APPROVED") {
+        setCurrentView("marketplace");
+        triggerToast("Seller account pending admin approval.", "warning");
+      } else {
+        setCurrentView("seller");
+        setIsSellerDashboardOpen(true);
+        triggerToast(`Welcome Seller, ${userObj.name}!`);
+      }
     } else {
       setCurrentView("marketplace");
       triggerToast(`Welcome back, ${userObj.name}!`);
@@ -314,6 +341,13 @@ export default function App() {
         registration_role: registrationRole,
       });
     }
+    if (registrationRole === "SELLER" && user.pendingApproval) {
+      setShowAuthModal(false);
+      setCurrentView("marketplace");
+      triggerToast("Seller application submitted! Pending admin review.", "info");
+      return;
+    }
+
     setCurrentUser(userObj);
     setShowAuthModal(false);
     localStorage.setItem("user_session", JSON.stringify(userObj));
@@ -358,10 +392,25 @@ export default function App() {
     window.location.pathname !== "/" &&
     window.location.pathname !== "/index.html" &&
     !window.location.pathname.startsWith("/admin") &&
-    !window.location.pathname.startsWith("/seller");
+    !window.location.pathname.startsWith("/seller") &&
+    !window.location.pathname.startsWith("/reset-password");
 
   if (isNotFound) {
     return <NotFoundPage />;
+  }
+
+  // Render Reset Password Screen
+  if (currentView === "reset_password") {
+    return (
+      <ResetPasswordScreen
+        onNavigateLogin={() => {
+          window.history.pushState({}, "", "/");
+          setCurrentView("marketplace");
+          setAuthInitialScreen("login");
+          setShowAuthModal(true);
+        }}
+      />
+    );
   }
 
   // Render Admin View
@@ -442,6 +491,10 @@ export default function App() {
         onLogout={handleLogout}
         scrolled={scrolled}
         onOpenSellerDashboard={() => {
+          if (currentUser?.role !== "SELLER") {
+            triggerToast("403 Forbidden: Seller access only.", "error");
+            return;
+          }
           setCurrentView("seller");
           setIsSellerDashboardOpen(true);
         }}
@@ -600,9 +653,16 @@ export default function App() {
         <CheckoutModal
           isOpen={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}
+          cartItems={cartItems}
           cartSubtotal={cartSubtotal}
           currentUser={currentUser}
           onCompleteOrder={handleCompleteOrder}
+          onOpenAuthModal={(screen = "buyer") => {
+            setIsCheckoutOpen(false);
+            setAuthInitialScreen(screen);
+            setShowAuthModal(true);
+          }}
+          triggerToast={triggerToast}
         />
 
         {/* Search Overlay */}

@@ -47,10 +47,13 @@ export const CAT_ICONS = {
   "Agriculture & Fertilizers": "🌾",
   "Paints & Chemicals": "🎨",
   "Home Appliances & Electronics": "🔌",
+  "Electronics & Machinery": "⚡",
+  "Industrial & Machinery": "⚙️",
   "Bedding & Home Textiles": "🛏️",
   "Cosmetics & Personal Care": "💄",
   "Tiles & Construction": "🧱",
   "Sanitary & Bathroom Fittings": "🚿",
+  "General Wholesale": "📦",
 };
 
 // Category High-Res Fallback Images Mapping
@@ -58,6 +61,8 @@ export const CAT_IMAGES = {
   "Clothing & Apparel": product01,
   "Tiles & Construction": product02,
   "Home Appliances & Electronics": product03,
+  "Electronics & Machinery": product03,
+  "Industrial & Machinery": product03,
   "Footwear": product04,
   "Bags & Luggage": product05,
   "Agriculture & Fertilizers": product06,
@@ -65,6 +70,7 @@ export const CAT_IMAGES = {
   "Bedding & Home Textiles": product08,
   "Cosmetics & Personal Care": product09,
   "Sanitary & Bathroom Fittings": product10,
+  "General Wholesale": product01,
 };
 
 // Available Color Options for Wholesale Product Selection
@@ -99,9 +105,9 @@ export const COLOR_OPTIONS = {
 
 // Initial Suppliers / Products Dataset
 export const PRODUCTS = [
-
   {
     id: 1,
+    product_id: "6723b5f6-1d67-4e05-af17-d1681e53f75f",
     name: "Faisalabad Textiles Co.",
     cat: "Clothing & Apparel",
     desc: "Premium grade 100% combed cotton fabric rolls, wholesale weave bundles for garments manufacture.",
@@ -115,6 +121,7 @@ export const PRODUCTS = [
   },
   {
     id: 2,
+    product_id: "d1000000-0000-0000-0000-000000000002",
     name: "Lahore Ceramics Hub",
     cat: "Tiles & Construction",
     desc: "Glazed porcelain floor tiles, non-slip 60x60cm high durability commercial grade.",
@@ -128,6 +135,7 @@ export const PRODUCTS = [
   },
   {
     id: 3,
+    product_id: "d1000000-0000-0000-0000-000000000003",
     name: "Karachi Steel Traders",
     cat: "Home Appliances & Electronics",
     desc: "Commercial stainless steel heavy-duty kitchen appliances & food prep machinery.",
@@ -141,6 +149,7 @@ export const PRODUCTS = [
   },
   {
     id: 4,
+    product_id: "d1000000-0000-0000-0000-000000000004",
     name: "Gujranwala Leather Works",
     cat: "Footwear",
     desc: "Genuine full-grain leather formal oxford & derby shoes, bulk retail assortment.",
@@ -154,6 +163,7 @@ export const PRODUCTS = [
   },
   {
     id: 5,
+    product_id: "d1000000-0000-0000-0000-000000000005",
     name: "Sialkot Bags & Co.",
     cat: "Bags & Luggage",
     desc: "Heavy-duty waterproof canvas duffel bags, tactical backpacks & sports gear bags.",
@@ -167,6 +177,7 @@ export const PRODUCTS = [
   },
   {
     id: 6,
+    product_id: "d1000000-0000-0000-0000-000000000006",
     name: "Punjab AgroChem",
     cat: "Agriculture & Fertilizers",
     desc: "High-grade NPK nitrogen-rich agricultural fertilizer sacks (50kg bulk packs).",
@@ -180,6 +191,7 @@ export const PRODUCTS = [
   },
   {
     id: 7,
+    product_id: "d1000000-0000-0000-0000-000000000007",
     name: "Multan Paints Ltd.",
     cat: "Paints & Chemicals",
     desc: "All-weather UV resistant exterior emulsion paints & industrial protective coatings.",
@@ -193,6 +205,7 @@ export const PRODUCTS = [
   },
   {
     id: 8,
+    product_id: "d1000000-0000-0000-0000-000000000008",
     name: "Hyderabad Home Textiles",
     cat: "Bedding & Home Textiles",
     desc: "Export quality 300-thread count cotton bedsheet sets, king size bulk packages.",
@@ -206,6 +219,7 @@ export const PRODUCTS = [
   },
   {
     id: 9,
+    product_id: "d1000000-0000-0000-0000-000000000009",
     name: "Islamabad Beauty Supplies",
     cat: "Cosmetics & Personal Care",
     desc: "Dermatologist-tested organic skincare range, retail-ready branded display boxes.",
@@ -219,6 +233,7 @@ export const PRODUCTS = [
   },
   {
     id: 10,
+    product_id: "d1000000-0000-0000-0000-000000000010",
     name: "Rawalpindi Sanitary Co.",
     cat: "Sanitary & Bathroom Fittings",
     desc: "Solid brass chrome-plated bathroom water taps, mixers & concealed shower valves.",
@@ -232,6 +247,7 @@ export const PRODUCTS = [
   },
   {
     id: 11,
+    product_id: "d1000000-0000-0000-0000-000000000011",
     name: "Karachi Cotton Mills",
     cat: "Clothing & Apparel",
     desc: "Unstitched 3-piece printed lawn fabric suits, latest summer seasonal catalog.",
@@ -245,6 +261,7 @@ export const PRODUCTS = [
   },
   {
     id: 12,
+    product_id: "d1000000-0000-0000-0000-000000000012",
     name: "Lahore Footwear Traders",
     cat: "Footwear",
     desc: "Ergonomic rubber sole casual sandals & chappals, assorted wholesale size boxes.",

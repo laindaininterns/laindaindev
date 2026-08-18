@@ -1,13 +1,13 @@
 const supabase = require('../config/supabase');
 
 /**
- * Helper to get seller_profile_id for authenticated user with safe fallback
+ * Helper to resolve seller_profile strictly for the authenticated user
  */
 const getSellerProfile = async (userId, profileIdFromToken) => {
   if (profileIdFromToken) {
     const { data } = await supabase
       .from('seller_profiles')
-      .select('id, user_id, business_name, business_address, tax_id, current_status')
+      .select('id, user_id, business_name, business_address, contact_number, city, main_category, ntn_number, tax_id, current_status, uploaded_docs, approved_at, approved_by')
       .eq('id', profileIdFromToken)
       .single();
     if (data) return data;
@@ -15,20 +15,39 @@ const getSellerProfile = async (userId, profileIdFromToken) => {
   if (userId) {
     const { data } = await supabase
       .from('seller_profiles')
-      .select('id, user_id, business_name, business_address, tax_id, current_status')
+      .select('id, user_id, business_name, business_address, contact_number, city, main_category, ntn_number, tax_id, current_status, uploaded_docs, approved_at, approved_by')
       .eq('user_id', userId)
       .single();
     if (data) return data;
   }
-  // Safe fallback profile object for development / demo state
-  return {
-    id: profileIdFromToken || userId || '18c3ab26-a682-4388-b7a6-1b715dfcda16',
-    user_id: userId || 'cecd1622-cbcb-45cd-912e-09e3e36dfbc3',
-    business_name: 'Faisalabad Textile Mills Ltd.',
-    business_address: 'Faisalabad, Punjab, Pakistan',
-    tax_id: 'NTN-9988776',
-    current_status: 'APPROVED',
-  };
+  return null;
+};
+
+/**
+ * GET /api/seller/profile
+ * Fetch authenticated seller's profile details strictly
+ */
+const getSellerProfileData = async (req, res) => {
+  try {
+    const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Seller profile not found for authenticated user.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      profile,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching seller profile.',
+      error: error.message,
+    });
+  }
 };
 
 /**
@@ -38,14 +57,18 @@ const getSellerProfile = async (userId, profileIdFromToken) => {
 const getSellerKyc = async (req, res) => {
   try {
     const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
+
     return res.status(200).json({
       success: true,
       kyc: {
         seller_id: profile.id,
-        business_name: profile.business_name || 'Faisalabad Textiles Co.',
-        business_address: profile.business_address || 'Faisalabad, Punjab, Pakistan',
-        tax_id: profile.tax_id || 'NTN-9876543-1',
-        status: profile.current_status || 'APPROVED',
+        business_name: profile.business_name || 'Wholesale Supplier',
+        business_address: profile.business_address || '',
+        tax_id: profile.tax_id || profile.ntn_number || '',
+        status: profile.current_status || 'PENDING',
         documents: profile.uploaded_docs || [],
       },
     });
@@ -61,17 +84,30 @@ const getSellerKyc = async (req, res) => {
 const submitSellerKyc = async (req, res) => {
   try {
     const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
+
     const { docName } = req.body;
+    const newDoc = {
+      id: `doc-${Date.now()}`,
+      name: docName || 'Business_Registration_Document.pdf',
+      size: '1.5 MB',
+      date: new Date().toISOString().split('T')[0],
+      status: 'Pending Verification',
+    };
+
+    const updatedDocs = [...(profile.uploaded_docs || []), newDoc];
+
+    await supabase
+      .from('seller_profiles')
+      .update({ uploaded_docs: updatedDocs })
+      .eq('id', profile.id);
+
     return res.status(200).json({
       success: true,
       message: 'KYC Document submitted successfully and is pending verification.',
-      document: {
-        id: `doc-${Date.now()}`,
-        name: docName || 'Business_Registration_Document.pdf',
-        size: '1.5 MB',
-        date: new Date().toISOString().split('T')[0],
-        status: 'Pending Verification',
-      },
+      document: newDoc,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error submitting KYC document.', error: error.message });
@@ -85,6 +121,9 @@ const submitSellerKyc = async (req, res) => {
 const getSellerProducts = async (req, res) => {
   try {
     const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
 
     const { data: products, error } = await supabase
       .from('products')
@@ -113,11 +152,28 @@ const getSellerProducts = async (req, res) => {
 const createSellerProduct = async (req, res) => {
   try {
     const profile = await getSellerProfile(req.user.id, req.user.profile_id);
-    const { title, name, description, desc, price, stock_quantity, stock, moq, category_id, cat, sku, images, photos, isOutOfStock, is_out_of_stock } = req.body;
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
+
+    let { title, name, description, desc, price, stock_quantity, stock, moq, category_id, cat, sku, images, photos, isOutOfStock, is_out_of_stock } = req.body;
     const productTitle = title || name;
 
     if (!productTitle || price === undefined) {
       return res.status(400).json({ success: false, message: 'Product title/name and price are required.' });
+    }
+
+    // Resolve category_id if category name string (cat) is passed instead of UUID
+    if (!category_id && cat) {
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('id')
+        .ilike('name', cat.trim())
+        .maybeSingle();
+
+      if (categoryData && categoryData.id) {
+        category_id = categoryData.id;
+      }
     }
 
     const qty = stock_quantity !== undefined ? Number(stock_quantity) : (stock !== undefined ? Number(stock) : 0);
@@ -125,6 +181,7 @@ const createSellerProduct = async (req, res) => {
     const productSku = sku || `TX-${Math.floor(Math.random() * 9000 + 1000)}`;
     const productMoq = moq ? Number(moq) : 10;
 
+    // Force seller_id = profile.id (prevents assigning to any other seller)
     const { data: newProduct, error } = await supabase
       .from('products')
       .insert([
@@ -142,7 +199,7 @@ const createSellerProduct = async (req, res) => {
           status: qty > 0 && !outOfStockBool ? 'APPROVED' : 'OUT_OF_STOCK',
         },
       ])
-      .select('*')
+      .select('*, categories(id, name, slug), seller_profiles(id, business_name)')
       .single();
 
     if (error) {
@@ -160,6 +217,99 @@ const createSellerProduct = async (req, res) => {
 };
 
 /**
+ * PATCH /api/seller/products/:id
+ * Update product specifications for a seller's product (Ownership Guard)
+ */
+const updateSellerProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
+
+    // Check ownership
+    const { data: existing, error: findErr } = await supabase
+      .from('products')
+      .select('id')
+      .eq('id', productId)
+      .eq('seller_id', profile.id)
+      .single();
+
+    if (findErr || !existing) {
+      return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
+    }
+
+    const allowed = ['title', 'description', 'price', 'stock_quantity', 'images', 'category_id', 'sku', 'moq', 'is_out_of_stock'];
+    const updates = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    if (req.body.name && !updates.title) updates.title = req.body.name;
+    if (req.body.desc && !updates.description) updates.description = req.body.desc;
+    if (req.body.photos && !updates.images) updates.images = req.body.photos;
+    if (req.body.stock !== undefined && updates.stock_quantity === undefined) updates.stock_quantity = Number(req.body.stock);
+    if (req.body.isOutOfStock !== undefined && updates.is_out_of_stock === undefined) updates.is_out_of_stock = Boolean(req.body.isOutOfStock);
+
+    if (updates.stock_quantity !== undefined || updates.is_out_of_stock !== undefined) {
+      const q = updates.stock_quantity !== undefined ? updates.stock_quantity : existing.stock_quantity;
+      const o = updates.is_out_of_stock !== undefined ? updates.is_out_of_stock : existing.is_out_of_stock;
+      updates.status = q > 0 && !o ? 'APPROVED' : 'OUT_OF_STOCK';
+    }
+
+    const { data: updated, error: updateErr } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', productId)
+      .eq('seller_id', profile.id)
+      .select('*, categories(id, name, slug)')
+      .single();
+
+    if (updateErr) {
+      return res.status(400).json({ success: false, error: updateErr.message });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Product updated successfully.',
+      product: updated,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error updating product.', error: error.message });
+  }
+};
+
+/**
+ * DELETE /api/seller/products/:id
+ * Delete a product owned by authenticated seller (Ownership Guard)
+ */
+const deleteSellerProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
+
+    const { data: deleted, error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', productId)
+      .eq('seller_id', profile.id)
+      .select('id')
+      .single();
+
+    if (error || !deleted) {
+      return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Product deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error deleting product.', error: error.message });
+  }
+};
+
+/**
  * PATCH /api/seller/products/:id/stock
  * Adjust stock count (+/-) or toggle out-of-stock state for a seller's product (Multi-Tenant Guard)
  */
@@ -167,6 +317,9 @@ const updateSellerStock = async (req, res) => {
   try {
     const productId = req.params.id;
     const profile = await getSellerProfile(req.user.id, req.user.profile_id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    }
 
     const { delta, stock, isOutOfStock } = req.body;
 
@@ -198,6 +351,7 @@ const updateSellerStock = async (req, res) => {
         status: newStock > 0 && !nextIsOut ? 'APPROVED' : 'OUT_OF_STOCK',
       })
       .eq('id', productId)
+      .eq('seller_id', profile.id)
       .select('*')
       .single();
 
@@ -216,9 +370,12 @@ const updateSellerStock = async (req, res) => {
 };
 
 module.exports = {
+  getSellerProfileData,
   getSellerKyc,
   submitSellerKyc,
   getSellerProducts,
   createSellerProduct,
+  updateSellerProduct,
+  deleteSellerProduct,
   updateSellerStock,
 };

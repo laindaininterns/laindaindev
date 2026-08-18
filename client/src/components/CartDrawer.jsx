@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { CAT_ICONS } from "../data/marketplaceData";
 
 export default function CartDrawer({
@@ -10,6 +10,18 @@ export default function CartDrawer({
   onRemoveItem,
   onProceedToCheckout,
 }) {
+  useEffect(() => {
+    if (isOpen) {
+      function handleKeyDown(e) {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (

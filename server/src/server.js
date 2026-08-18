@@ -89,7 +89,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Lain-Dain server listening on port ${PORT}`);
 });
 

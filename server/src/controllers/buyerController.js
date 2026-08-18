@@ -250,7 +250,14 @@ const checkout = async (req, res) => {
       order: orderResult,
     });
   } catch (error) {
-    const statusCode = error.statusCode || (error.message.includes('empty cart') ? 400 : 500);
+    const isClientErr = error.statusCode === 400 ||
+      error.message.includes('empty cart') ||
+      error.message.includes('required') ||
+      error.message.includes('compulsory') ||
+      error.message.includes('Insufficient stock') ||
+      error.message.includes('valid');
+
+    const statusCode = error.statusCode || (isClientErr ? 400 : 500);
     return res.status(statusCode).json({
       success: false,
       message: error.message || 'Checkout failed.',

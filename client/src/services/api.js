@@ -2,6 +2,42 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
 
+/**
+ * Request Password Reset Email via backend API
+ */
+export async function requestPasswordReset(email) {
+  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to dispatch password reset link.');
+  }
+
+  return data;
+}
+
+/**
+ * Execute Password Reset with token and new password via backend API
+ */
+export async function resetPasswordRequest({ token, newPassword }) {
+  const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Password reset failed. Token may be invalid or expired.');
+  }
+
+  return data;
+}
+
 
 /**
  * Register a Buyer account in Supabase via backend API
@@ -67,6 +103,45 @@ export async function registerSellerRequest(formData) {
   const refId = data.profile?.id ? `SUP-${data.profile.id.substring(0, 6).toUpperCase()}` : `SUP-${Math.floor(100000 + Math.random() * 900000)}`;
 
   return { refId, bizName: formData.bizName, ...data };
+}
+
+/**
+ * Verify 6-digit OTP email verification code via backend API
+ */
+export async function verifyEmailRequest({ email, code, otp }) {
+  const verificationCode = code || otp;
+  const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code: verificationCode, otp: verificationCode }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Invalid or expired verification code.');
+  }
+
+  return data;
+}
+
+export const verifyOtpRequest = verifyEmailRequest;
+
+/**
+ * Resend 6-digit OTP verification code via backend API
+ */
+export async function resendOtpRequest(email) {
+  const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to resend verification code.');
+  }
+
+  return data;
 }
 
 /**
@@ -160,62 +235,109 @@ export async function updateSellerStatus(sellerId, status) {
 }
 
 /**
+ * Helper to normalize backend Supabase product records into standard UI format
+ */
+export function normalizeProduct(p) {
+  const categoryName = p.categories?.name || p.cat || p.category || 'Electronics & Machinery';
+  const supplierName = p.seller_profiles?.business_name || (p.title?.includes(' - ') ? p.title.split(' - ')[0] : 'Verified Supplier');
+  const photos = Array.isArray(p.images) && p.images.length > 0
+    ? p.images
+    : (Array.isArray(p.photos) && p.photos.length > 0 ? p.photos : []);
+  const mainImage = photos[0] || p.image || '';
+
+  return {
+    id: p.id,
+    product_id: p.id,
+    name: p.title || p.name || 'Wholesale Product',
+    title: p.title || p.name || 'Wholesale Product',
+    supplier: supplierName,
+    seller_id: p.seller_id,
+    sku: p.sku || `TX-${String(p.id).substring(0, 4).toUpperCase()}`,
+    cat: categoryName,
+    category: categoryName,
+    price: parseFloat(p.price || 0),
+    stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
+    stock_quantity: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
+    isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock_quantity === 0 || p.stock === 0),
+    moq: p.moq || 10,
+    desc: p.description || p.desc || '',
+    description: p.description || p.desc || '',
+    photos,
+    images: photos,
+    image: mainImage,
+  };
+}
+
+/**
+ * Fetch public marketplace products catalog live from Supabase (Unauthenticated / Public)
+ */
+export async function fetchMarketplaceProductsRequest(params = {}) {
+  const query = new URLSearchParams();
+  if (params.category) query.append('category', params.category);
+  if (params.search || params.q) query.append('search', params.search || params.q);
+  if (params.page) query.append('page', params.page);
+  if (params.limit) query.append('limit', params.limit || 100);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/products?${query.toString()}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && Array.isArray(data.products)) {
+        return data.products.map(normalizeProduct);
+      }
+    }
+  } catch (err) {
+    console.warn('Marketplace products API error:', err.message);
+  }
+
+  return [];
+}
+
+/**
  * Fetch products live from Supabase database via backend API (Seller)
  */
 export async function fetchSellerProductsRequest() {
   const token = localStorage.getItem('auth_token');
-  if (token) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/seller/products`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-          return data.products.map((p) => ({
-            id: p.id,
-            name: p.title || p.name,
-            sku: p.sku || `TX-${String(p.id).substring(0, 4).toUpperCase()}`,
-            cat: p.categories?.name || p.cat || 'Clothing & Apparel',
-            price: parseFloat(p.price),
-            stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
-            isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock === 0),
-            moq: p.moq || 10,
-            desc: p.description || p.desc || '',
-            photos: p.images && p.images.length > 0 ? p.images : (p.photos || []),
-            image: p.image || (p.images && p.images[0]) || (p.photos && p.photos[0]),
-          }));
-        }
+  if (!token) return [];
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/seller/products`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && Array.isArray(data.products)) {
+        return data.products.map(normalizeProduct);
       }
-    } catch (err) {
-      console.warn('Seller API endpoint error, falling back to public feed:', err.message);
     }
+  } catch (err) {
+    console.warn('Seller products API error:', err.message);
   }
 
-  // Fallback to public products endpoint
+  return [];
+}
+
+/**
+ * Fetch authenticated seller's profile details strictly
+ */
+export async function fetchSellerProfileRequest() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return null;
+
   try {
-    const res2 = await fetch(`${API_BASE_URL}/products`);
-    if (res2.ok) {
-      const data2 = await res2.json();
-      if (data2.success && Array.isArray(data2.products) && data2.products.length > 0) {
-        return data2.products.map((p) => ({
-          id: p.id,
-          name: p.title || p.name,
-          sku: p.sku || `TX-${String(p.id).substring(0, 4).toUpperCase()}`,
-          cat: p.categories?.name || p.cat || 'Clothing & Apparel',
-          price: parseFloat(p.price),
-          stock: p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0),
-          isOutOfStock: p.is_out_of_stock !== undefined ? p.is_out_of_stock : (p.stock === 0),
-          moq: p.moq || 10,
-          desc: p.description || p.desc || '',
-          photos: p.images && p.images.length > 0 ? p.images : (p.photos || []),
-          image: p.image || (p.images && p.images[0]) || (p.photos && p.photos[0]),
-        }));
+    const response = await fetch(`${API_BASE_URL}/seller/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.profile) {
+        return data.profile;
       }
     }
-  } catch (e) {}
-
-  return [];
+  } catch (err) {
+    console.warn('Failed to fetch seller profile:', err.message);
+  }
+  return null;
 }
 
 /**
@@ -228,8 +350,9 @@ export async function createProductRequest(productData) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const url = token ? `${API_BASE_URL}/seller/products` : `${API_BASE_URL}/products`;
 
-  const response = await fetch(`${API_BASE_URL}/products`, {
+  const response = await fetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -260,8 +383,6 @@ export async function createProductRequest(productData) {
 export const createSellerProductRequest = createProductRequest;
 export const fetchSellerProducts = fetchSellerProductsRequest;
 
-
-
 /**
  * Update existing product in Supabase via backend API
  */
@@ -272,7 +393,9 @@ export async function updateProductRequest(productId, updatedData) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+  const url = token ? `${API_BASE_URL}/seller/products/${productId}` : `${API_BASE_URL}/products/${productId}`;
+
+  const response = await fetch(url, {
     method: 'PATCH',
     headers,
     body: JSON.stringify({
@@ -630,5 +753,44 @@ export async function fetchAdminProductsCatalog(forceRefresh = false) {
   }
 }
 
+/**
+ * Guest Session ID Generator / Getter
+ */
+export function getOrCreateGuestId() {
+  let guestId = localStorage.getItem('guest_session_id');
+  if (!guestId) {
+    guestId = 'gst_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+    localStorage.setItem('guest_session_id', guestId);
+  }
+  return guestId;
+}
 
+/**
+ * Execute wholesale checkout for signed-in buyer or guest
+ */
+export async function checkoutRequest(checkoutData) {
+  const token = localStorage.getItem('auth_token');
+  const guestId = getOrCreateGuestId();
 
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-guest-id': guestId,
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/buyer/checkout`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(checkoutData),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Checkout failed. Please check your information and try again.');
+  }
+
+  return data.order;
+}
