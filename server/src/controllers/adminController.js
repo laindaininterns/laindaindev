@@ -7,39 +7,64 @@ const { sendSellerStatusAlert } = require('../services/emailService');
  */
 const getPendingSellers = async (req, res) => {
   try {
-    // Fetch pending seller profiles and join with users email
-    const { data: pendingSellers, error } = await supabase
+    // Fetch pending seller profiles safely without failing on PostgREST relationship embeds
+    const { data: pendingSellers, error: fetchErr } = await supabase
       .from('seller_profiles')
-      .select(`
-        id,
-        user_id,
-        business_name,
-        business_address,
-        tax_id,
-        current_status,
-        created_at,
-        updated_at,
-        users (
-          id,
-          email,
-          role,
-          created_at
-        )
-      `)
-      .eq('current_status', 'PENDING');
+      .select('*')
+      .eq('current_status', 'PENDING')
+      .order('created_at', { ascending: false });
 
-    if (error) {
+    if (fetchErr) {
+      console.error('Error querying seller_profiles:', fetchErr);
       return res.status(400).json({
         success: false,
         message: 'Failed to fetch pending seller profiles.',
-        error: error.message,
+        error: fetchErr.message,
       });
     }
 
+    if (!pendingSellers || pendingSellers.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        sellers: [],
+      });
+    }
+
+    // Map user_id to user records
+    const userIds = pendingSellers.map((s) => s.user_id).filter(Boolean);
+    const userMap = {};
+    if (userIds.length > 0) {
+      const { data: userRecords } = await supabase
+        .from('users')
+        .select('id, email, role, created_at')
+        .in('id', userIds);
+
+      (userRecords || []).forEach((u) => {
+        userMap[u.id] = u;
+      });
+    }
+
+    const formattedSellers = pendingSellers.map((s) => {
+      const userRec = userMap[s.user_id] || {};
+      return {
+        ...s,
+        current_status: 'PENDING',
+        status: 'PENDING',
+        email: userRec.email || 'No email provided',
+        users: {
+          id: s.user_id,
+          email: userRec.email || 'No email provided',
+          role: userRec.role || 'SELLER',
+          created_at: userRec.created_at || s.created_at,
+        },
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      count: pendingSellers ? pendingSellers.length : 0,
-      sellers: pendingSellers || [],
+      count: formattedSellers.length,
+      sellers: formattedSellers,
     });
   } catch (error) {
     console.error('Error fetching pending sellers:', error);
@@ -70,21 +95,12 @@ const updateSellerStatus = async (req, res) => {
 
     const normalizedStatus = status.toUpperCase();
 
-    // Check if seller profile exists
-    const { data: existingSeller, error: fetchErr } = await supabase
+    // Check if seller profile exists (by profile id or user_id)
+    let { data: existingSeller, error: fetchErr } = await supabase
       .from('seller_profiles')
-      .select(`
-        id,
-        user_id,
-        business_name,
-        current_status,
-        users (
-          id,
-          email
-        )
-      `)
-      .eq('id', sellerId)
-      .single();
+      .select('*')
+      .or(`id.eq.${sellerId},user_id.eq.${sellerId}`)
+      .maybeSingle();
 
     if (fetchErr || !existingSeller) {
       return res.status(404).json({
@@ -92,6 +108,8 @@ const updateSellerStatus = async (req, res) => {
         message: `Seller profile with ID ${sellerId} not found.`,
       });
     }
+
+    const targetProfileId = existingSeller.id;
 
     // Build update payload with audit fields
     const updatePayload = {
@@ -101,7 +119,10 @@ const updateSellerStatus = async (req, res) => {
 
     if (normalizedStatus === 'APPROVED') {
       updatePayload.approved_at = new Date().toISOString();
-      if (adminId) updatePayload.approved_by = adminId;
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (adminId && uuidPattern.test(adminId)) {
+        updatePayload.approved_by = adminId;
+      }
       updatePayload.rejection_reason = null;
     } else if (normalizedStatus === 'REJECTED') {
       updatePayload.rejection_reason = rejection_reason || 'Application rejected by administration.';
@@ -111,23 +132,8 @@ const updateSellerStatus = async (req, res) => {
     const { data: updatedSeller, error: updateErr } = await supabase
       .from('seller_profiles')
       .update(updatePayload)
-      .eq('id', sellerId)
-      .select(`
-        id,
-        user_id,
-        business_name,
-        business_address,
-        tax_id,
-        current_status,
-        approved_at,
-        approved_by,
-        rejection_reason,
-        updated_at,
-        users (
-          id,
-          email
-        )
-      `)
+      .eq('id', targetProfileId)
+      .select('*')
       .single();
 
     if (updateErr) {
@@ -138,8 +144,17 @@ const updateSellerStatus = async (req, res) => {
       });
     }
 
-    // Post-execution hook: immediately dispatch sendSellerStatusAlert notification
-    const sellerEmail = existingSeller.users ? existingSeller.users.email : null;
+    // Fetch seller user email for alert dispatch
+    let sellerEmail = null;
+    if (existingSeller.user_id) {
+      const { data: userRec } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', existingSeller.user_id)
+        .single();
+      if (userRec) sellerEmail = userRec.email;
+    }
+
     if (sellerEmail) {
       await sendSellerStatusAlert(sellerEmail, normalizedStatus);
     }
@@ -165,42 +180,38 @@ const updateSellerStatus = async (req, res) => {
  */
 const getBuyersDirectory = async (req, res) => {
   try {
-    const { data: buyers, error } = await supabase
-      .from('buyer_profiles')
-      .select(`
-        id,
-        user_id,
-        full_name,
-        company_name,
-        store_name,
-        contact_number,
-        phone_number,
-        billing_address,
-        shipping_address,
-        created_at,
-        users (
-          id,
-          email,
-          created_at
-        ),
-        orders (
-          id,
-          total_amount,
-          status
-        )
-      `);
+    const [
+      { data: buyers, error: fetchErr },
+      { data: users },
+      { data: orders },
+    ] = await Promise.all([
+      supabase.from('buyer_profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('users').select('id, email'),
+      supabase.from('orders').select('id, buyer_profile_id, total_amount, status'),
+    ]);
 
-    if (error) {
+    if (fetchErr) {
       return res.status(400).json({
         success: false,
         message: 'Failed to fetch buyers directory.',
-        error: error.message,
+        error: fetchErr.message,
       });
     }
 
+    const userMap = {};
+    (users || []).forEach((u) => { userMap[u.id] = u.email; });
+
+    const orderMap = {};
+    (orders || []).forEach((o) => {
+      if (o.buyer_profile_id) {
+        if (!orderMap[o.buyer_profile_id]) orderMap[o.buyer_profile_id] = [];
+        orderMap[o.buyer_profile_id].push(o);
+      }
+    });
+
     const formattedBuyers = (buyers || []).map((b) => {
-      const orders = b.orders || [];
-      const completedOrders = orders.filter((o) => o.status !== 'CANCELLED');
+      const bOrders = orderMap[b.id] || [];
+      const completedOrders = bOrders.filter((o) => o.status !== 'CANCELLED');
       const totalSpent = completedOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
 
       return {
@@ -209,10 +220,10 @@ const getBuyersDirectory = async (req, res) => {
         full_name: b.full_name || 'Retail Buyer',
         company_name: b.company_name || b.store_name || b.full_name || 'Retail Store',
         store_name: b.store_name || b.company_name || 'Retail Store',
-        email: b.users ? b.users.email : 'N/A',
+        email: userMap[b.user_id] || 'N/A',
         contact_number: b.contact_number || b.phone_number || 'N/A',
         location: b.billing_address || b.shipping_address || 'Pakistan',
-        orders_placed: orders.length,
+        orders_placed: bOrders.length,
         total_volume: parseFloat(totalSpent.toFixed(2)),
         joined: b.created_at,
       };

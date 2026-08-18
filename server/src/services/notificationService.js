@@ -1,77 +1,59 @@
-const { sendEmail } = require('./emailService');
+const { sendEmail, sendOrderConfirmationEmail } = require('./emailService');
 
 /**
  * Transactional Resend Email Notification Service for E-Commerce Orders
  */
 class NotificationService {
   /**
-   * Dispatch Order Confirmation Receipt to Buyer
+   * Dispatch Order Confirmation Receipt to Buyer (Signed-In & Guest)
    * @param {Object} order 
    */
   static async sendOrderConfirmationNotification(order) {
-    const recipientEmail = order.guest_email || (order.buyer_profile && order.buyer_profile.users ? order.buyer_profile.users.email : null);
+    const orderId = order.id || order.order_id || '';
+    const shortId = orderId.slice(0, 8).toUpperCase();
+    const customerName = order.customer_name || order.buyer_name || 'Valued Customer';
+    const recipientEmail = order.customer_email || order.guest_email || (order.buyer_profile && order.buyer_profile.users ? order.buyer_profile.users.email : null);
+    const totalAmount = parseFloat(order.total_amount || 0).toLocaleString();
+
+    // Print order summary to console for instant dev verification
+    console.log(`📋 [DEV] ORDER SUMMARY FOR #${shortId}: Total: Rs. ${totalAmount} | Customer: ${customerName} (${recipientEmail || 'No Email / Guest'})`);
 
     if (!recipientEmail) {
-      console.log(`[Notification Skip] No email address found for Order ${order.id || order.order_id}`);
-      return { success: false, reason: 'No recipient email' };
+      console.log('ℹ️ [DEV] GUEST ORDER CREATED WITHOUT EMAIL - SKIPPING EMAIL DISPATCH');
+      return { success: false, reason: 'No recipient email provided' };
     }
 
-    const orderId = order.id || order.order_id;
-    const totalAmount = parseFloat(order.total_amount).toFixed(2);
-    const items = order.order_items || [];
+    console.log('📧 [DEV] ORDER CONFIRMATION EMAIL DISPATCHED TO:', recipientEmail);
 
-    const itemsHtml = items.map(item => {
-      const title = item.product ? item.product.title : (item.title || 'Product');
-      const qty = item.quantity;
-      const price = parseFloat(item.price_at_purchase || item.price || 0).toFixed(2);
-      const subtotal = (qty * price).toFixed(2);
-      return `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${title}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${qty}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">\$${price}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">\$${subtotal}</td>
-        </tr>
-      `;
-    }).join('');
+    try {
+      const emailResult = await sendOrderConfirmationEmail({
+        email: recipientEmail,
+        customerName,
+        orderId,
+        shippingAddress: order.shipping_address || 'Delivery Address',
+        region: order.region || '',
+        paymentMethod: order.payment_method || 'Cash on Delivery (COD)',
+        totalAmount: order.total_amount,
+        items: order.order_items || [],
+      });
 
-    const subject = `🛍️ Order Confirmation #${orderId.slice(0, 8)}`;
-    const html = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px;">
-        <h2 style="color: #1a56db; margin-bottom: 10px;">Thank You for Your Order!</h2>
-        <p>Your order <strong>#${orderId}</strong> has been successfully placed.</p>
-        
-        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 15px 0;">
-          <p style="margin: 4px 0;"><strong>Shipping Address:</strong> ${order.shipping_address || 'N/A'}</p>
-          <p style="margin: 4px 0;"><strong>Status:</strong> ${order.status || 'PENDING'}</p>
-        </div>
+      if (!emailResult.success) {
+        const errMsg = String(emailResult.error || '').toLowerCase();
+        if (errMsg.includes('suppress') || errMsg.includes('bounce') || errMsg.includes('validation_error') || errMsg.includes('invalid `to`')) {
+          console.warn('⚠️ [RESEND WARNING] Could not send to recipient (likely on Resend Suppression list). Unsuppress in dashboard.');
+        }
+      }
 
-        <h3 style="color: #2c3e50; border-bottom: 2px solid #1a56db; padding-bottom: 6px;">Order Summary</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-          <thead>
-            <tr style="background: #f1f5f9; text-align: left;">
-              <th style="padding: 10px;">Item</th>
-              <th style="padding: 10px; text-align: center;">Qty</th>
-              <th style="padding: 10px; text-align: right;">Price</th>
-              <th style="padding: 10px; text-align: right;">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-        </table>
-
-        <div style="text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold; color: #1a56db;">
-          Total: \$${totalAmount}
-        </div>
-
-        <br/>
-        <p style="color: #64748b; font-size: 13px;">If you have any questions, reply directly to this email or contact support.</p>
-        <p style="color: #334155;">Best regards,<br/><strong>The Lain-Dain Marketplace Team</strong></p>
-      </div>
-    `;
-
-    return sendEmail({ to: recipientEmail, subject, html });
+      return emailResult;
+    } catch (err) {
+      const errMsg = (err.message || '').toLowerCase();
+      if (errMsg.includes('suppress') || errMsg.includes('bounce') || errMsg.includes('validation_error') || errMsg.includes('invalid `to`')) {
+        console.warn('⚠️ [RESEND WARNING] Could not send to recipient (likely on Resend Suppression list). Unsuppress in dashboard.');
+      } else {
+        console.warn('[Resend Non-blocking Error]:', err.message);
+      }
+      return { success: false, error: err.message };
+    }
   }
 
   /**

@@ -149,6 +149,29 @@ const getProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
+
+    // Multi-tenant Ownership guard for sellers
+    if (req.user && req.user.role === 'SELLER') {
+      const { data: sellerProfile } = await supabase
+        .from('seller_profiles')
+        .select('id')
+        .eq('user_id', req.user.id)
+        .maybeSingle();
+
+      if (sellerProfile) {
+        const { data: prodCheck } = await supabase
+          .from('products')
+          .select('id')
+          .eq('id', productId)
+          .eq('seller_id', sellerProfile.id)
+          .maybeSingle();
+
+        if (!prodCheck) {
+          return res.status(403).json({ success: false, message: 'Unauthorized: Product belongs to another vendor.' });
+        }
+      }
+    }
+
     const allowed = ['title', 'description', 'price', 'stock_quantity', 'images', 'status', 'category_id', 'sku', 'moq', 'is_out_of_stock'];
     const updates = {};
     
@@ -201,7 +224,31 @@ const updateProduct = async (req, res) => {
 // DELETE /api/products/:id — seller ownership / demo delete
 const deleteProduct = async (req, res) => {
   try {
-    const { error } = await supabase.from('products').delete().eq('id', req.params.id);
+    const productId = req.params.id;
+
+    // Multi-tenant Ownership guard for sellers
+    if (req.user && req.user.role === 'SELLER') {
+      const { data: sellerProfile } = await supabase
+        .from('seller_profiles')
+        .select('id')
+        .eq('user_id', req.user.id)
+        .maybeSingle();
+
+      if (sellerProfile) {
+        const { data: prodCheck } = await supabase
+          .from('products')
+          .select('id')
+          .eq('id', productId)
+          .eq('seller_id', sellerProfile.id)
+          .maybeSingle();
+
+        if (!prodCheck) {
+          return res.status(403).json({ success: false, message: 'Unauthorized: Product belongs to another vendor.' });
+        }
+      }
+    }
+
+    const { error } = await supabase.from('products').delete().eq('id', productId);
     if (error) return res.status(400).json({ success: false, error: error.message });
     return res.json({ success: true, message: 'Product deleted successfully.' });
   } catch (err) {

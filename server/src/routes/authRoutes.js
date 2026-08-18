@@ -3,10 +3,10 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const rateLimit = require('express-rate-limit');
 
-// Rate limiter for authentication routes: max 15 requests per 15 minutes per IP
+// Rate limiter for authentication routes: max 100 requests in development, 20 in production
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: process.env.NODE_ENV === 'production' ? 20 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -23,11 +23,20 @@ const authLimiter = rateLimit({
 router.post('/register', authLimiter, authController.register);
 
 /**
- * @route   POST /api/auth/verify-email
+ * @route   POST /api/auth/verify-email (or /api/auth/verify-otp)
  * @desc    Verify 6-digit numeric OTP and set is_email_verified to true
  * @access  Public
  */
 router.post('/verify-email', authLimiter, authController.verifyEmail);
+router.post('/verify-otp', authLimiter, authController.verifyEmail);
+
+/**
+ * @route   POST /api/auth/resend-otp (or /api/auth/resend-verification)
+ * @desc    Resend a fresh 6-digit OTP code to email
+ * @access  Public
+ */
+router.post('/resend-otp', authLimiter, authController.resendOtp);
+router.post('/resend-verification', authLimiter, authController.resendOtp);
 
 /**
  * @route   POST /api/auth/login
@@ -35,6 +44,20 @@ router.post('/verify-email', authLimiter, authController.verifyEmail);
  * @access  Public
  */
 router.post('/login', authLimiter, authController.login);
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Generate password reset token and send email via Resend
+ * @access  Public
+ */
+router.post('/forgot-password', authLimiter, authController.forgotPassword);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Verify reset token and update password with bcrypt
+ * @access  Public
+ */
+router.post('/reset-password', authLimiter, authController.resetPassword);
 
 /**
  * @route   POST /api/auth/seller/submit_application

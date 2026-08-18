@@ -50,18 +50,28 @@ export default function Navbar({
           {/* User Auth Buttons / Profile status */}
           {currentUser ? (
             <div className="flex items-center gap-2">
-              <button
-                onClick={onOpenSellerDashboard}
-                className="h-[40px] px-3.5 rounded-[16px] text-[14px] font-medium text-black bg-[#EEF3F2] hover:bg-[#A3C1BF] transition-colors"
-              >
-                Portal ⚙️
-              </button>
+              {currentUser.role === "SELLER" && (
+                <button
+                  onClick={onOpenSellerDashboard}
+                  className="h-[40px] px-3.5 rounded-[16px] text-[14px] font-medium text-black bg-[#EEF3F2] hover:bg-[#A3C1BF] transition-colors cursor-pointer"
+                >
+                  Portal ⚙️
+                </button>
+              )}
+              {currentUser.role === "ADMIN" && (
+                <button
+                  onClick={onOpenAdmin}
+                  className="h-[40px] px-3.5 rounded-[16px] text-[14px] font-medium text-black bg-[#EEF3F2] hover:bg-[#A3C1BF] transition-colors cursor-pointer"
+                >
+                  Admin 🛡️
+                </button>
+              )}
               <span className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#EEF3F2] text-[13px] font-medium text-black border border-[#E9E8E2]">
-                👤 {currentUser.name}
+                👤 {currentUser.name || currentUser.full_name || (currentUser.role === "BUYER" ? "Buyer" : "User")}
               </span>
               <button
                 onClick={onLogout}
-                className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[#C6564D] hover:bg-red-50 transition-colors"
+                className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[#C6564D] hover:bg-red-50 transition-colors cursor-pointer"
               >
                 Log Out
               </button>

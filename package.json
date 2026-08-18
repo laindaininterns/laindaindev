@@ -15,5 +15,8 @@
   },
   "devDependencies": {
     "agentation": "^3.0.2"
+  },
+  "dependencies": {
+    "posthog-js": "^1.417.1"
   }
 }

@@ -9,6 +9,13 @@ const { verifySeller } = require('../middleware/sellerAuth');
 router.use(verifyToken, verifySeller);
 
 /**
+ * @route   GET /api/seller/profile
+ * @desc    Fetch authenticated seller's profile details strictly
+ * @access  Private (Seller)
+ */
+router.get('/profile', sellerController.getSellerProfileData);
+
+/**
  * @route   GET /api/seller/kyc
  * @desc    Fetch seller KYC status and document records
  * @access  Private (Seller)
@@ -35,6 +42,20 @@ router.get('/products', sellerController.getSellerProducts);
  * @access  Private (Seller)
  */
 router.post('/products', sellerController.createSellerProduct);
+
+/**
+ * @route   PATCH /api/seller/products/:id
+ * @desc    Update product specifications (Ownership guarded)
+ * @access  Private (Seller)
+ */
+router.patch('/products/:id', sellerController.updateSellerProduct);
+
+/**
+ * @route   DELETE /api/seller/products/:id
+ * @desc    Delete a product owned by authenticated seller (Ownership guarded)
+ * @access  Private (Seller)
+ */
+router.delete('/products/:id', sellerController.deleteSellerProduct);
 
 /**
  * @route   PATCH /api/seller/products/:id/stock
